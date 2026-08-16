@@ -402,6 +402,13 @@ familles demandent une base de test, d'où leur absence ici.
   journal des actions et sans rotation de mot de passe.
 - **Vérification du numéro désactivée par défaut.** `BOOKING_REQUIRE_OTP=true`
   l'active ; elle ajoute une étape au parcours et un envoi facturé par tentative.
+- **La limitation compte par `x-forwarded-for`.** Derrière un hébergeur qui
+  réécrit cet en-tête (Vercel, Netlify, Fly, Nginx configuré), le compte est juste.
+  En exposition directe, l'en-tête est forgeable et la limitation devient
+  contournable.
+- **Le rendu est entièrement dynamique** depuis le passage à la CSP à nonce : plus
+  de pages statiques servies depuis le cache. Réversible — voir
+  `src/app/[locale]/layout.tsx`.
 - **Pas de règle d'attribution de table fine.** La plus petite table libre suffisante est
   choisie ; il n'y a ni fusion de tables pour les grands groupes, ni réservation d'une
   table précise.

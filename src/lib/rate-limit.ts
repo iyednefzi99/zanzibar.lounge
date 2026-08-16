@@ -91,7 +91,15 @@ export async function clearRateLimit(key: string): Promise<void> {
   if (isShared) await redisCommand([["DEL", key]]);
 }
 
-/** Adresse de l'appelant, en tenant compte des en-têtes de proxy. */
+/**
+ * Adresse de l'appelant, en tenant compte des en-têtes de proxy.
+ *
+ * ⚠️ `x-forwarded-for` est fourni par le client s'il n'y a pas de proxy devant
+ * l'application : n'importe qui peut alors le forger, obtenir un compteur neuf
+ * à chaque requête et rendre la limitation inopérante. Derrière Vercel,
+ * Netlify, Fly ou un Nginx correctement configuré, l'en-tête est réécrit par la
+ * plateforme et le compte est juste. En exposition directe, ne pas s'y fier.
+ */
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]!.trim();

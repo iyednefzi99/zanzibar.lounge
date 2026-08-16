@@ -24,8 +24,14 @@ const body = z.object({
   locale: z.enum(locales).default("fr"),
   /** Code reçu par SMS ou WhatsApp, exigé si BOOKING_REQUIRE_OTP est actif. */
   code: z.string().trim().regex(/^\d{6}$/).optional(),
-  /** Champ leurre : rempli uniquement par les robots. */
-  website: z.string().max(0).optional(),
+  /**
+   * Champ leurre : rempli uniquement par les robots.
+   *
+   * Volontairement accepté par le schéma. Le refuser ici renverrait une erreur
+   * nommant le champ — autrement dit, le mode d'emploi pour le contourner. Il
+   * est traité plus bas, par une réponse de succès qui ne crée rien.
+   */
+  website: z.string().max(200).optional(),
 });
 
 export async function POST(request: Request) {

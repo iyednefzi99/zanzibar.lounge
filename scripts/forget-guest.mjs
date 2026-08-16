@@ -1,6 +1,9 @@
-import "dotenv/config";
-
+import { config } from "dotenv";
 import { Client } from "pg";
+
+// Même ordre de priorité que Next : `.env.local` d'abord, `.env` en repli.
+config({ path: ".env.local", quiet: true });
+config({ path: ".env", quiet: true });
 
 /**
  * Effacement des données d'une personne, sur sa demande.

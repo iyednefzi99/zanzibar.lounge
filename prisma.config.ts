@@ -1,6 +1,10 @@
-import "dotenv/config";
-
+import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
+
+// Même ordre de priorité que Next : `.env.local` d'abord, `.env` en repli.
+// dotenv n'écrase pas une variable déjà définie, donc le premier chargé gagne.
+config({ path: ".env.local", quiet: true });
+config({ path: ".env", quiet: true });
 
 /**
  * Configuration Prisma 7.
