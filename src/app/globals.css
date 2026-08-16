@@ -1,26 +1,170 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   Zanzibar Lounge — direction artistique
+   Ancrage : les portes sculptées de Stone Town (arches, clous de laiton),
+   l'océan Indien la nuit, les épices. Fond sarcelle profond, laiton, corail.
+   ------------------------------------------------------------------ */
+
+@theme {
+  /* Palette */
+  --color-night: #0e2e30; /* sarcelle profond — fond principal */
+  --color-deep: #071b1c; /* sarcelle nuit — sections creuses */
+  --color-lagoon: #3fa89b; /* turquoise océan — liens, état ouvert */
+  --color-brass: #c9922e; /* laiton des clous de porte — accent principal */
+  --color-coral: #e4674c; /* corail / hibiscus — accent chaud, alertes */
+  --color-shell: #efe3d0; /* pierre de corail blanchie — texte */
+  --color-shell-dim: #b9ad9c; /* texte secondaire */
+  --color-clove: #3a1f16; /* clou de girofle — ombres chaudes */
+
+  /* Typographie */
+  --font-display: var(--font-bodoni), "Bodoni Moda", Georgia, serif;
+  --font-display-ar: var(--font-aref), "Aref Ruqaa", serif;
+  --font-body: var(--font-readex), "Readex Pro", system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
+
+  /* Rythme */
+  --spacing-section: 6rem;
+
+  /* Motion */
+  --ease-door: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --arch: 50% 50% 0 0 / 50% 28% 0 0; /* l'arche de porte swahilie */
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-night);
+  color: var(--color-shell);
+  font-family: var(--font-body);
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* L'arabe passe à sa face d'affichage calligraphique */
+[lang="ar"] .font-display,
+[lang="ar"] h1,
+[lang="ar"] h2,
+[lang="ar"] h3 {
+  font-family: var(--font-display-ar);
+  line-height: 1.5;
+}
+
+/* --- Signature : l'arche et la rangée de clous de laiton --- */
+
+.arch {
+  border-radius: var(--arch);
+}
+
+/* Rangée de clous : sépare les sections comme les bossages d'une porte */
+.studs {
+  height: 0.75rem;
+  background-image: radial-gradient(
+    circle at center,
+    var(--color-brass) 0 2.5px,
+    color-mix(in oklab, var(--color-brass) 35%, transparent) 2.5px 3.5px,
+    transparent 3.6px
+  );
+  background-size: 1.75rem 0.75rem;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* --- Accessibilité --- */
+
+:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-brass);
+  color: var(--color-deep);
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* --- Motion : une seule séquence orchestrée à l'ouverture --- */
+
+@keyframes door-open {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stud-draw {
+  from {
+    background-size: 1.75rem 0;
+    opacity: 0;
+  }
+  to {
+    background-size: 1.75rem 0.75rem;
+    opacity: 1;
+  }
+}
+
+.reveal {
+  animation: door-open 900ms var(--ease-door) both;
+}
+
+.studs.reveal {
+  animation:
+    door-open 900ms var(--ease-door) both,
+    stud-draw 700ms var(--ease-door) both;
+}
+
+.reveal-1 {
+  animation-delay: 120ms;
+}
+.reveal-2 {
+  animation-delay: 260ms;
+}
+.reveal-3 {
+  animation-delay: 400ms;
+}
+.reveal-4 {
+  animation-delay: 540ms;
+}
+
+/* Révélation au défilement, sans JS : progressive enhancement */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .on-scroll {
+      animation: door-open 1ms var(--ease-door) both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 22%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

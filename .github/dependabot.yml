@@ -1,0 +1,22 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Une seule demande de fusion par famille : sinon le bruit fait qu'on
+      # n'en lit plus aucune.
+      next:
+        patterns: ["next", "eslint-config-next", "react", "react-dom"]
+      prisma:
+        patterns: ["prisma", "@prisma/*"]
+      dev:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

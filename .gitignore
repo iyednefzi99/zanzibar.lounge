@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — aucun secret ne doit être versionné.
+# `.env.example` est l'exception : il ne contient que des valeurs vides.
 .env*
+!.env.example
+
+# client Prisma généré (régénéré par `npm install` via le script postinstall)
+/src/generated
 
 # vercel
 .vercel

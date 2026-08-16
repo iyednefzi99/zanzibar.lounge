@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `npm ci` installe exactement le lockfile et déclenche `prisma generate`
+      # par le script postinstall.
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+      # La compilation ne touche pas la base : aucune variable secrète requise.
+      - run: npm run build
+
+      # Une nouvelle faille connue en dépendance de production casse le build.
+      - run: npm audit --omit=dev --audit-level=high

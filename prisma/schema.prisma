@@ -1,0 +1,167 @@
+// Zanzibar Lounge — réservations et conversations.
+//
+// Règle : `startsAt` / `endsAt` sont des instants UTC. `serviceDate` est la
+// date locale du service (AAAA-MM-JJ) et sert à regrouper une soirée qui
+// déborde après minuit — voir src/lib/hours.ts.
+
+// Prisma 7 : l'URL de connexion ne vit plus ici mais dans prisma.config.ts,
+// et le client se construit avec un adaptateur (voir src/lib/db.ts).
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ReservationStatus {
+  PENDING // créée, en attente de confirmation du client
+  CONFIRMED // confirmée
+  SEATED // le client est à table
+  COMPLETED // table libérée
+  CANCELLED // annulée
+  NO_SHOW // ne s'est pas présenté
+}
+
+enum Zone {
+  TERRASSE
+  SALLE
+  SALON
+}
+
+enum Channel {
+  WEB
+  WHATSAPP
+  SMS
+  PHONE
+}
+
+enum MessageRole {
+  GUEST
+  AGENT
+  STAFF
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  /// Numéro au format E.164, sans espace : +21620123456
+  phone     String   @unique
+  name      String?
+  /// Langue de la dernière conversation : fr | ar | en
+  locale    String   @default("fr")
+  /// Le client a demandé à ne plus recevoir de messages.
+  optedOut  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations  Reservation[]
+  conversations Conversation[]
+
+  @@index([createdAt])
+}
+
+model RestaurantTable {
+  id       String  @id @default(cuid())
+  /// Nom affiché en salle : « T4 », « Terrasse 2 »…
+  name     String  @unique
+  capacity Int
+  zone     Zone
+  active   Boolean @default(true)
+
+  reservations Reservation[]
+}
+
+model Reservation {
+  id        String @id @default(cuid())
+  /// Référence courte communiquée au client : ZL-4F2K
+  reference String @unique
+
+  guestId String
+  guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  startsAt    DateTime
+  endsAt      DateTime
+  /// Date locale du service (AAAA-MM-JJ), y compris après minuit.
+  serviceDate String
+  partySize   Int
+  zone        Zone?
+
+  tableId String?
+  table   RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  status  ReservationStatus @default(CONFIRMED)
+  channel Channel
+  notes   String?
+
+  reminderSentAt     DateTime?
+  confirmedByGuestAt DateTime?
+  seatedAt           DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  /// « guest » | « staff » | « agent »
+  cancelledBy        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceDate, status])
+  @@index([startsAt, status])
+  @@index([guestId, startsAt])
+}
+
+model Conversation {
+  id      String  @id @default(cuid())
+  guestId String
+  guest   Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  channel Channel
+  locale  String  @default("fr")
+  /// Une conversation close ne repart pas dans le contexte de l'agent.
+  closed  Boolean @default(false)
+
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  messages Message[]
+
+  @@unique([guestId, channel])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  body           String
+  /// Trace brute du fournisseur, utile au débogage d'un webhook.
+  providerId     String?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+/// Vérification du numéro par code court, quand BOOKING_REQUIRE_OTP est actif.
+/// Une seule ligne par numéro : une nouvelle demande remplace la précédente.
+model PhoneVerification {
+  /// Numéro en E.164.
+  phone     String   @id
+  /// Empreinte du code — le code lui-même n'est jamais stocké.
+  codeHash  String
+  expiresAt DateTime
+  /// Tentatives infructueuses ; au-delà du plafond, il faut redemander un code.
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+/// Déduplication des webhooks : les fournisseurs rejouent les livraisons.
+model ProcessedEvent {
+  /// Identifiant du message chez le fournisseur.
+  id        String   @id
+  channel   Channel
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

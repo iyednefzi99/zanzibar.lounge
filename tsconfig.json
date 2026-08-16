@@ -11,6 +11,9 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Le script de peuplement (prisma/seed.ts) tourne directement sous Node,
+    // qui exige l'extension .ts sur ses imports relatifs.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
