@@ -34,7 +34,10 @@ export default async function BookingPage({
         <p className="reveal reveal-1 mt-4 max-w-xl text-shell-dim">
           {dictionary.booking.lead}
         </p>
-        <OpenBadge dictionary={dictionary} className="reveal reveal-2 mt-6" />
+        <OpenBadge
+          dictionary={dictionary}
+          className="reveal reveal-2 mt-6 inline-flex"
+        />
       </header>
 
       <Studs className="reveal reveal-2" />

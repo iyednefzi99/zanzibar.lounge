@@ -48,13 +48,16 @@ body {
   overflow-x: hidden;
 }
 
-/* L'arabe passe à sa face d'affichage calligraphique */
+/* L'arabe passe à sa face d'affichage calligraphique.
+   La ruqaa descend loin sous la ligne de base : sans interligne généreux et
+   sans marge basse, les hampes se font rogner par le conteneur. */
 [lang="ar"] .font-display,
 [lang="ar"] h1,
 [lang="ar"] h2,
 [lang="ar"] h3 {
   font-family: var(--font-display-ar);
-  line-height: 1.5;
+  line-height: 1.45;
+  padding-block-end: 0.14em;
 }
 
 /* --- Signature : l'arche et la rangée de clous de laiton --- */
@@ -85,19 +88,40 @@ body {
   border-radius: 2px;
 }
 
+/**
+ * Masquage accessible.
+ *
+ * ⚠️ Ne jamais masquer par `left: -9999px`. En lecture de droite à gauche, ce
+ * qui déborde à gauche devient du défilement : la page arabe se retrouvait avec
+ * 10 000 px de vide et son contenu poussé hors de l'écran. Le découpage par
+ * `clip-path` ne dépend pas de la direction du texte.
+ */
+.visually-hidden,
 .skip-link {
   position: absolute;
-  left: -9999px;
-  top: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link:focus {
+  position: fixed;
+  inset-inline-start: 1rem;
+  inset-block-start: 1rem;
   z-index: 100;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip-path: none;
   background: var(--color-brass);
   color: var(--color-deep);
   padding: 0.75rem 1.25rem;
   font-weight: 600;
-}
-.skip-link:focus {
-  left: 1rem;
-  top: 1rem;
 }
 
 /* --- Motion : une seule séquence orchestrée à l'ouverture --- */

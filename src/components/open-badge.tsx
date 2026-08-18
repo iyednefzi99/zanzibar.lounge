@@ -25,9 +25,13 @@ export function OpenBadge({
           time: status.opensAt,
         });
 
+  // Pas de classe d'affichage par défaut : `hidden` et `inline-flex` agissent
+  // toutes deux sur `display`, et c'est l'ordre du fichier CSS qui tranche, pas
+  // celui de l'attribut. Une base `inline-flex` rendait le `hidden` du parent
+  // inopérant et faisait déborder l'en-tête sur mobile. L'appelant décide.
   return (
     <p
-      className={`inline-flex items-center gap-2.5 font-mono text-xs tracking-[0.14em] uppercase ${className}`}
+      className={`items-center gap-2.5 font-mono text-xs tracking-[0.14em] uppercase ${className}`}
     >
       <span
         aria-hidden="true"

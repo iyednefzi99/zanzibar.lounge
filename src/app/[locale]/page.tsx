@@ -8,7 +8,6 @@ import { menu } from "@/content/menu";
 import { site } from "@/content/site";
 import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
-import { serviceWindow } from "@/lib/hours";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export default async function HomePage({
@@ -71,7 +70,10 @@ export default async function HomePage({
               </Link>
             </div>
 
-            <OpenBadge dictionary={dictionary} className="reveal reveal-4 mt-8" />
+            <OpenBadge
+              dictionary={dictionary}
+              className="reveal reveal-4 mt-8 inline-flex"
+            />
           </div>
 
           {/* L'arche. Sans photographie du lieu, on ne met pas d'image
@@ -238,17 +240,7 @@ export default async function HomePage({
             </ul>
           </div>
         </div>
-
-        {todayIsOpen() && (
-          <p className="mt-10">
-            <OpenBadge dictionary={dictionary} />
-          </p>
-        )}
       </section>
     </>
   );
-}
-
-function todayIsOpen(): boolean {
-  return serviceWindow(new Date().toISOString().slice(0, 10)) !== null;
 }

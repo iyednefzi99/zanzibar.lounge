@@ -29,7 +29,7 @@ export function SiteHeader({
           {site.name}
         </Link>
 
-        <OpenBadge dictionary={dictionary} className="hidden md:inline-flex" />
+        <OpenBadge dictionary={dictionary} className="hidden md:flex" />
 
         <nav className="ms-auto hidden items-center gap-6 text-sm sm:flex">
           {links.map((link) => (

@@ -393,8 +393,9 @@ export function BookingForm({
         />
       </Field>
 
-      {/* Piège à robots : invisible, jamais rempli par un humain. */}
-      <div aria-hidden="true" className="absolute -left-[9999px]">
+      {/* Piège à robots : invisible, jamais rempli par un humain. Masqué par
+          découpage et non par un décalage négatif, qui déborderait en RTL. */}
+      <div aria-hidden="true" className="visually-hidden">
         <label htmlFor={`${ids}-website`}>Website</label>
         <input
           id={`${ids}-website`}
