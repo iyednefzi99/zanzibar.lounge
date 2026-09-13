@@ -251,8 +251,8 @@ async function flagForStaff(
     summary: handOff.summary,
   });
 
-  const conversation = await db.conversation.findUnique({
-    where: { guestId_channel: { guestId, channel: inbound.channel } },
+  const conversation = await db.conversation.findFirst({
+    where: { guestId, channel: inbound.channel, closed: false },
   });
   if (conversation) {
     await recordMessage(

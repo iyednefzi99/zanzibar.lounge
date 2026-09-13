@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createOrder, getGuestOrders } from "@/lib/orders";
+import { requireAdmin } from "@/lib/admin-auth";
+import { createOrder } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -19,19 +20,17 @@ const createSchema = z.object({
 });
 
 /**
- * POST /api/orders — Créer une commande.
- * GET  /api/orders?phone=+216... — Historique d'un client.
+ * POST /api/orders — Créer une commande (public).
+ * GET  /api/orders — Historique (admin uniquement).
  */
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const phone = searchParams.get("phone");
-
-  if (!phone) {
-    return NextResponse.json({ error: "phone requis" }, { status: 400 });
+export async function GET() {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const orders = await getGuestOrders(phone);
-  return NextResponse.json(orders);
+  return NextResponse.json({ error: "Utilisez /api/admin/orders" }, { status: 400 });
 }
 
 export async function POST(request: Request) {
@@ -49,8 +48,7 @@ export async function POST(request: Request) {
   const result = await createOrder(phone, cart, pickupMinutes, notes, locale);
 
   if (!result.ok) {
-    const status = result.error.code === "CART_EMPTY" ? 400 : 400;
-    return NextResponse.json({ error: result.error.code }, { status });
+    return NextResponse.json({ error: result.error.code }, { status: 400 });
   }
 
   return NextResponse.json(result.value, { status: 201 });

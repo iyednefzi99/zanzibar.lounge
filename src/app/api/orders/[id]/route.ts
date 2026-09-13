@@ -6,13 +6,19 @@ import { requireAdmin } from "@/lib/admin-auth";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/orders/:id — Détail d'une commande.
+ * GET /api/orders/:id — Détail d'une commande (admin).
  * PATCH /api/orders/:id — Modifier le statut (admin).
  */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const order = await getOrderDetail(id);
 

@@ -213,6 +213,7 @@ export async function createReservation(
 // --------------------------------------------------------------------------
 
 export type ReservationSummary = {
+  id: string;
   reference: string;
   guestId: string;
   name: string | null;
@@ -660,6 +661,7 @@ type ReservationRow = Prisma.ReservationGetPayload<{
 function summarize(row: ReservationRow): ReservationSummary {
   const minutes = minutesOf(row.serviceDate, row.startsAt);
   return {
+    id: row.id,
     reference: row.reference,
     guestId: row.guestId,
     name: row.guest.name,

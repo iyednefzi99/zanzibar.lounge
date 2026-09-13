@@ -319,7 +319,7 @@ async function confirm(
     const [next] = await upcomingForPhone(context.phone, context.now);
     if (!next) return { content: "Aucune réservation à confirmer." };
     await db.reservation.update({
-      where: { id: (await db.reservation.findFirst({ where: { reference: next.reference } }))!.id },
+      where: { id: next.id },
       data: { confirmedByGuestAt: new Date(), status: ReservationStatus.CONFIRMED },
     });
     return { content: `Venue confirmée pour ${next.reference}.` };
@@ -328,8 +328,10 @@ async function confirm(
   const owned = await assertOwnership(reference, context.phone);
   if (!owned) return { content: OWNERSHIP_DENIED };
 
+  const found = await findByReference(reference);
+  if (!found) return { content: "Réservation introuvable." };
   await db.reservation.update({
-    where: { id: (await db.reservation.findFirst({ where: { reference } }))!.id },
+    where: { id: found.id },
     data: { confirmedByGuestAt: new Date(), status: ReservationStatus.CONFIRMED },
   });
   return { content: `Venue confirmée pour ${reference}.` };

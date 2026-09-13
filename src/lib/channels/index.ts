@@ -100,10 +100,20 @@ export async function ensureConversation(
   channel: Channel,
   locale = "fr",
 ) {
-  return db.conversation.upsert({
-    where: { guestId_channel: { guestId, channel } },
-    create: { guestId, channel, locale },
-    update: { lastMessageAt: new Date(), closed: false },
+  // Chercher une conversation ouverte existante
+  const existing = await db.conversation.findFirst({
+    where: { guestId, channel, closed: false },
+  });
+
+  if (existing) {
+    return db.conversation.update({
+      where: { id: existing.id },
+      data: { lastMessageAt: new Date(), closed: false },
+    });
+  }
+
+  return db.conversation.create({
+    data: { guestId, channel, locale },
   });
 }
 

@@ -189,7 +189,6 @@ model Conversation {
 
   messages Message[]
 
-  @@unique([guestId, channel])
   @@index([lastMessageAt])
 }
 
@@ -298,6 +297,7 @@ model MenuItem {
 
   items OrderItem[]
 
+  @@unique([restaurantId, name])
   @@index([restaurantId, category, available])
 }
 
@@ -306,7 +306,7 @@ model Order {
   id           String @id @default(cuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  reference String @unique
+  reference String
 
   guestId String
   guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
@@ -323,6 +323,7 @@ model Order {
 
   items OrderItem[]
 
+  @@unique([restaurantId, reference])
   @@index([status, createdAt])
   @@index([guestId, createdAt])
 }

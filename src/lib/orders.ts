@@ -146,7 +146,7 @@ export async function createOrder(
   });
 
   // Générer la référence
-  const reference = await generateOrderReference();
+  const reference = await generateOrderReference(rid);
 
   // Créer la commande avec les articles
   const order = await db.order.create({
@@ -367,19 +367,19 @@ export async function cancelOrder(
 
 // --- Helpers ---
 
-async function generateOrderReference(): Promise<string> {
-  // Format: CMD-XXXX (4 caractères aléatoires)
+async function generateOrderReference(restaurantId: string): Promise<string> {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(4);
   let reference: string;
   let exists: boolean;
 
   do {
-    let suffix = "";
-    for (let i = 0; i < 4; i++) {
-      suffix += chars[Math.floor(Math.random() * chars.length)];
-    }
+    crypto.getRandomValues(bytes);
+    const suffix = Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
     reference = `CMD-${suffix}`;
-    const existing = await db.order.findUnique({ where: { reference } });
+    const existing = await db.order.findUnique({
+      where: { restaurantId_reference: { restaurantId, reference } },
+    });
     exists = !!existing;
   } while (exists);
 

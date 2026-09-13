@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { updateOrderStatus } from "@/lib/orders";
 
+const VALID_TRANSITIONS = ["PREPARING", "READY", "COMPLETED"] as const;
+
 export async function advanceStatusAction(
   formData: FormData,
 ): Promise<void> {
@@ -12,6 +14,8 @@ export async function advanceStatusAction(
   const orderId = formData.get("orderId");
   const nextStatus = formData.get("nextStatus");
   if (typeof orderId !== "string" || typeof nextStatus !== "string") return;
+
+  if (!(VALID_TRANSITIONS as readonly string[]).includes(nextStatus)) return;
 
   await updateOrderStatus(orderId, nextStatus as "PREPARING" | "READY" | "COMPLETED");
   revalidatePath("/[locale]/admin/orders", "page");

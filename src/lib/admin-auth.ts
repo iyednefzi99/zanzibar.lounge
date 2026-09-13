@@ -68,6 +68,11 @@ export async function requireAdmin(): Promise<void> {
 function timingSafeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a, "utf8");
   const right = Buffer.from(b, "utf8");
-  if (left.length !== right.length) return false;
-  return crypto.timingSafeEqual(left, right);
+  // Pad le plus court pour éviter le timing leak sur la longueur
+  const maxLen = Math.max(left.length, right.length);
+  const leftPadded = Buffer.alloc(maxLen, 0);
+  const rightPadded = Buffer.alloc(maxLen, 0);
+  left.copy(leftPadded);
+  right.copy(rightPadded);
+  return crypto.timingSafeEqual(leftPadded, rightPadded);
 }
