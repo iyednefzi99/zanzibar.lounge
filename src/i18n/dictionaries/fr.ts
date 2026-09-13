@@ -19,6 +19,7 @@ const fr = {
     opensAt: "Ouvre à {time}",
     opensDay: "Ouvre {day} à {time}",
     closedToday: "Fermé aujourd'hui",
+    now: "maintenant",
   },
 
   hero: {
@@ -33,6 +34,7 @@ const fr = {
   about: {
     title: "Ce qu'on fait",
     body: "On ouvre le matin pour le café et on ferme quand la dernière table s'en va. Entre les deux : une cuisine simple qu'on assume, des jus pressés à la commande, et une terrasse sur l'avenue de l'Environnement où l'on peut rester trois heures sans que personne ne vous presse.",
+    covers: "{count} couverts",
     zones: {
       title: "Trois façons de s'installer",
       terrasse: {
@@ -54,6 +56,7 @@ const fr = {
     title: "La carte",
     lead: "Prix en dinars, service compris.",
     priceOfDay: "Prix du jour",
+    jumpTo: "Aller à",
     tags: {
       vegetarien: "Végétarien",
       epice: "Épicé",
@@ -103,6 +106,12 @@ const fr = {
       salle: "Salle",
       salon: "Salon",
     },
+    periods: {
+      morning: "Le matin",
+      afternoon: "L'après-midi",
+      evening: "Le soir",
+      late: "Tard le soir",
+    },
     otp: {
       label: "Code de vérification",
       hint: "Nous vous envoyons un code à six chiffres pour confirmer votre numéro.",
@@ -116,6 +125,7 @@ const fr = {
       tooMany: "Trop d'essais. Demandez un nouveau code.",
       failed: "L'envoi du code a échoué. Réessayez dans un instant.",
     },
+    slotsLoading: "Recherche des créneaux…",
     submit: "Réserver",
     submitting: "Envoi…",
     success: {
@@ -131,6 +141,8 @@ const fr = {
       time: "Choisissez une heure.",
       partySize: "Indiquez le nombre de personnes.",
       closed: "L'établissement est fermé à cette heure-là.",
+      slotsUnavailable:
+        "Les créneaux ne s'affichent pas pour l'instant. Réessayez, ou écrivez-nous sur WhatsApp.",
       tooSoon: "Il faut réserver au moins {minutes} minutes à l'avance.",
       tooFar: "Les réservations s'ouvrent {days} jours à l'avance.",
       partyTooLarge:
@@ -144,6 +156,19 @@ const fr = {
     tagline: "Zanzibar is your happy place",
     follow: "Suivre",
     rights: "Tous droits réservés.",
+  },
+
+  reviews: {
+    title: "Avis de nos clients",
+    lead: "Ce que nos clients disent de leur expérience au Zanzibar Lounge.",
+    formTitle: "Laisser un avis",
+    titleField: "Titre",
+    rating: "Note",
+    comment: "Commentaire",
+    submit: "Envoyer",
+    success: "Merci ! Votre avis sera visible après modération.",
+    error: "Une erreur est survenue. Réessayez.",
+    namePlaceholder: "Votre nom",
   },
 
   days: {

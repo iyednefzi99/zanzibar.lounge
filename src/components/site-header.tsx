@@ -24,7 +24,7 @@ export function SiteHeader({
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3 sm:px-8">
         <Link
           href={`/${locale}`}
-          className="font-display text-lg leading-none tracking-tight text-shell sm:text-xl"
+          className="inline-flex min-h-11 items-center font-display text-lg leading-none tracking-tight text-shell sm:text-xl"
         >
           {site.name}
         </Link>
@@ -47,7 +47,7 @@ export function SiteHeader({
           <LocaleSwitcher current={locale} label={dictionary.nav.language} />
           <Link
             href={`/${locale}/reserver`}
-            className="rounded-full bg-brass px-4 py-2 text-sm font-medium text-deep transition-transform hover:scale-[1.03] active:scale-100"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-brass px-4 text-sm font-medium text-deep transition-transform hover:scale-[1.03] active:scale-100"
           >
             {dictionary.nav.book}
           </Link>

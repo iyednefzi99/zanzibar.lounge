@@ -20,7 +20,13 @@ export function MenuList({
   return (
     <div className="space-y-16">
       {categories.map((category) => (
-        <section key={category.id} className="on-scroll">
+        // `scroll-mt` garde le titre sous l'en-tête collant quand on
+        // arrive par une ancre du rail de catégories.
+        <section
+          key={category.id}
+          id={category.id}
+          className="on-scroll scroll-mt-28"
+        >
           <header>
             <h2 className="font-display text-3xl text-shell sm:text-4xl">
               {category.name[locale]}

@@ -39,7 +39,7 @@ export function SiteFooter({
           <br />
           <a
             href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
-            className="mt-3 inline-block font-mono text-shell hover:text-brass"
+            className="mt-3 inline-flex min-h-11 items-center font-mono text-shell hover:text-brass"
           >
             {formatPhone(site.contact.phone.replace(/\s/g, ""))}
           </a>
@@ -49,14 +49,14 @@ export function SiteFooter({
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-shell-dim">
             {dictionary.footer.follow}
           </p>
-          <ul className="mt-3 space-y-1.5 text-sm">
+          <ul className="mt-3 text-sm">
             {social.map((item) => (
               <li key={item.label}>
                 <a
                   href={item.href}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-shell hover:text-brass"
+                  className="inline-flex min-h-11 items-center text-shell hover:text-brass"
                 >
                   {item.label}
                 </a>
@@ -65,7 +65,7 @@ export function SiteFooter({
             <li>
               <Link
                 href={`/${locale}/reserver`}
-                className="text-shell hover:text-brass"
+                className="inline-flex min-h-11 items-center text-shell hover:text-brass"
               >
                 {dictionary.nav.book}
               </Link>
@@ -75,7 +75,7 @@ export function SiteFooter({
       </div>
 
       <div className="mx-auto max-w-6xl px-5 pb-10 sm:px-8">
-        <p className="font-mono text-xs text-shell-dim/70">
+        <p className="font-mono text-xs text-shell-dim/80">
           © {new Date().getFullYear()} {site.name}. {dictionary.footer.rights}
         </p>
       </div>

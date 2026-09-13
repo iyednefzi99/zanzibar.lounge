@@ -36,7 +36,10 @@ export function LocaleSwitcher({
             lang={locale}
             aria-current={active ? "true" : undefined}
             title={localeLabel[locale]}
-            className={`px-2 py-1 font-mono text-xs tracking-widest transition-colors ${
+            // 44 px de haut pour le pouce ; 32 px de large en dessous de 640 px, sinon
+            // les trois langues plus le bouton dépassent de 2,5 px sur un écran
+            // de 320 px (mesuré). La hauteur est ce qui compte pour viser.
+            className={`inline-flex min-h-11 min-w-8 items-center justify-center font-mono text-xs tracking-widest transition-colors sm:min-w-9 ${
               active
                 ? "text-brass"
                 : "text-shell-dim hover:text-shell"

@@ -106,6 +106,33 @@ export function openStatus(now: Date = new Date()): OpenStatus {
   return { open: false, opensAt: "", opensWeekday: -1, today: false };
 }
 
+/**
+ * Le service qui a cours, et où l'on se trouve dedans.
+ *
+ * Sert au cadran de la porte : on veut la fenêtre en cours — celle d'hier si
+ * l'on est à 1 h du matin — et la position de l'instant présent à l'intérieur.
+ * Hors service, on rend la fenêtre qui s'ouvre aujourd'hui, sans position :
+ * la porte est dessinée, mais éteinte.
+ */
+export function activeService(now: Date = new Date()): {
+  window: ServiceWindow;
+  /** Minutes depuis minuit du jour de service, ou `null` hors ouverture. */
+  nowMinutes: number | null;
+} | null {
+  const isoDate = toISODate(now, TZ);
+  const parts = toZoned(now, TZ);
+  const minutes = parts.hour * 60 + parts.minute;
+
+  for (const { window, shift } of windowsCovering(isoDate)) {
+    if (minutes >= window.open + shift && minutes < window.close + shift) {
+      return { window, nowMinutes: minutes - shift };
+    }
+  }
+
+  const today = serviceWindow(isoDate);
+  return today ? { window: today, nowMinutes: null } : null;
+}
+
 /** Dernière installation possible pour une fenêtre de service. */
 export function lastSeating(window: ServiceWindow): number {
   return window.close - site.booking.lastSeatingBufferMinutes;

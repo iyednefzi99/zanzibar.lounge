@@ -56,7 +56,7 @@ export function BookingForm({
   // en cache par couple date/effectif, ce qui évite de rappeler l'API quand le
   // client revient sur un choix qu'il vient de faire.
   const [cache, setCache] = useState<
-    Record<string, { closed: boolean; slots: Slot[] }>
+    Record<string, { closed: boolean; failed: boolean; slots: Slot[] }>
   >({});
 
   const key = `${date}|${partySize}`;
@@ -76,21 +76,28 @@ export function BookingForm({
     fetch(`/api/availability?date=${date}&party=${partySize}`, {
       signal: controller.signal,
     })
-      .then((response) => (response.ok ? response.json() : null))
+      .then((response) => {
+        if (!response.ok) throw new Error("unavailable");
+        return response.json();
+      })
       .then((data) => {
         setCache((previous) => ({
           ...previous,
           [key]: {
             closed: Boolean(data?.closed),
+            failed: false,
             slots: data?.slots ?? [],
           },
         }));
       })
       .catch(() => {
+        // Une panne de l'API n'est pas une fermeture. Confondre les deux fait
+        // renoncer un client alors que la maison est ouverte : on dit ce qui
+        // s'est passé, et par où passer en attendant.
         if (controller.signal.aborted) return;
         setCache((previous) => ({
           ...previous,
-          [key]: { closed: false, slots: [] },
+          [key]: { closed: false, failed: true, slots: [] },
         }));
       });
 
@@ -99,6 +106,7 @@ export function BookingForm({
 
   const slots = entry?.slots ?? null;
   const closed = entry?.closed ?? false;
+  const failed = entry?.failed ?? false;
 
   // Un créneau choisi puis rendu caduc par un changement de date ou d'effectif
   // ne compte plus : on le déduit plutôt que de le remettre à zéro par effet.
@@ -285,30 +293,46 @@ export function BookingForm({
           {t.fields.time}
         </legend>
 
-        <div className="mt-3 min-h-14">
+        {/* Les créneaux se lisent par moment du service, pas en une bande de
+            trente pastilles : personne ne cherche « 15:30 », on cherche le
+            soir. Le groupe vide disparaît, il n'y a rien à annoncer. */}
+        <div className="mt-5 min-h-14">
           {loading || slots === null ? (
-            <p className="text-sm text-shell-dim">…</p>
+            <SlotSkeleton label={t.slotsLoading} />
+          ) : failed ? (
+            <p role="alert" className="text-sm text-coral">
+              {t.errors.slotsUnavailable}
+            </p>
           ) : closed || slots.length === 0 ? (
             <p className="text-sm text-coral">{t.errors.closed}</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {slots.map((slot) => (
-                <button
-                  key={slot.minutes}
-                  type="button"
-                  disabled={!slot.available}
-                  aria-pressed={selected === slot.minutes}
-                  onClick={() => setMinutes(slot.minutes)}
-                  className={`rounded-full border px-3.5 py-2 font-mono text-sm transition-colors ${
-                    selected === slot.minutes
-                      ? "border-brass bg-brass text-deep"
-                      : slot.available
-                        ? "border-shell/25 text-shell hover:border-brass hover:text-brass"
-                        : "border-shell/10 text-shell-dim/40 line-through"
-                  }`}
-                >
-                  {slot.label}
-                </button>
+            <div className="space-y-5">
+              {groupByPeriod(slots).map((group) => (
+                <div key={group.period}>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-shell-dim/80">
+                    {t.periods[group.period]}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {group.slots.map((slot) => (
+                      <button
+                        key={slot.minutes}
+                        type="button"
+                        disabled={!slot.available}
+                        aria-pressed={selected === slot.minutes}
+                        onClick={() => setMinutes(slot.minutes)}
+                        className={`inline-flex min-h-11 items-center justify-center rounded-full border px-3.5 font-mono text-sm tabular-nums transition-colors ${
+                          selected === slot.minutes
+                            ? "border-brass bg-brass text-deep"
+                            : slot.available
+                              ? "border-shell/25 text-shell hover:border-brass hover:text-brass"
+                              : "border-shell/10 text-shell-dim/40 line-through"
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -356,13 +380,13 @@ export function BookingForm({
                 onChange={(event) =>
                   setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
                 }
-                className="w-32 rounded-lg border border-shell/20 bg-deep/60 px-3.5 py-2.5 text-center font-mono tracking-[0.4em] text-shell outline-none transition-colors focus:border-brass"
+                className="min-h-11 w-32 rounded-lg border border-shell/20 bg-deep/60 px-3.5 py-2.5 text-center font-mono tracking-[0.4em] text-shell transition-colors focus:border-brass"
               />
               <button
                 type="button"
                 onClick={sendCode}
                 disabled={otp === "sending"}
-                className="rounded-full border border-lagoon/50 px-4 py-2.5 text-sm text-lagoon transition-colors hover:bg-lagoon/10 disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-lagoon/50 px-4 text-sm text-lagoon transition-colors hover:bg-lagoon/10 disabled:opacity-50"
               >
                 {otp === "sending"
                   ? t.otp.sending
@@ -425,7 +449,7 @@ export function BookingForm({
 }
 
 const inputClass =
-  "mt-2 w-full rounded-lg border border-shell/20 bg-deep/60 px-3.5 py-2.5 text-shell outline-none transition-colors placeholder:text-shell-dim/50 focus:border-brass";
+  "mt-2 min-h-11 w-full rounded-lg border border-shell/20 bg-deep/60 px-3.5 py-2.5 text-shell transition-colors placeholder:text-shell-dim/80 focus:border-brass";
 
 function Field({
   label,
@@ -447,7 +471,7 @@ function Field({
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-shell-dim/70">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-shell-dim/80">{hint}</p>}
     </div>
   );
 }
@@ -466,7 +490,7 @@ function ZoneChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+      className={`inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm transition-colors ${
         active
           ? "border-lagoon bg-lagoon/15 text-lagoon"
           : "border-shell/20 text-shell-dim hover:border-shell/50 hover:text-shell"
@@ -475,6 +499,58 @@ function ZoneChip({
       {label}
     </button>
   );
+}
+
+/**
+ * Le squelette d'attente.
+ *
+ * Une rangée de pastilles grises tient la place exacte des créneaux à venir :
+ * la page ne saute pas quand la réponse arrive. Le texte n'est là que pour les
+ * lecteurs d'écran — à l'œil, la forme dit déjà « ça charge ».
+ */
+function SlotSkeleton({ label }: { label: string }) {
+  return (
+    <div>
+      <p role="status" className="visually-hidden">
+        {label}
+      </p>
+      <div aria-hidden="true" className="flex flex-wrap gap-2">
+        {Array.from({ length: 6 }, (_, index) => (
+          <span
+            key={index}
+            className="h-[2.4rem] w-[4.6rem] animate-pulse rounded-full bg-shell/8"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type Period = "morning" | "afternoon" | "evening" | "late";
+
+const PERIODS: readonly Period[] = [
+  "morning",
+  "afternoon",
+  "evening",
+  "late",
+] as const;
+
+/** Le moment du service auquel appartient un créneau. */
+function periodOf(minutes: number): Period {
+  if (minutes < 12 * 60) return "morning";
+  if (minutes < 17 * 60) return "afternoon";
+  if (minutes < 22 * 60) return "evening";
+  return "late";
+}
+
+/** Les créneaux par moment, dans l'ordre du service, groupes vides écartés. */
+function groupByPeriod(
+  slots: Slot[],
+): Array<{ period: Period; slots: Slot[] }> {
+  return PERIODS.map((period) => ({
+    period,
+    slots: slots.filter((slot) => periodOf(slot.minutes) === period),
+  })).filter((group) => group.slots.length > 0);
 }
 
 /** Traduit le code d'erreur de l'API en phrase pour le client. */

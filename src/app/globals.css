@@ -12,7 +12,11 @@
   --color-deep: #071b1c; /* sarcelle nuit — sections creuses */
   --color-lagoon: #3fa89b; /* turquoise océan — liens, état ouvert */
   --color-brass: #c9922e; /* laiton des clous de porte — accent principal */
-  --color-coral: #e4674c; /* corail / hibiscus — accent chaud, alertes */
+  /* Corail hibiscus. Éclairci de L 60 % à 64 % : à #e4674c il ne donnait que
+     4,37:1 sur le fond, sous le seuil AA — or c'est la couleur des messages
+     d'erreur, la dernière qu'on peut se permettre de rendre illisible.
+     À #e7765e : 4,92:1 sur `night`, 6,05:1 sur `deep`. */
+  --color-coral: #e7765e;
   --color-shell: #efe3d0; /* pierre de corail blanchie — texte */
   --color-shell-dim: #b9ad9c; /* texte secondaire */
   --color-clove: #3a1f16; /* clou de girofle — ombres chaudes */
@@ -58,6 +62,10 @@ body {
   font-family: var(--font-display-ar);
   line-height: 1.45;
   padding-block-end: 0.14em;
+  /* Le crénage serré des titres latins est fait pour des lettres séparées.
+     Appliqué à une écriture cursive, il écrase les liaisons : l'arabe reprend
+     son crénage naturel. */
+  letter-spacing: normal;
 }
 
 /* --- Signature : l'arche et la rangée de clous de laiton --- */
@@ -180,6 +188,23 @@ body {
       animation-range: entry 5% cover 22%;
     }
   }
+}
+
+/* Le cadran de la porte : la barre du service se remplit de haut en bas,
+   dans la même respiration que le reste de l'ouverture. */
+@keyframes rail-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.rail-fill {
+  transform-origin: top;
+  animation: rail-fill 1100ms var(--ease-door) both;
+  animation-delay: 420ms;
 }
 
 @media (prefers-reduced-motion: reduce) {

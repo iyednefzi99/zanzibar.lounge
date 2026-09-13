@@ -24,6 +24,14 @@ enum ReservationStatus {
   NO_SHOW // ne s'est pas présenté
 }
 
+enum OrderStatus {
+  PENDING // en attente de préparation
+  PREPARING // en cours de préparation
+  READY // prête à être récupérée
+  COMPLETED // récupérée
+  CANCELLED // annulée
+}
+
 enum Zone {
   TERRASSE
   SALLE
@@ -43,6 +51,30 @@ enum MessageRole {
   STAFF
 }
 
+/// Établissement (multi-tenancy).
+model Restaurant {
+  id        String  @id @default(cuid())
+  name      String
+  slug      String  @unique
+  address   String?
+  phone     String?
+  /// Fuseau horaire IANA (ex: "Africa/Tunis").
+  timezone  String  @default("Africa/Tunis")
+  /// Langue principale : fr | ar | en.
+  locale    String  @default("fr")
+  active    Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+  tables       RestaurantTable[]
+  menuItems    MenuItem[]
+  orders       Order[]
+  loyaltyAccounts LoyaltyAccount[]
+
+  @@index([slug])
+}
+
 model Guest {
   id        String   @id @default(cuid())
   /// Numéro au format E.164, sans espace : +21620123456
@@ -55,27 +87,38 @@ model Guest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reservations  Reservation[]
-  conversations Conversation[]
+  reservations      Reservation[]
+  conversations     Conversation[]
+  reviews           Review[]
+  pushSubscriptions PushSubscription[]
+  loyaltyAccounts   LoyaltyAccount[]
+  orders            Order[]
 
   @@index([createdAt])
 }
 
 model RestaurantTable {
-  id       String  @id @default(cuid())
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   /// Nom affiché en salle : « T4 », « Terrasse 2 »…
-  name     String  @unique
+  name     String
   capacity Int
   zone     Zone
   active   Boolean @default(true)
 
   reservations Reservation[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
 }
 
 model Reservation {
-  id        String @id @default(cuid())
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   /// Référence courte communiquée au client : ZL-4F2K
-  reference String @unique
+  reference String
 
   guestId String
   guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
@@ -105,9 +148,31 @@ model Reservation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  reviews Review[]
+
   @@index([serviceDate, status])
   @@index([startsAt, status])
   @@index([guestId, startsAt])
+  @@unique([restaurantId, reference])
+}
+
+model Review {
+  id            String  @id @default(cuid())
+  guestId       String
+  guest         Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  rating        Int
+  title         String?
+  body          String?
+  /// Langue dans laquelle l'avis a été rédigé.
+  locale        String  @default("fr")
+  /// Avis visible publiquement uniquement après modération.
+  approved      Boolean @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([approved, createdAt])
+  @@index([rating])
 }
 
 model Conversation {
@@ -164,4 +229,115 @@ model ProcessedEvent {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// Abonnements aux notifications push (Web Push API).
+model PushSubscription {
+  id        String  @id @default(cuid())
+  guestId   String?
+  guest     Guest?  @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@unique([endpoint])
+  @@index([guestId])
+}
+
+/// Compte de fidélité d'un client.
+model LoyaltyAccount {
+  id           String   @id @default(cuid())
+  guestId      String
+  guest        Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  points    Int      @default(0)
+  tier      String   @default("bronze") // bronze | silver | gold
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions LoyaltyTransaction[]
+
+  @@unique([guestId, restaurantId])
+  @@index([restaurantId])
+}
+
+/// Historique des mouvements de points.
+model LoyaltyTransaction {
+  id        String   @id @default(cuid())
+  accountId String
+  account   LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  points    Int      // positif = accumulation, négatif = réclamation
+  reason    String   // "reservation_completed" | "review" | "referral" | "redeemed" | "bonus"
+  /// Référence optionnelle (ex: numéro de réservation).
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+// ─── Commandes en ligne ───────────────────────────────────────────────
+
+/// Article du menu (boissons, plats à emporter, etc.).
+model MenuItem {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  /// Prix en millimes (ex: 12000 = 12.000 DT).
+  price       Int
+  category    String  @default("general") // boisson | plat | dessert | general
+  imageUrl    String?
+  available   Boolean @default(true)
+  /// Ordre d'affichage dans la catégorie.
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([restaurantId, category, available])
+}
+
+/// Commande passée par un client (à emporter).
+model Order {
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reference String @unique
+
+  guestId String
+  guest   Guest  @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  status   OrderStatus @default(PENDING)
+  /// Heure souhaitée de récupération (HH:MM, minutes depuis minuit).
+  pickupMinutes Int?
+  notes    String?
+  /// Total en millimes.
+  total    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([status, createdAt])
+  @@index([guestId, createdAt])
+}
+
+/// Ligne de commande.
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  quantity   Int    @default(1)
+  /// Prix au moment de la commande (millimes), figé.
+  unitPrice  Int
+
+  @@index([orderId])
+  @@index([menuItemId])
 }

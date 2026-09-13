@@ -57,7 +57,7 @@ export default async function BookingPage({
               href={`https://wa.me/${whatsapp.slice(1)}`}
               target="_blank"
               rel="noreferrer noopener"
-              className="mt-3 inline-block font-medium text-lagoon hover:text-brass"
+              className="mt-3 inline-flex min-h-11 items-center font-medium text-lagoon hover:text-brass"
             >
               {dictionary.hero.bookWhatsapp} →
             </a>

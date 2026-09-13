@@ -21,6 +21,7 @@ const en: Dictionary = {
     opensAt: "Opens at {time}",
     opensDay: "Opens {day} at {time}",
     closedToday: "Closed today",
+    now: "now",
   },
 
   hero: {
@@ -35,6 +36,7 @@ const en: Dictionary = {
   about: {
     title: "What we do",
     body: "We open in the morning for coffee and close when the last table leaves. In between: straightforward cooking we stand behind, juice pressed to order, and a terrace on Avenue de l'Environnement where you can sit for three hours without anyone rushing you.",
+    covers: "{count} seats",
     zones: {
       title: "Three ways to sit",
       terrasse: {
@@ -56,6 +58,7 @@ const en: Dictionary = {
     title: "Menu",
     lead: "Prices in Tunisian dinars, service included.",
     priceOfDay: "Market price",
+    jumpTo: "Jump to",
     tags: {
       vegetarien: "Vegetarian",
       epice: "Spicy",
@@ -105,6 +108,12 @@ const en: Dictionary = {
       salle: "Dining room",
       salon: "Lounge",
     },
+    periods: {
+      morning: "Morning",
+      afternoon: "Afternoon",
+      evening: "Evening",
+      late: "Late night",
+    },
     otp: {
       label: "Verification code",
       hint: "We'll send a six-digit code to confirm your number.",
@@ -118,6 +127,7 @@ const en: Dictionary = {
       tooMany: "Too many attempts. Ask for a new code.",
       failed: "Couldn't send the code. Try again in a moment.",
     },
+    slotsLoading: "Finding times…",
     submit: "Book",
     submitting: "Sending…",
     success: {
@@ -133,6 +143,8 @@ const en: Dictionary = {
       time: "Pick a time.",
       partySize: "Tell us how many people.",
       closed: "We're closed at that time.",
+      slotsUnavailable:
+        "Times aren't loading right now. Try again, or message us on WhatsApp.",
       tooSoon: "Bookings need at least {minutes} minutes' notice.",
       tooFar: "Bookings open {days} days ahead.",
       partyTooLarge: "For more than {max} guests, call us — we'll arrange it with you.",
@@ -145,6 +157,19 @@ const en: Dictionary = {
     tagline: "Zanzibar is your happy place",
     follow: "Follow",
     rights: "All rights reserved.",
+  },
+
+  reviews: {
+    title: "What our guests say",
+    lead: "Read what our guests think about their experience at Zanzibar Lounge.",
+    formTitle: "Leave a review",
+    titleField: "Title",
+    rating: "Rating",
+    comment: "Comment",
+    submit: "Submit",
+    success: "Thank you! Your review will appear after moderation.",
+    error: "Something went wrong. Please try again.",
+    namePlaceholder: "Your name",
   },
 
   days: {

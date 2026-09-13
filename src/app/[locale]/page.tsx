@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DoorClock } from "@/components/door-clock";
 import { MenuList } from "@/components/menu-list";
-import { OpenBadge } from "@/components/open-badge";
 import { Studs } from "@/components/studs";
 import { menu } from "@/content/menu";
 import { site } from "@/content/site";
-import { getDictionary } from "@/i18n";
+import { fill, getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
@@ -25,8 +25,8 @@ export default async function HomePage({
     <>
       {/* ------------------------------------------------------------------
           L'accroche : l'arche d'une porte de Stone Town, la devise du lieu,
-          et l'état d'ouissance en direct — la question qu'on se pose vraiment
-          avant de sortir.
+          et le service du jour dans l'arche — la question qu'on se pose vraiment
+          avant de sortir : c'est ouvert, et jusqu'à quand ?
           ------------------------------------------------------------------ */}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pt-16 pb-20 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:pt-24">
@@ -69,28 +69,11 @@ export default async function HomePage({
                 {dictionary.hero.menu}
               </Link>
             </div>
-
-            <OpenBadge
-              dictionary={dictionary}
-              className="reveal reveal-4 mt-8 inline-flex"
-            />
           </div>
 
-          {/* L'arche. Sans photographie du lieu, on ne met pas d'image
-              d'illustration : on dessine la porte elle-même. */}
-          <div className="reveal reveal-3 relative mx-auto w-full max-w-sm">
-            <div className="arch relative aspect-[3/4] w-full border border-brass/50 bg-gradient-to-b from-deep via-night to-clove/40">
-              <div className="arch absolute inset-3 border border-brass/25" />
-              <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 p-8 text-center">
-                <span className="font-display text-5xl text-brass/90">ز</span>
-                <span className="font-mono text-[0.65rem] uppercase tracking-[0.3em] text-shell-dim">
-                  {site.address.city}
-                </span>
-              </div>
-              <Studs className="absolute inset-x-8 top-1/3" />
-              <Studs className="absolute inset-x-8 top-1/2" />
-            </div>
-          </div>
+          {/* Le cadran de la porte : l'arche, et dedans le service du jour.
+              C'est la seule illustration du site, et elle dit quelque chose. */}
+          <DoorClock dictionary={dictionary} className="reveal reveal-3" />
         </div>
 
         <Studs className="reveal reveal-4" />
@@ -107,22 +90,24 @@ export default async function HomePage({
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-3">
+        {/* Trois colonnes sous un filet de laiton, et non trois arches : la
+            porte n'est dessinée qu'une fois sur ce site, dans l'accroche. */}
+        <div className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-3">
           {(["terrasse", "salle", "salon"] as const).map((zoneId) => {
             const zone = dictionary.about.zones[zoneId];
             const capacity = site.zones.find((z) => z.id === zoneId)?.capacity;
             return (
               <article
                 key={zoneId}
-                className="on-scroll arch border border-shell/12 bg-deep/40 p-7 pt-10"
+                className="on-scroll border-t border-brass/35 pt-6"
               >
                 <h3 className="font-display text-2xl text-brass">{zone.name}</h3>
                 <p className="mt-2.5 text-sm leading-relaxed text-shell-dim">
                   {zone.body}
                 </p>
                 {capacity && (
-                  <p className="mt-4 font-mono text-xs tracking-widest text-shell-dim/70">
-                    {capacity} {"couverts"}
+                  <p className="mt-4 font-mono text-xs tracking-widest tabular-nums text-shell-dim/80">
+                    {fill(dictionary.about.covers, { count: capacity })}
                   </p>
                 )}
               </article>

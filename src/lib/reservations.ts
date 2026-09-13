@@ -19,6 +19,7 @@ import {
   slotsFor,
 } from "@/lib/hours";
 import { normalizePhone } from "@/lib/phone";
+import { getDefaultRestaurantId } from "@/lib/restaurant";
 import { addDays, toISODate } from "@/lib/time";
 
 const TZ = site.timezone;
@@ -59,6 +60,7 @@ export type BookingInput = {
   notes?: string | null;
   channel: Channel;
   locale?: string;
+  restaurantId?: string;
 };
 
 export type SlotAvailability = {
@@ -79,11 +81,13 @@ export async function availability(
   serviceDate: string,
   partySize = 1,
   now: Date = new Date(),
+  restaurantId?: string,
 ): Promise<SlotAvailability[]> {
   const slots = slotsFor(serviceDate, now);
   if (slots.length === 0) return [];
 
-  const booked = await bookedCoversByMinute(serviceDate);
+  const rid = restaurantId ?? await getDefaultRestaurantId();
+  const booked = await bookedCoversByMinute(serviceDate, rid);
 
   return slots.map((minutes) => {
     const taken = overlappingCovers(booked, minutes);
@@ -136,11 +140,12 @@ export async function createReservation(
   const { startsAt, endsAt } = validated.value;
   const phone = normalizePhone(input.phone)!;
   const name = input.name.trim();
+  const restaurantId = input.restaurantId ?? await getDefaultRestaurantId();
 
   try {
     const reservation = await db.$transaction(
       async (tx) => {
-        const taken = await coversBetween(tx, startsAt, endsAt);
+        const taken = await coversBetween(tx, startsAt, endsAt, restaurantId);
         if (taken + input.partySize > site.booking.maxCoversPerSlot) {
           throw new CapacityError();
         }
@@ -164,10 +169,12 @@ export async function createReservation(
           endsAt,
           input.partySize,
           input.zone ?? null,
+          restaurantId,
         );
 
         return tx.reservation.create({
           data: {
+            restaurantId,
             reference: newReference(),
             guestId: guest.id,
             startsAt,
@@ -207,6 +214,7 @@ export async function createReservation(
 
 export type ReservationSummary = {
   reference: string;
+  guestId: string;
   name: string | null;
   phone: string;
   serviceDate: string;
@@ -216,6 +224,7 @@ export type ReservationSummary = {
   zone: ZoneId | null;
   table: string | null;
   status: ReservationStatus;
+  channel: Channel;
   notes: string | null;
   startsAt: Date;
 };
@@ -243,9 +252,11 @@ export async function upcomingForPhone(
 
 export async function findByReference(
   reference: string,
+  restaurantId?: string,
 ): Promise<ReservationSummary | null> {
+  const rid = restaurantId ?? await getDefaultRestaurantId();
   const row = await db.reservation.findUnique({
-    where: { reference: reference.trim().toUpperCase() },
+    where: { restaurantId_reference: { restaurantId: rid, reference: reference.trim().toUpperCase() } },
     include: { guest: true, table: true },
   });
   return row ? summarize(row) : null;
@@ -254,9 +265,11 @@ export async function findByReference(
 /** Réservations d'un service, pour le back-office. */
 export async function reservationsForDate(
   serviceDate: string,
+  restaurantId?: string,
 ): Promise<ReservationSummary[]> {
+  const rid = restaurantId ?? await getDefaultRestaurantId();
   const rows = await db.reservation.findMany({
-    where: { serviceDate },
+    where: { serviceDate, restaurantId: rid },
     include: { guest: true, table: true },
     orderBy: { startsAt: "asc" },
   });
@@ -267,9 +280,11 @@ export async function rescheduleReservation(
   reference: string,
   next: { serviceDate: string; minutes: number; partySize?: number },
   now: Date = new Date(),
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
+  const rid = restaurantId ?? await getDefaultRestaurantId();
   const existing = await db.reservation.findUnique({
-    where: { reference: reference.trim().toUpperCase() },
+    where: { restaurantId_reference: { restaurantId: rid, reference: reference.trim().toUpperCase() } },
     include: { guest: true },
   });
   if (!existing) return { ok: false, error: { code: "NOT_FOUND" } };
@@ -296,7 +311,7 @@ export async function rescheduleReservation(
   try {
     const updated = await db.$transaction(
       async (tx) => {
-        const taken = await coversBetween(tx, startsAt, endsAt, existing.id);
+        const taken = await coversBetween(tx, startsAt, endsAt, rid, existing.id);
         if (taken + partySize > site.booking.maxCoversPerSlot) {
           throw new CapacityError();
         }
@@ -307,6 +322,7 @@ export async function rescheduleReservation(
           endsAt,
           partySize,
           fromPrismaZone(existing.zone),
+          rid,
           existing.id,
         );
 
@@ -346,9 +362,11 @@ export async function rescheduleReservation(
 export async function cancelReservation(
   reference: string,
   by: "guest" | "staff" | "agent",
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
+  const rid = restaurantId ?? await getDefaultRestaurantId();
   const existing = await db.reservation.findUnique({
-    where: { reference: reference.trim().toUpperCase() },
+    where: { restaurantId_reference: { restaurantId: rid, reference: reference.trim().toUpperCase() } },
   });
   if (!existing) return { ok: false, error: { code: "NOT_FOUND" } };
   if (!ACTIVE_STATUSES.includes(existing.status)) {
@@ -372,24 +390,41 @@ export async function cancelReservation(
 /** Installe le client à sa table (bouton « Installer » du back-office). */
 export async function seatReservation(
   reference: string,
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
-  return transition(reference, ReservationStatus.SEATED, { seatedAt: new Date() });
+  return transition(reference, ReservationStatus.SEATED, { seatedAt: new Date() }, restaurantId);
 }
 
 /** Libère la table à la fin du repas. */
 export async function completeReservation(
   reference: string,
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
-  return transition(reference, ReservationStatus.COMPLETED, {
+  const result = await transition(reference, ReservationStatus.COMPLETED, {
     completedAt: new Date(),
     tableId: null,
-  });
+  }, restaurantId);
+
+  // Accumuler les points de fidélité après une réservation terminée
+  if (result.ok) {
+    const { accrueForReservation } = await import("@/lib/loyalty");
+    await accrueForReservation(
+      result.value.guestId,
+      result.value.partySize,
+      result.value.reference,
+    ).catch(() => {
+      // Ne pas faire échouer la réservation si la fidélité échoue
+    });
+  }
+
+  return result;
 }
 
 export async function markNoShow(
   reference: string,
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
-  return transition(reference, ReservationStatus.NO_SHOW, { tableId: null });
+  return transition(reference, ReservationStatus.NO_SHOW, { tableId: null }, restaurantId);
 }
 
 async function transition(
@@ -398,9 +433,11 @@ async function transition(
   // `Unchecked` autorise l'écriture directe de la clé étrangère `tableId`,
   // ce que la variante vérifiée réserve à l'objet relation.
   extra: Prisma.ReservationUncheckedUpdateInput,
+  restaurantId?: string,
 ): Promise<BookingResult<ReservationSummary>> {
+  const rid = restaurantId ?? await getDefaultRestaurantId();
   const existing = await db.reservation.findUnique({
-    where: { reference: reference.trim().toUpperCase() },
+    where: { restaurantId_reference: { restaurantId: rid, reference: reference.trim().toUpperCase() } },
   });
   if (!existing) return { ok: false, error: { code: "NOT_FOUND" } };
 
@@ -492,11 +529,13 @@ async function coversBetween(
   tx: TxClient,
   startsAt: Date,
   endsAt: Date,
+  restaurantId: string,
   excludeId?: string,
 ): Promise<number> {
   const result = await tx.reservation.aggregate({
     _sum: { partySize: true },
     where: {
+      restaurantId,
       status: { in: ACTIVE_STATUSES },
       startsAt: { lt: endsAt },
       endsAt: { gt: startsAt },
@@ -517,10 +556,12 @@ async function pickTable(
   endsAt: Date,
   partySize: number,
   zone: ZoneId | null,
+  restaurantId: string,
   excludeReservationId?: string,
 ): Promise<string | null> {
   const candidates = await tx.restaurantTable.findMany({
     where: {
+      restaurantId,
       active: true,
       capacity: { gte: partySize },
       ...(zone ? { zone: toPrismaZone(zone)! } : {}),
@@ -531,6 +572,7 @@ async function pickTable(
 
   const busy = await tx.reservation.findMany({
     where: {
+      restaurantId,
       status: { in: ACTIVE_STATUSES },
       tableId: { in: candidates.map((table) => table.id) },
       startsAt: { lt: endsAt },
@@ -547,6 +589,7 @@ async function pickTable(
 /** Couverts par créneau sur une date, pour l'affichage des disponibilités. */
 async function bookedCoversByMinute(
   serviceDate: string,
+  restaurantId: string,
 ): Promise<Array<{ start: number; end: number; covers: number }>> {
   const window = serviceWindow(serviceDate);
   if (!window) return [];
@@ -557,6 +600,7 @@ async function bookedCoversByMinute(
 
   const rows = await db.reservation.findMany({
     where: {
+      restaurantId,
       status: { in: ACTIVE_STATUSES },
       startsAt: { lt: dayEnd },
       endsAt: { gt: dayStart },
@@ -617,6 +661,7 @@ function summarize(row: ReservationRow): ReservationSummary {
   const minutes = minutesOf(row.serviceDate, row.startsAt);
   return {
     reference: row.reference,
+    guestId: row.guestId,
     name: row.guest.name,
     phone: row.guest.phone,
     serviceDate: row.serviceDate,
@@ -626,6 +671,7 @@ function summarize(row: ReservationRow): ReservationSummary {
     zone: fromPrismaZone(row.zone),
     table: row.table?.name ?? null,
     status: row.status,
+    channel: row.channel,
     notes: row.notes,
     startsAt: row.startsAt,
   };

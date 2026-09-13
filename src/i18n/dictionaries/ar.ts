@@ -21,6 +21,7 @@ const ar: Dictionary = {
     opensAt: "يفتح على {time}",
     opensDay: "يفتح {day} على {time}",
     closedToday: "مغلق اليوم",
+    now: "الآن",
   },
 
   hero: {
@@ -35,6 +36,7 @@ const ar: Dictionary = {
   about: {
     title: "ما نقدّمه",
     body: "نفتح صباحاً للقهوة ونغلق حين تغادر آخر طاولة. وبينهما: مطبخ بسيط نقف خلفه، وعصائر تُعصر عند الطلب، وتراس على شارع البيئة يمكنك الجلوس فيه ثلاث ساعات دون أن يستعجلك أحد.",
+    covers: "{count} مقعداً",
     zones: {
       title: "ثلاث طرق للجلوس",
       terrasse: {
@@ -56,6 +58,7 @@ const ar: Dictionary = {
     title: "القائمة",
     lead: "الأسعار بالدينار التونسي، الخدمة مشمولة.",
     priceOfDay: "سعر اليوم",
+    jumpTo: "انتقل إلى",
     tags: {
       vegetarien: "نباتي",
       epice: "حار",
@@ -104,6 +107,12 @@ const ar: Dictionary = {
       salle: "القاعة",
       salon: "الصالون",
     },
+    periods: {
+      morning: "الصباح",
+      afternoon: "بعد الظهر",
+      evening: "المساء",
+      late: "آخر الليل",
+    },
     otp: {
       label: "رمز التحقق",
       hint: "نرسل لك رمزاً من ستة أرقام لتأكيد رقمك.",
@@ -117,6 +126,7 @@ const ar: Dictionary = {
       tooMany: "محاولات كثيرة. اطلب رمزاً جديداً.",
       failed: "تعذّر إرسال الرمز. أعد المحاولة بعد قليل.",
     },
+    slotsLoading: "جارٍ البحث عن الأوقات…",
     submit: "احجز",
     submitting: "جارٍ الإرسال…",
     success: {
@@ -132,6 +142,8 @@ const ar: Dictionary = {
       time: "اختر ساعة.",
       partySize: "حدّد عدد الأشخاص.",
       closed: "المكان مغلق في هذا الوقت.",
+      slotsUnavailable:
+        "لا تظهر الأوقات المتاحة حالياً. أعد المحاولة، أو راسلنا على واتساب.",
       tooSoon: "يجب الحجز قبل {minutes} دقيقة على الأقل.",
       tooFar: "يُفتح الحجز قبل {days} يوماً.",
       partyTooLarge: "لأكثر من {max} أشخاص، اتصل بنا وننظّم ذلك معك.",
@@ -144,6 +156,19 @@ const ar: Dictionary = {
     tagline: "زنجبار مكانك السعيد",
     follow: "تابعنا",
     rights: "كل الحقوق محفوظة.",
+  },
+
+  reviews: {
+    title: "آراء ضيوفنا",
+    lead: "اطلع على ما يقوله ضيوفنا عن تجربتهم في زنجبار لاونج.",
+    formTitle: "اترك تقييماً",
+    titleField: "العنوان",
+    rating: "التقييم",
+    comment: "التعليق",
+    submit: "إرسال",
+    success: "شكراً! سيظهر تقييمك بعد المراجعة.",
+    error: "حدث خطأ. أعد المحاولة.",
+    namePlaceholder: "اسمك",
   },
 
   days: {
