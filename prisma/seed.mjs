@@ -6,16 +6,11 @@ config({ path: ".env.local", quiet: true });
 config({ path: ".env", quiet: true });
 
 /**
- * Plan de salle initial.
+ * Plan de salle initial + restaurant par défaut + menu.
  *
  * Écrit en SQL et en JavaScript plutôt qu'avec le client Prisma : c'est un
  * script ponctuel, lancé par un humain avant la première mise en service, et
  * il n'a aucune raison d'exiger une étape de compilation.
- *
- * ⚠️ Ces tables sont un point de départ plausible, pas le vrai plan. À ajuster
- * aux noms et capacités réels. Tant qu'aucune table n'existe, les réservations
- * restent acceptées : seule la capacité globale s'applique, et le placement se
- * règle en salle.
  */
 
 const layout = [
@@ -31,6 +26,32 @@ const layout = [
 
 const prefix = { TERRASSE: "T", SALLE: "S", SALON: "L" };
 
+/**
+ * Menu seed — prix en millimes (1 TND = 1000 millimes).
+ * Catégories mappées depuis src/content/menu.ts.
+ */
+const menuItems = [
+  // Cafés & thés
+  { name: "Express", description: null, price: 2500, category: "boisson", sortOrder: 1 },
+  { name: "Cappuccino", description: null, price: 4500, category: "boisson", sortOrder: 2 },
+  { name: "Thé à la menthe et pignons", description: "Signature", price: 4000, category: "boisson", sortOrder: 3 },
+  { name: "Chocolat chaud", description: null, price: 6000, category: "boisson", sortOrder: 4 },
+  // Jus & smoothies
+  { name: "Orange pressée", description: "Fruits pressés à la commande", price: 6000, category: "boisson", sortOrder: 5 },
+  { name: "Zanzibar — mangue, passion, citron vert", description: "Signature", price: 12000, category: "boisson", sortOrder: 6 },
+  { name: "Smoothie avocat-miel", description: null, price: 11000, category: "boisson", sortOrder: 7 },
+  // À table
+  { name: "Brick à l'œuf", description: null, price: 5000, category: "plat", sortOrder: 1 },
+  { name: "Salade mechouia", description: "Poivrons et tomates grillés, thon, œuf", price: 9000, category: "plat", sortOrder: 2 },
+  { name: "Burger Zanzibar", description: "Signature", price: 18000, category: "plat", sortOrder: 3 },
+  // Chicha
+  { name: "Chicha classique", description: null, price: 12000, category: "general", sortOrder: 1 },
+  { name: "Chicha premium — parfums du jour", description: null, price: 18000, category: "general", sortOrder: 2 },
+  // Douceurs
+  { name: "Bambalouni", description: null, price: 4000, category: "dessert", sortOrder: 1 },
+  { name: "Tiramisu maison", description: null, price: 9000, category: "dessert", sortOrder: 2 },
+];
+
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("DATABASE_URL manquante. Voir .env.example.");
@@ -42,19 +63,45 @@ await client.connect();
 
 let count = 0;
 
+// 1. Restaurant par défaut
+const restaurantResult = await client.query(
+  `INSERT INTO "Restaurant" ("id", "name", "slug", "address", "phone", "timezone", "locale", "active", "createdAt", "updatedAt")
+   VALUES (gen_random_uuid()::text, 'Zanzibar Lounge', 'zanzibar', 'Medjez el Bab, Tunisie', '+21620123456', 'Africa/Tunis', 'fr', true, NOW(), NOW())
+   ON CONFLICT ("slug")
+   DO UPDATE SET "name" = EXCLUDED."name"
+   RETURNING "id"`,
+);
+const restaurantId = restaurantResult.rows[0].id;
+console.log(`Restaurant « Zanzibar Lounge » (${restaurantId}).`);
+
+// 2. Tables
 for (const group of layout) {
   for (let index = 1; index <= group.count; index += 1) {
     const name = `${prefix[group.zone]}${group.capacity}-${index}`;
     await client.query(
-      `INSERT INTO "RestaurantTable" ("id", "name", "capacity", "zone", "active")
-       VALUES (gen_random_uuid()::text, $1, $2, $3::"Zone", true)
-       ON CONFLICT ("name")
+      `INSERT INTO "RestaurantTable" ("id", "restaurantId", "name", "capacity", "zone", "active")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, $4::"Zone", true)
+       ON CONFLICT ("restaurantId", "name")
        DO UPDATE SET "capacity" = EXCLUDED."capacity", "zone" = EXCLUDED."zone"`,
-      [name, group.capacity, group.zone],
+      [restaurantId, name, group.capacity, group.zone],
     );
     count += 1;
   }
 }
+console.log(`${count} tables en place.`);
+
+// 3. Menu
+let menuCount = 0;
+for (const item of menuItems) {
+  await client.query(
+    `INSERT INTO "MenuItem" ("id", "restaurantId", "name", "description", "price", "category", "available", "sortOrder", "createdAt", "updatedAt")
+     VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, true, $6, NOW(), NOW())
+     ON CONFLICT ("restaurantId", "name")
+     DO UPDATE SET "price" = EXCLUDED."price", "description" = EXCLUDED."description"`,
+    [restaurantId, item.name, item.description, item.price, item.category, item.sortOrder],
+  );
+  menuCount += 1;
+}
+console.log(`${menuCount} articles de menu en place.`);
 
 await client.end();
-console.log(`${count} tables en place.`);

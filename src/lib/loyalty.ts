@@ -195,6 +195,26 @@ export async function accrueForReservation(
   );
 }
 
+// --- Intégration commande ---
+
+/**
+ * 1 point par 1000 millimes (1 DT) dépensés pour une commande terminée.
+ */
+export async function accrueForOrder(
+  guestId: string,
+  totalMillimes: number,
+  orderRef: string,
+): Promise<void> {
+  const points = Math.floor(totalMillimes / 1000);
+  if (points <= 0) return;
+  await addPoints(
+    guestId,
+    points,
+    "order_completed",
+    orderRef,
+  );
+}
+
 // --- Intégration avis ---
 
 export async function accrueForReview(

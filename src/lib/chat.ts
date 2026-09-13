@@ -30,6 +30,7 @@ export type ChatMessage = {
 
 /**
  * Conversations ouvertes, triées par dernier message.
+ * Le compteur `unread` compte les messages guests sans réponse staff.
  */
 export async function getOpenConversations(): Promise<ConversationSummary[]> {
   const conversations = await db.conversation.findMany({
@@ -40,20 +41,54 @@ export async function getOpenConversations(): Promise<ConversationSummary[]> {
         orderBy: { createdAt: "desc" },
         take: 1,
       },
+      _count: {
+        select: {
+          messages: {
+            where: { role: "GUEST" },
+          },
+        },
+      },
     },
     orderBy: { lastMessageAt: "desc" },
   });
 
-  return conversations.map((conv) => ({
-    id: conv.id,
-    guestName: conv.guest.name,
-    guestPhone: conv.guest.phone,
-    channel: conv.channel,
-    locale: conv.locale,
-    lastMessageAt: conv.lastMessageAt,
-    unread: 0, // TODO: compter les messages non lus si besoin
-    lastMessage: conv.messages[0]?.body ?? "",
-  }));
+  // Pour chaque conversation, compter les messages guests après le dernier message staff
+  const results: ConversationSummary[] = [];
+  for (const conv of conversations) {
+    let unread = 0;
+    const lastStaffMsg = await db.message.findFirst({
+      where: { conversationId: conv.id, role: { in: ["STAFF", "AGENT"] } },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+
+    if (lastStaffMsg) {
+      const count = await db.message.count({
+        where: {
+          conversationId: conv.id,
+          role: "GUEST",
+          createdAt: { gt: lastStaffMsg.createdAt },
+        },
+      });
+      unread = count;
+    } else {
+      // Pas de message staff → tous les messages guests sont non lus
+      unread = conv._count.messages;
+    }
+
+    results.push({
+      id: conv.id,
+      guestName: conv.guest.name,
+      guestPhone: conv.guest.phone,
+      channel: conv.channel,
+      locale: conv.locale,
+      lastMessageAt: conv.lastMessageAt,
+      unread,
+      lastMessage: conv.messages[0]?.body ?? "",
+    });
+  }
+
+  return results;
 }
 
 /**

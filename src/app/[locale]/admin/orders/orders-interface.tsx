@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { advanceStatusAction, cancelOrderAction } from "./actions";
 
@@ -42,9 +42,23 @@ const NEXT_STATUS: Record<string, string> = {
 type Props = { initialOrders: Order[] };
 
 export function OrdersInterface({ initialOrders }: Props) {
-  const [orders] = useState(initialOrders);
+  const [orders, setOrders] = useState(initialOrders);
 
-  // Polling via refresh de page côté serveur
+  // Polling toutes les 5s pour les nouvelles commandes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/admin/orders");
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data);
+        }
+      } catch {
+        // silently ignore poll errors
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   function formatPrice(millimes: number): string {
     return `${(millimes / 1000).toFixed(3)} DT`;

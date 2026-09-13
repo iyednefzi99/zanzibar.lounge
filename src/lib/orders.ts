@@ -331,6 +331,14 @@ export async function updateOrderStatus(
     include: { guest: true, items: true },
   });
 
+  // Accumuler les points de fidélité pour les commandes terminées
+  if (status === OrderStatus.COMPLETED) {
+    const { accrueForOrder } = await import("@/lib/loyalty");
+    await accrueForOrder(order.guestId, order.total, order.reference).catch(() => {
+      // Ne pas faire échouer la commande si la fidélité échoue
+    });
+  }
+
   return {
     ok: true,
     value: {
