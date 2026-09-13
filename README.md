@@ -26,6 +26,9 @@ tables 24 h/24, sur les mêmes règles de capacité que le formulaire en ligne.
 - Recevoir la confirmation puis un rappel, et répondre « OUI » ou « NON » pour confirmer
   sa venue.
 - Se désabonner à tout moment en écrivant « STOP ».
+- Commander à emporter ou pour livraison — la carte, le panier et le suivi en temps réel.
+- Suivre son programme de fidélité :积累 des points à chaque visite, monter de niveau,
+  voir son solde de points.
 
 **Pour la salle**
 
@@ -33,6 +36,20 @@ tables 24 h/24, sur les mêmes règles de capacité que le formulaire en ligne.
 - Installer un client, libérer une table, marquer une absence, annuler.
 - Compteur de couverts et de réservations pour la journée.
 - Signalement des messages que l'agent a préféré transmettre à un humain.
+- Tableau de bord analytique : taux de remplissage, répartition par jour/semaine/mois,
+  couverts vs réservations, export CSV des données.
+- Suivi des commandes en temps réel : statuts, contenu, gestion de la file d'attente.
+- Gestion des avis clients : liste, réponses, modération.
+- Chat en direct avec les clients : conversation en temps réel, prise en charge par le staff.
+- Multi-établissement : un seul dépôt gère plusieurs restaurants, chacun avec ses menus,
+  tables et réservations.
+
+**Programme de fidélité**
+
+- Un client accumule des points à chaque réservation ou commande complétée.
+- Trois niveaux : Bronze (0-99 points), Argent (100-499), Or (500+).
+- Les avantages augmentent avec le niveau (réservations prioritaires, offres spéciales).
+- Le programme est optionnel — les points ne s'appliquent qu'aux clients inscrits.
 
 **Garde-fous intégrés**
 
@@ -69,10 +86,13 @@ flowchart TB
 
     subgraph next [Application Next.js]
         PROXY[proxy.ts<br/>langue + auth back-office]
-        PAGES[Pages<br/>vitrine, carte, réservation]
+        PAGES[Pages<br/>vitrine, carte, réservation, commande]
         ADMIN[Back-office<br/>/fr/admin]
         API_RES[POST /api/reservations]
         API_AVA[GET /api/availability]
+        API_ORD[POST /api/orders]
+        API_MENU[GET /api/menu]
+        API_CHAT[WS /api/chat]
         HOOK_WA[POST /api/webhooks/whatsapp]
         HOOK_SMS[POST /api/webhooks/twilio]
         CRON[GET /api/cron/reminders]
@@ -80,9 +100,12 @@ flowchart TB
 
     subgraph core [Cœur métier]
         RES[lib/reservations<br/>capacité, tables, statuts]
+        ORD[lib/orders<br/>commandes, statuts]
+        LOY[lib/loyalty<br/>points, niveaux]
         HOURS[lib/hours<br/>horaires et créneaux]
         AGENT[lib/agent<br/>boucle d'outils]
         CH[lib/channels<br/>envoi et conversations]
+        ANA[lib/analytics<br/>statistiques]
     end
 
     CLAUDE[API Anthropic]
@@ -93,7 +116,12 @@ flowchart TB
     WEB --> PROXY --> PAGES
     PAGES --> API_AVA --> RES
     PAGES --> API_RES --> RES
+    PAGES --> API_ORD --> ORD
+    PAGES --> API_MENU
+    PAGES --> API_CHAT
     ADMIN --> RES
+    ADMIN --> ORD
+    ADMIN --> ANA
 
     WA --> META --> HOOK_WA --> AGENT
     SMS --> TW --> HOOK_SMS --> AGENT
@@ -107,7 +135,10 @@ flowchart TB
 
     RES --> HOURS
     RES --> DB
+    ORD --> DB
+    LOY --> DB
     CH --> DB
+    ANA --> DB
 ```
 
 Le point important : **le formulaire du site et l'agent conversationnel n'ont pas deux
@@ -119,19 +150,35 @@ refuserait.
 
 ```
 prisma/
-  schema.prisma        Modèles : clients, tables, réservations, conversations
-  seed.mjs             Plan de salle initial (à ajuster au vrai plan)
+  schema.prisma        Modèles : clients, tables, réservations, conversations,
+                       commandes, fidélité, menus, établissements
+  seed.mjs             Plan de salle, menus et tables initiaux
 src/
   app/
     [locale]/          Pages localisées — la racine de l'application
-      admin/           Back-office : service du jour, actions serveur
-      carte/ galerie/ reserver/
+      admin/           Back-office : service du jour, analytics, commandes,
+                       chat, avis, gestion
+      carte/           Carte du restaurant
+      commander/       Commande en ligne (menu, panier, suivi)
+      fidelite/        Programme de fidélité
+      avis/            Avis clients
+      galerie/         Galerie photos
+      reserver/        Formulaire de réservation
     api/
       availability/    Créneaux libres d'une date
       reservations/    Création depuis le site
+      orders/          Commandes en ligne
+      menu/            Carte du restaurant
+      chat/            Chat en direct (conversations, messages)
+      loyalty/         Programme de fidélité
+      push/            Notifications push
+      reviews/         Avis clients
+      admin/           Back-office (analytics, export CSV, commandes, chat, avis)
+      otp/             Vérification du numéro
       webhooks/        Entrées WhatsApp (Meta) et SMS (Twilio)
       cron/reminders/  Rappels J-1 et H-2
-  components/          En-tête, pied de page, carte, formulaire, badge d'ouverture
+  components/          En-tête, pied de page, carte, formulaire, badge
+                       d'ouverture, panier, graphiques SVG
   content/             Établissement, carte, galerie — la source de vérité éditoriale
   i18n/                Configuration des langues et dictionnaires fr / ar / en
   lib/
@@ -140,7 +187,15 @@ src/
     channels/          WhatsApp, SMS, conversations, déduplication des webhooks
     hours.ts           Horaires, fenêtres de service, créneaux
     reservations.ts    Cœur métier : capacité, tables, statuts
+    orders.ts          Commandes : création, statuts, attribution de table
+    loyalty.ts         Fidélité : points, niveaux, avantages
+    reviews.ts         Avis clients : création, réponses, modération
+    chat.ts            Chat en direct : conversations, messages, prise en charge
+    analytics.ts       Statistiques : remplissage, répartition, export
+    restaurant.ts      Multi-établissement : restaurant par défaut
     time.ts            Conversions de fuseau (Africa/Tunis) sans dépendance
+    push.ts            Notifications push (VAPID, abonnements)
+    export.ts          Export CSV des réservations
   proxy.ts             Redirection de langue et authentification du back-office
 ```
 
@@ -150,7 +205,7 @@ src/
 PostgreSQL 14+ (Neon, Supabase ou locale).
 
 ```bash
-git clone <url-du-depot> zanzibar.lounge
+git clone https://github.com/iyednefzi99/zanzibar.lounge.git zanzibar.lounge
 cd zanzibar.lounge
 npm install          # génère aussi le client Prisma (script postinstall)
 cp .env.example .env.local
@@ -202,10 +257,10 @@ proprement : le back-office affiche ce qui manque, et rien d'autre ne casse.
 | `npm run db:migrate` | Crée et applique une migration en développement |
 | `npm run db:deploy` | Applique les migrations en production |
 | `npm run db:studio` | Explorateur de base Prisma |
-| `npm run db:seed` | Insère le plan de salle (`prisma/seed.mjs`) |
+| `npm run db:seed` | Insère le plan de salle, les menus et les tables (`prisma/seed.mjs`) |
 | `npm test` | Suite de tests Vitest |
 | `npm run test:watch` | Tests en continu |
-| `npm run forget -- +216…` | Efface toutes les données d'une personne, sur sa demande |
+| `npm run forget -- +216…` | Efface toutes les données d'une personne, sur sa demande (GDPR) |
 
 ### Brancher WhatsApp et les SMS
 
@@ -226,8 +281,25 @@ l'état d'ouverture en direct et deux chemins : réserver en ligne, ou ouvrir Wh
 Le formulaire (`/fr/reserver`) demande le nom, le numéro, la date et l'effectif, puis
 n'affiche que les créneaux réellement libres ; la confirmation part par WhatsApp ou SMS.
 
+**Commander en ligne.** `/fr/commander` affiche la carte du restaurant avec les prix.
+Le client compose son panier, valide, et reçoit un numéro de commande. Le suivi en
+temps réel affiche les statuts : reçue → en préparation → prête.
+
+**Programme de fidélité.** `/fr/fidelite` permet au client de consulter son solde de points
+et son niveau (Bronze, Argent, Or). Les points s'accumulent automatiquement à chaque
+réservation ou commande complétée.
+
+**Avis clients.** `/fr/avis` permet de laisser un avis et de consulter les avis des autres
+clients. Les avis incluent une note (1-5 étoiles) et un commentaire.
+
 **Côté salle.** `/fr/admin`, protégé par `ADMIN_USER` / `ADMIN_PASSWORD`, liste le service
 du jour heure par heure. Quatre boutons par ligne : installer, libérer, non venu, annuler.
+Le back-office comprend aussi :
+- **Analytics** (`/fr/admin/analytics`) — graphiques de remplissage, répartition par jour/semaine/mois.
+- **Commandes** (`/fr/admin/orders`) — file d'attente des commandes en ligne avec mise à jour des statuts.
+- **Chat** (`/fr/admin/chat`) — conversations en direct avec les clients.
+- **Avis** (`/fr/admin/reviews`) — liste des avis, réponses et modération.
+- **Export CSV** — extraction des données de réservation pour analyse externe.
 
 **Une conversation type**
 
@@ -236,15 +308,6 @@ du jour heure par heure. Quatre boutons par ligne : installer, libérer, non ven
 >   enregistre, et renvoie la référence `ZL-4F2K`.
 > — *Finalement on sera 6.*
 > — L'agent revérifie la capacité et déplace la réservation, ou propose une autre heure.
-
-## Captures d'écran
-
-<!-- TODO: confirm — aucune capture dans le dépôt. À produire dans docs/screenshots/ :
-     1. accueil-fr.png     — l'accueil avec le badge « Ouvert jusqu'à »
-     2. reservation.png    — le formulaire avec les créneaux
-     3. carte-ar.png       — la carte en arabe, pour montrer le passage en RTL
-     4. admin-service.png  — le back-office un soir de service
-     5. whatsapp.png       — une conversation de réservation (numéro masqué) -->
 
 ## API
 
@@ -255,6 +318,14 @@ vérification Meta (texte brut).
 |---|---|---|---|
 | `GET` | `/api/availability?date=AAAA-MM-JJ&party=N` | aucune, limitée à 60/min | Créneaux d'une date |
 | `POST` | `/api/reservations` | aucune, limitée à 8/10 min par IP et 4/h par numéro | Crée une réservation |
+| `POST` | `/api/orders` | aucune, limitée à 8/10 min par IP | Crée une commande |
+| `GET` | `/api/menu` | aucune | Carte du restaurant |
+| `POST` | `/api/chat/conversations` | aucune | Crée une conversation chat |
+| `POST` | `/api/chat/messages` | aucune | Envoie un message chat |
+| `GET` | `/api/loyalty` | aucune | Consulte le programme de fidélité |
+| `POST` | `/api/reviews` | aucune | Soumet un avis |
+| `GET` | `/api/admin/analytics` | Basic | Statistiques du back-office |
+| `GET` | `/api/admin/export` | Basic | Export CSV des réservations |
 | `GET` | `/api/webhooks/whatsapp` | `hub.verify_token` | Vérification de l'abonnement Meta |
 | `POST` | `/api/webhooks/whatsapp` | `X-Hub-Signature-256` | Messages WhatsApp entrants |
 | `POST` | `/api/webhooks/twilio` | `X-Twilio-Signature` | SMS entrants |
@@ -391,7 +462,7 @@ familles demandent une base de test, d'où leur absence ici.
 
 - **Le contenu est un espace réservé.** Horaires, carte, prix, téléphones, coordonnées
   GPS et plan de salle sont des exemples, marqués « À CONFIRMER » dans
-  `src/content/site.ts`, `src/content/menu.ts` et `prisma/seed.ts`.
+  `src/content/site.ts`, `src/content/menu.ts` et `prisma/seed.mjs`.
 - **Aucune photo.** `src/content/gallery.ts` est vide et la page galerie renvoie vers
   Instagram plutôt que d'afficher des images qui ne sont pas celles de la maison.
 - **Limitation de débit partagée uniquement si Upstash est configuré.** Sans
@@ -416,7 +487,30 @@ familles demandent une base de test, d'où leur absence ici.
 - **Rappels WhatsApp conditionnés à un modèle approuvé.** Hors de la fenêtre de 24 h, Meta
   n'accepte que des modèles ; sans `WHATSAPP_REMINDER_TEMPLATE`, les rappels basculent
   en SMS.
-- **Pas d'export ni de statistiques.** Ni taux de remplissage, ni historique client, ni
-  extraction comptable.
+- **Aucune licence définie.** Le dépôt ne contient pas de fichier `LICENSE`.
 
-<!-- TODO: confirm — licence non définie (aucun fichier LICENSE dans le dépôt). -->
+## Contribuer
+
+Les contributions sont les bienvenues. Ouvrez une issue pour discuter d'une idée avant de
+soumettre une pull request.
+
+```bash
+git clone https://github.com/iyednefzi99/zanzibar.lounge.git
+cd zanzibar.lounge
+npm install
+npm run db:migrate
+npm run dev
+```
+
+Avant de valider :
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Auteur
+
+**Iyed Nefzi** — [iyednefzi99](https://github.com/iyednefzi99)
