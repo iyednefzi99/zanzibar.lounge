@@ -1,25 +1,18 @@
-import { NextResponse } from "next/server";
-import { healthCheck } from "@/lib/monitoring";
+import { NextRequest, NextResponse } from "next/server";
+import { getHealth, getMetrics } from "@/lib/health";
 
-export const dynamic = "force-dynamic";
+export async function GET(request: NextRequest) {
+  const type = request.nextUrl.searchParams.get("type") ?? "health";
 
-export async function GET(): Promise<
-  NextResponse<{
-    status: string;
-    version: string;
-    uptime: number;
-    db: { status: string; latencyMs: number; error?: string };
-    memory: {
-      rss: number;
-      heapUsed: number;
-      heapTotal: number;
-      external: number;
-    };
-  }>
-> {
-  const result = await healthCheck();
+  if (type === "metrics") {
+    const metrics = await getMetrics();
+    return NextResponse.json(metrics, {
+      status: metrics.status === "unhealthy" ? 503 : 200,
+    });
+  }
 
-  return NextResponse.json(result, {
-    status: result.status === "healthy" ? 200 : 503,
+  const health = await getHealth();
+  return NextResponse.json(health, {
+    status: health.status === "unhealthy" ? 503 : 200,
   });
 }
