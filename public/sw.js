@@ -1,124 +1,110 @@
-// Service Worker pour les notifications push et le cache offline.
-//
-// Ce fichier est placé dans public/ pour être accessible depuis la racine.
-// Il gère les événements push, notificationclick, et le cache des assets statiques.
-
 const CACHE_NAME = "zanzibar-v1";
-const STATIC_ASSETS = ["/offline", "/icon-192.png", "/icon-512.png"];
+const STATIC_ASSETS = [
+  "/",
+  "/offline",
+  "/manifest.webmanifest",
+];
 
-// Installation : pré-cacher les assets critiques
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(STATIC_ASSETS))
-      .catch(() => {}),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)),
   );
   self.skipWaiting();
 });
 
-// Activation : nettoyer les anciens caches
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", (event: ExtendableEvent) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)),
-        ),
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
       ),
+    ),
   );
   self.clients.claim();
 });
 
-// Stratégie de cache : network-first pour les pages, cache-first pour les assets
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+self.addEventListener("fetch", (event: FetchEvent) => {
+  const { request } = event;
 
-  const url = new URL(event.request.url);
+  // Skip non-GET requests
+  if (request.method !== "GET") return;
 
-  // Pour les assets statiques (images, CSS, JS) : cache-first
-  if (
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.endsWith(".svg") ||
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".ico")
-  ) {
-    event.respondWith(
-      caches.match(event.request).then(
-        (cached) =>
-          cached ||
-          fetch(event.request).then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            return response;
-          }),
-      ),
-    );
-    return;
-  }
+  // Skip API calls
+  if (request.url.includes("/api/")) return;
 
-  // Pour les pages : network-first avec fallback offline
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Mettre en cache les pages naviguées
-        if (response.ok && event.request.mode === "navigate") {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
+    caches.match(request).then((cached) => {
+      // Network first for HTML pages
+      if (request.headers.get("accept")?.includes("text/html")) {
+        return fetch(request)
+          .then((response) => {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            return response;
+          })
+          .catch(() => cached || caches.match("/offline"));
+      }
+
+      // Cache first for static assets
+      if (cached) return cached;
+
+      return fetch(request).then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         return response;
-      })
-      .catch(() =>
-        caches
-          .match(event.request)
-          .then((cached) => cached ?? caches.match("/offline")),
-      ),
+      });
+    }),
   );
 });
 
-// Push notification handler
-self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
-  let payload;
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = {
-      title: "Zanzibar Lounge",
-      body: event.data.text(),
-      url: "/",
-    };
+// Background sync for offline orders
+self.addEventListener("sync", (event: ExtendableEvent & { tag?: string }) => {
+  if (event.tag === "sync-orders") {
+    event.waitUntil(syncOfflineOrders());
   }
+});
 
-  const title = payload.title || "Zanzibar Lounge";
+async function syncOfflineOrders() {
+  const cache = await caches.open("offline-orders");
+  const keys = await cache.keys();
+
+  for (const request of keys) {
+    const response = await cache.match(request);
+    if (response) {
+      const body = await response.json();
+      await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await cache.delete(request);
+    }
+  }
+}
+
+// Push notification handler
+self.addEventListener("push", (event: PushEvent) => {
+  const data = event.data?.json() ?? {};
+  const title = data.title || "Zanzibar Lounge";
   const options = {
-    body: payload.body || "",
-    icon: payload.icon || "/icon-192.png",
-    badge: payload.badge || "/badge-72.png",
-    tag: payload.tag || "zanzibar-push",
-    renotify: true,
-    data: { url: payload.url || "/" },
+    body: data.body || "Nouvelle notification",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/badge.png",
+    data: data.url,
+    actions: [
+      { action: "open", title: "Ouvrir" },
+      { action: "dismiss", title: "Fermer" },
+    ],
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-self.addEventListener("notificationclick", (event) => {
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
-
-  const url = event.notification.data?.url || "/";
-
-  event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((clients) => {
-      for (const client of clients) {
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(url);
-          return client.focus();
-        }
-      }
-      return self.clients.openWindow(url);
-    }),
-  );
+  if (event.action === "open" || !event.action) {
+    event.waitUntil(
+      self.clients.openWindow(event.notification.data || "/"),
+    );
+  }
 });
