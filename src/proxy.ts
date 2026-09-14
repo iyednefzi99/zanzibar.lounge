@@ -26,7 +26,14 @@ export async function proxy(request: NextRequest) {
 
   // Le back-office vit sous /fr/admin, /ar/admin… : on le protège quelle que
   // soit la langue, avant toute autre décision de routage.
-  if (/^\/(?:[a-z]{2}\/)?admin(?:\/|$)/.test(pathname)) {
+  if (/^\/(?:[a-z]{2}\/)?(?:admin|owner|kitchen)(?:\/|$)/.test(pathname)) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+  }
+
+  // Staff PWA routes are protected by Basic auth as the first barrier.
+  // Session-based auth is verified server-side in each page/action.
+  if (/^\/(?:[a-z]{2}\/)?staff(?:\/|$)/.test(pathname)) {
     const denied = await requireAdmin(request);
     if (denied) return denied;
   }

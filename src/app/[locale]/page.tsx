@@ -10,6 +10,8 @@ import { fill, getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
+export const revalidate = 3600;
+
 export default async function HomePage({
   params,
 }: {

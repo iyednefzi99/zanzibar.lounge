@@ -15,6 +15,7 @@ import {
 } from "@/lib/channels";
 import { buildSystemPrompt } from "@/lib/agent/prompt";
 import { runTool, tools, type ToolContext } from "@/lib/agent/tools";
+import { getSmartSuggestions } from "@/lib/agent/suggestions";
 
 /**
  * L'agent conversationnel : reçoit un message, décide, agit, répond.
@@ -50,13 +51,27 @@ const OPT_OUT = [
 const OPT_OUT_REPLY: Record<Locale, string> = {
   fr: "C'est noté, vous ne recevrez plus de messages. Vos réservations en cours restent valables. Écrivez « START » pour réactiver.",
   ar: "تم، لن تصلك رسائل بعد الآن. حجوزاتك الحالية سارية. اكتب « START » لإعادة التفعيل.",
-  en: "Done — no more messages. Any existing bookings still stand. Text “START” to switch them back on.",
+  en: "Done — no more messages. Any existing bookings still stand. Text \"START\" to switch them back on.",
+  de: "Erledigt — keine weiteren Nachrichten. Bestehende Buchungen bleiben gültig. Schreiben Sie \"START\", um sie wieder zu aktivieren.",
+  es: "Listo — no más mensajes. Las reservas existentes siguen válidas. Envíe \"START\" para reactivarlas.",
+  it: "Fatto — nient'altro messaggi. Le prenotazioni esistenti restano valide. Scrivi \"START\" per riattivarle.",
+  pt: "Pronto — sem mais mensagens. As reservas existentes continuam válidas. Envie \"START\" para reativá-las.",
+  ru: "Готово — больше никаких сообщений. Существующие бронирования остаются в силе. Отправьте \"START\", чтобы снова включить.",
+  zh: "已完成 — 不再收到消息。现有预订仍然有效。发送\"START\"重新开启。",
+  ja: "完了 — これ以上のメッセージはありません。既存の予約は有効です。\"START\"と送信して再開してください。",
 };
 
 const FALLBACK_REPLY: Record<Locale, string> = {
   fr: `Je n'arrive pas à traiter votre message. Appelez-nous au ${site.contact.phone}, on s'en occupe.`,
   ar: `تعذّر عليّ معالجة رسالتك. اتصل بنا على ${site.contact.phone} وسنتكفّل بالأمر.`,
   en: `I can't process that right now. Call us on ${site.contact.phone} and we'll sort it out.`,
+  de: `Ich kann das gerade nicht verarbeiten. Rufen Sie uns unter ${site.contact.phone} an, wir kümmern uns darum.`,
+  es: `No puedo procesar eso ahora. Llámenos al ${site.contact.phone} y lo resolvemos.`,
+  it: `Non riesco a elaborare questo ora. Chiamaci al ${site.contact.phone} e ci occupiamo noi.`,
+  pt: `Não consigo processar isso agora. Ligue para ${site.contact.phone} e nós resolvemos.`,
+  ru: `Я не могу обработать это сейчас. Позвоните нам по номеру ${site.contact.phone}, и мы разберёмся.`,
+  zh: `我现在无法处理这个。请致电 ${site.contact.phone}，我们会解决。`,
+  ja: `今それを処理できません。${site.contact.phone} にお電話ください。対応いたします。`,
 };
 
 export type AgentResult = {
@@ -111,9 +126,10 @@ export async function handleInbound(
   };
 
   try {
+    const suggestions = await getSmartSuggestions(guest.id, locale);
     const { text, handOff } = await converse(
       conversation.id,
-      buildSystemPrompt({ locale, guestName: guest.name, now }),
+      buildSystemPrompt({ locale, guestName: guest.name, now, suggestions }),
       context,
     );
 

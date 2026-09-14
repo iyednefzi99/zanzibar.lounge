@@ -102,10 +102,28 @@ export default async function AdminPage({
             Chat
           </Link>
           <Link
+            href={`/${locale}/admin/floor`}
+            className="text-sm text-shell-dim hover:text-brass"
+          >
+            Plan de salle
+          </Link>
+          <Link
             href={`/${locale}/admin/orders`}
             className="text-sm text-shell-dim hover:text-brass"
           >
             Commandes
+          </Link>
+          <Link
+            href={`/${locale}/admin/menu`}
+            className="text-sm text-shell-dim hover:text-brass"
+          >
+            Menu
+          </Link>
+          <Link
+            href={`/${locale}/admin/inventory`}
+            className="text-sm text-shell-dim hover:text-brass"
+          >
+            Inventaire
           </Link>
           <p className="font-mono text-sm text-shell-dim">
             {longDate(serviceDate)}

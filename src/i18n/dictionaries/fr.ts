@@ -152,6 +152,18 @@ const fr = {
     },
   },
 
+  notFound: {
+    title: "Page introuvable",
+    description: "La page que vous cherchez n'existe pas ou a été déplacée.",
+    backHome: "Retour à l'accueil",
+  },
+
+  discover: {
+    title: "Découvrir nos restaurants",
+    description:
+      "Trouvez le Zanzibar Lounge le plus proche de vous.",
+  },
+
   footer: {
     tagline: "Zanzibar is your happy place",
     follow: "Suivre",
