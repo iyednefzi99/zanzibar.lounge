@@ -8,6 +8,13 @@ const DAY_NAMES: Record<Locale, string[]> = {
   fr: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
   ar: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
   en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  de: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
+  es: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  it: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"],
+  pt: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"],
+  ru: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"],
+  zh: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+  ja: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
 };
 
 export type SmartSuggestions = {
@@ -157,6 +164,34 @@ const habitPhrases: Record<Locale, (type: string, ...args: string[]) => string> 
     type === "day_time"
       ? `You usually book on ${day} at ${time} — want me to check availability?`
       : `You tend to come on ${day} — I can check available slots.`,
+  de: (type, day, time) =>
+    type === "day_time"
+      ? `Sie buchen oft am ${day} um ${time} — soll ich die Verfügbarkeit prüfen?`
+      : `Sie kommen oft am ${day} — ich kann verfügbare Zeiten prüfen.`,
+  es: (type, day, time) =>
+    type === "day_time"
+      ? `Suele reservar los ${day} a las ${time} — ¿quiere que compruebe la disponibilidad?`
+      : `Suele venir los ${day} — puedo buscar huecos disponibles.`,
+  it: (type, day, time) =>
+    type === "day_time"
+      ? `Prenota spesso il ${day} alle ${time} — vuoi che controlli la disponibilità?`
+      : `Vieni spesso il ${day} — posso cercare posti disponibili.`,
+  pt: (type, day, time) =>
+    type === "day_time"
+      ? `Costuma reservar nas ${day} às ${time} — quer que eu verifique a disponibilidade?`
+      : `Costuma vir nas ${day} — posso verificar horários disponíveis.`,
+  ru: (type, day, time) =>
+    type === "day_time"
+      ? `Вы часто бронируете на ${day} в ${time} — хотите, я проверю наличие мест?`
+      : `Вы часто приходите в ${day} — я могу проверить свободные слоты.`,
+  zh: (type, day, time) =>
+    type === "day_time"
+      ? `您通常在${day} ${time}预订 — 要我查一下空位吗？`
+      : `您常在${day}来 — 我可以查查可用时段。`,
+  ja: (type, day, time) =>
+    type === "day_time"
+      ? `${day}の${time}に予約されることが多いですね — 空き状況を確認しましょうか？`
+      : `${day}によくいらっしゃいますね — 空き枠を確認できますよ。`,
 };
 
 const popularTimePhrases: Record<Locale, (size: number) => string> = {
@@ -166,10 +201,31 @@ const popularTimePhrases: Record<Locale, (size: number) => string> = {
     `حجوزاتك غالبًا ما تكون لـ ${size} ${size > 1 ? "أشخاص" : "شخص"}.`,
   en: (size) =>
     `Your bookings are often for ${size} ${size > 1 ? "people" : "person"}.`,
+  de: (size) =>
+    `Ihre Buchungen sind oft für ${size} ${size > 1 ? "Personen" : "Person"}.`,
+  es: (size) =>
+    `Sus reservas suelen ser para ${size} ${size > 1 ? "personas" : "persona"}.`,
+  it: (size) =>
+    `Le sue prenotazioni sono spesso per ${size} ${size > 1 ? "persone" : "persona"}.`,
+  pt: (size) =>
+    `Suas reservas costumam ser para ${size} ${size > 1 ? "pessoas" : "pessoa"}.`,
+  ru: (size) =>
+    `Ваши бронирования часто на ${size} ${size > 1 ? "человек" : "человека"}.`,
+  zh: (size) =>
+    `您通常预订${size}人的桌位。`,
+  ja: (size) =>
+    `よく${size}名で予約されますね。`,
 };
 
 const newItemsPhrases: Record<Locale, string> = {
   fr: "C'est votre première fois ? Découvrez nos spécialités de la maison.",
   ar: "هل هذه زيارتك الأولى؟ اكتشف أطباقنا المميزة.",
   en: "First time? Check out our house specialties.",
+  de: "Erstes Mal? Entdecken Sie unsere Hausmischungen.",
+  es: "¿Primera vez? Pruebe nuestras especialidades de la casa.",
+  it: "Prima volta? Scopra le nostre specialità della casa.",
+  pt: "Primeira vez? Experimente nossas especialidades da casa.",
+  ru: "Впервые у нас? Попробуйте наши фирменные блюда.",
+  zh: "第一次来？试试我们的招牌菜。",
+  ja: "初めてですか？我们的看板メニューをお試しください。",
 };

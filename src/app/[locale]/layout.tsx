@@ -119,6 +119,13 @@ export default async function LocaleLayout({
     >
       <head>
         <RestaurantJsonLd locale={typedLocale} />
+        <link rel="preload" href="/opengraph-image" as="image" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-dvh bg-night text-shell antialiased">
         <a className="skip-link" href="#contenu">

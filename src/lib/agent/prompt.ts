@@ -125,5 +125,16 @@ function dayName(day: number): string {
 }
 
 function localeName(locale: Locale): string {
-  return { fr: "français", ar: "arabe", en: "anglais" }[locale];
+  return {
+    fr: "français",
+    ar: "arabe",
+    en: "anglais",
+    de: "allemand",
+    es: "espagnol",
+    it: "italien",
+    pt: "portugais",
+    ru: "russe",
+    zh: "chinois",
+    ja: "japonais",
+  }[locale];
 }

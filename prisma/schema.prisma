@@ -112,6 +112,10 @@ model Restaurant {
   apiKeys          ApiKey[]
   notifications    Notification[]
   inventory        Inventory[]
+  referrals        Referral[]
+  waitlist         Waitlist[]
+  events           Event[]
+  gallery          Gallery[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -138,6 +142,10 @@ model Guest {
   payments          Payment[]
   notifications     Notification[]
   profile           GuestProfile?
+  referralsMade     Referral[] @relation("ReferralsMade")
+  referralsReceived Referral[] @relation("ReferralsReceived")
+  waitlist          Waitlist[]
+  eventBookings     EventBooking[]
 
   @@index([createdAt])
 }
@@ -774,4 +782,122 @@ model ApiKey {
 
   @@index([restaurantId])
   @@index([keyPrefix])
+}
+
+// ─── Social & Community ─────────────────────────────────────────────
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  EXPIRED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  FULL
+}
+
+enum EventBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+/// Parrainage : un client existant invite un nouveau client.
+model Referral {
+  id              String         @id @default(cuid())
+  referrerGuestId String
+  referrerGuest   Guest          @relation("ReferralsMade", fields: [referrerGuestId], references: [id], onDelete: Cascade)
+  referredGuestId String?
+  referredGuest   Guest?         @relation("ReferralsReceived", fields: [referredGuestId], references: [id], onDelete: SetNull)
+  restaurantId    String
+  restaurant      Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Code court de parrainage (ex: ZL-ABCD).
+  code            String         @unique
+  status          ReferralStatus @default(PENDING)
+  /// Points attribués au parrain et au filleul.
+  rewardPoints    Int            @default(10)
+  createdAt       DateTime       @default(now())
+
+  @@index([code])
+  @@index([referrerGuestId])
+  @@index([restaurantId])
+}
+
+/// File d'attente : un client s'inscrit pour une date donnée.
+model Waitlist {
+  id           String         @id @default(cuid())
+  guestId      String
+  guest        Guest          @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Date de service souhaitée (AAAA-MM-JJ).
+  date         String
+  partySize    Int
+  status       WaitlistStatus @default(WAITING)
+  /// Position dans la file (1 = premier).
+  position     Int
+  createdAt    DateTime       @default(now())
+
+  @@index([restaurantId, date, status])
+  @@index([guestId])
+}
+
+/// Événement organisé par le restaurant.
+model Event {
+  id           String      @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  /// Date de l'événement (AAAA-MM-JJ).
+  date         String
+  /// Heure de début (HH:MM).
+  startTime    String
+  capacity     Int
+  /// Prix en millimes (0 = gratuit).
+  price        Int         @default(0)
+  imageUrl     String?
+  status       EventStatus @default(DRAFT)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  bookings EventBooking[]
+
+  @@index([restaurantId, date, status])
+}
+
+/// Réservation d'un événement par un client.
+model EventBooking {
+  id        String              @id @default(cuid())
+  eventId   String
+  event     Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guestId   String
+  guest     Guest               @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  quantity  Int                 @default(1)
+  status    EventBookingStatus  @default(CONFIRMED)
+  createdAt DateTime            @default(now())
+
+  @@unique([eventId, guestId])
+  @@index([guestId])
+}
+
+/// Galerie photos du restaurant.
+model Gallery {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  caption      String?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  @@index([restaurantId, sortOrder])
 }
