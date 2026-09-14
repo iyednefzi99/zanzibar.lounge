@@ -12,7 +12,7 @@ type Config = {
 };
 
 export default function WidgetAdminPage() {
-  const [slug, setSlug] = useState("zanzibar");
+  const [slug, setSlug] = useState("e-coffee");
   const [theme, setTheme] = useState("");
   const [lang, setLang] = useState<"fr" | "ar" | "en">("fr");
   const [config, setConfig] = useState<Config | null>(null);
@@ -65,16 +65,16 @@ export default function WidgetAdminPage() {
   loading="lazy"
 ></iframe>`;
 
-  const sdkCode = `<!-- Zanzibar Lounge Widget -->
-<div id="zanzibar-widget"></div>
+  const sdkCode = `<!-- E-Coffee Node Widget -->
+<div id="e-coffee-widget"></div>
 <script>
   (function() {
     var s = document.createElement('script');
     s.src = '${siteUrl}/widget.js';
     s.async = true;
     s.onload = function() {
-      ZanzibarWidget.init({
-        el: '#zanzibar-widget',
+      ECoffeeWidget.init({
+        el: '#e-coffee-widget',
         slug: '${slug}',
         lang: '${lang}',
         ${theme ? `theme: '${theme}',` : ""}
@@ -119,7 +119,7 @@ export default function WidgetAdminPage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className={inputClass}
-                placeholder="zanzibar"
+                placeholder="e-coffee"
               />
             </Field>
 

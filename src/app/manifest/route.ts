@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const manifest = {
-    name: "Zanzibar Lounge",
-    short_name: "Zanzibar",
+    name: "E-Coffee Node",
+    short_name: "E-Coffee",
     description: "Restaurant reservation & ordering platform",
     start_url: "/",
     display: "standalone",

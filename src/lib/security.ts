@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 
 const TOTP_PERIOD = 30; // seconds
 const TOTP_DIGITS = 6;
-const TOTP_ISSUER = "Zanzibar Lounge";
+const TOTP_ISSUER = "E-Coffee Node";
 
 function base32Decode(encoded: string): Uint8Array {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";

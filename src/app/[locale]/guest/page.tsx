@@ -64,17 +64,17 @@ export default async function GuestDashboardPage({
       <header>
         <h1 className="font-display text-[clamp(2rem,5vw,3rem)] leading-none text-shell">
           {locale === "fr"
-            ? `Bonjour, ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "Zanzibar"}`
+            ? `Bonjour, ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "E-Coffee"}`
             : locale === "ar"
-              ? `مرحبا، ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "زنجبار"}`
-              : `Hello, ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "Zanzibar"}`}
+              ? `مرحبا، ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "E-Coffee"}`
+              : `Hello, ${dashboard.profile?.displayName ?? dashboard.guest.name ?? "E-Coffee"}`}
         </h1>
         <p className="mt-2 text-shell-dim">
           {locale === "fr"
-            ? "Bienvenue dans votre espace Zanzibar"
+            ? "Bienvenue dans votre espace E-Coffee"
             : locale === "ar"
-              ? "مرحبا بكم في مساحتكم في زنجبار"
-              : "Welcome to your Zanzibar space"}
+              ? "مرحبا بكم في مساحتكم في E-Coffee"
+              : "Welcome to your E-Coffee space"}
         </p>
       </header>
 

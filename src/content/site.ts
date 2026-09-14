@@ -9,8 +9,8 @@
  */
 
 export const site = {
-  name: "Zanzibar Lounge",
-  tagline: "Zanzibar is your happy place",
+  name: "E-Coffee Node",
+  tagline: "E-Coffee is your happy place",
 
   address: {
     street: "Avenue de l'Environnement",
@@ -29,12 +29,12 @@ export const site = {
   contact: {
     phone: "+216 00 000 000",
     whatsapp: "+216 00 000 000",
-    email: "contact@zanzibar.lounge",
+    email: "contact@e-coffee.node",
   },
 
   social: {
-    instagram: "https://www.instagram.com/zanzibar.lounge/",
-    facebook: "https://www.facebook.com/zanzibar.rlc/",
+    instagram: "https://www.instagram.com/e-coffee.node/",
+    facebook: "https://www.facebook.com/e-coffee.node/",
     tripadvisor:
       "https://www.tripadvisor.fr/Restaurant_Review-g1237245-d32836171-Reviews-Zanzibar_Lounge-Medjez_el_Bab_Beja_Governorate.html",
   },

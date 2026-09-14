@@ -12,7 +12,7 @@ export function InstallBanner() {
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-brass p-3 text-center text-deep">
       <div className="flex items-center justify-center gap-4">
         <p className="text-sm font-medium">
-          Installer Zanzibar Lounge sur votre appareil
+          Installer E-Coffee Node sur votre appareil
         </p>
         <button
           onClick={install}

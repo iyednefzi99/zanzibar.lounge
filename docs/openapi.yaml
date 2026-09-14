@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 
 info:
-  title: Zanzibar Lounge API
+  title: E-Coffee Node API
   description: |
     API de réservation pour restaurants —plateforme SaaS multi-tenancy.
 
@@ -24,14 +24,14 @@ info:
     - Requêtes : limitées par rate-limiting (Upstash Redis si configuré)
   version: "1.0.0"
   contact:
-    name: Zanzibar Lounge
-    url: https://zanzibar-lounge.com
+    name: E-Coffee Node
+    url: https://e-coffee.node
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://zanzibar-lounge.com
+  - url: https://e-coffee.node
     description: Production
   - url: http://localhost:3000
     description: Développement local
@@ -123,11 +123,11 @@ components:
           example: "clx9a2b3c4d5e6f7g8h9i0"
         name:
           type: string
-          example: "Le Zanzibar"
+          example: "Le E-Coffee"
         slug:
           type: string
           description: Identifiant URL-friendly
-          example: "le-zanzibar"
+          example: "le-e-coffee"
         address:
           type: string
           nullable: true
@@ -324,13 +324,13 @@ components:
           type: string
           format: email
           description: Email du propriétaire
-          example: "ahmed@zanzibar.tn"
+          example: "ahmed@e-coffee.tn"
         restaurantName:
           type: string
           minLength: 1
           maxLength: 200
           description: Nom du restaurant (optionnel)
-          example: "Le Zanzibar"
+          example: "Le E-Coffee"
 
     SetupRequest:
       type: object
@@ -344,14 +344,14 @@ components:
           type: string
           minLength: 2
           maxLength: 200
-          example: "Le Zanzibar"
+          example: "Le E-Coffee"
         slug:
           type: string
           minLength: 2
           maxLength: 60
           pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           description: Slug du restaurant (lowercase, tirets)
-          example: "le-zanzibar"
+          example: "le-e-coffee"
         ownerName:
           type: string
           minLength: 2
@@ -360,7 +360,7 @@ components:
         ownerEmail:
           type: string
           format: email
-          example: "ahmed@zanzibar.tn"
+          example: "ahmed@e-coffee.tn"
         password:
           type: string
           minLength: 8
@@ -393,12 +393,12 @@ components:
           type: string
           format: uri
           description: URL de redirection après paiement réussi
-          example: "https://dashboard.zanzibar-lounge.com/billing/success"
+          example: "https://dashboard.e-coffee.node/billing/success"
         cancelUrl:
           type: string
           format: uri
           description: URL de redirection si annulation
-          example: "https://dashboard.zanzibar-lounge.com/billing/cancel"
+          example: "https://dashboard.e-coffee.node/billing/cancel"
 
     UsageResponse:
       type: object
@@ -434,7 +434,7 @@ components:
         email:
           type: string
           format: email
-          example: "ahmed@zanzibar.tn"
+          example: "ahmed@e-coffee.tn"
         name:
           type: string
           example: "Ahmed Ben Salah"
@@ -465,7 +465,7 @@ components:
         email:
           type: string
           format: email
-          example: "nouveau@zanzibar.tn"
+          example: "nouveau@e-coffee.tn"
         name:
           type: string
           minLength: 2
@@ -543,7 +543,7 @@ components:
           type: string
           format: uri
           description: URL de redirection après le portail Stripe
-          example: "https://dashboard.zanzibar-lounge.com/billing"
+          example: "https://dashboard.e-coffee.node/billing"
 
 # =====================================================================
 # Paths
@@ -588,8 +588,8 @@ paths:
                 data:
                   restaurants:
                     - id: "clx9a2b3c4d5e6f7g8h9i0"
-                      name: "Le Zanzibar"
-                      slug: "le-zanzibar"
+                      name: "Le E-Coffee"
+                      slug: "le-e-coffee"
                       address: "42 Avenue Habib Bourguiba, Tunis"
                       phone: "+21671234567"
                       timezone: "Africa/Tunis"
@@ -620,7 +620,7 @@ paths:
           schema:
             type: string
           description: Slug du restaurant
-          example: "le-zanzibar"
+          example: "le-e-coffee"
       responses:
         "200":
           description: Détails du restaurant
@@ -642,8 +642,8 @@ paths:
                 data:
                   restaurant:
                     id: "clx9a2b3c4d5e6f7g8h9i0"
-                    name: "Le Zanzibar"
-                    slug: "le-zanzibar"
+                    name: "Le E-Coffee"
+                    slug: "le-e-coffee"
                     address: "42 Avenue Habib Bourguiba, Tunis"
                     phone: "+21671234567"
                     timezone: "Africa/Tunis"
@@ -691,7 +691,7 @@ paths:
           schema:
             type: string
           description: Slug du restaurant
-          example: "le-zanzibar"
+          example: "le-e-coffee"
         - name: date
           in: query
           required: true
@@ -808,7 +808,7 @@ paths:
           schema:
             type: string
           description: Slug du restaurant
-          example: "le-zanzibar"
+          example: "le-e-coffee"
       requestBody:
         required: true
         content:
@@ -905,7 +905,7 @@ paths:
           schema:
             type: string
           description: Slug du restaurant
-          example: "le-zanzibar"
+          example: "le-e-coffee"
       responses:
         "200":
           description: Articles du menu
@@ -980,7 +980,7 @@ paths:
           schema:
             type: string
           description: Slug du restaurant
-          example: "le-zanzibar"
+          example: "le-e-coffee"
         - name: limit
           in: query
           required: false
@@ -1071,8 +1071,8 @@ paths:
             schema:
               $ref: "#/components/schemas/OnboardRequest"
             example:
-              email: "ahmed@zanzibar.tn"
-              restaurantName: "Le Zanzibar"
+              email: "ahmed@e-coffee.tn"
+              restaurantName: "Le E-Coffee"
       responses:
         "200":
           description: Token d'onboarding créé
@@ -1133,10 +1133,10 @@ paths:
               $ref: "#/components/schemas/SetupRequest"
             example:
               token: "abc123def456ghi789"
-              restaurantName: "Le Zanzibar"
-              slug: "le-zanzibar"
+              restaurantName: "Le E-Coffee"
+              slug: "le-e-coffee"
               ownerName: "Ahmed Ben Salah"
-              ownerEmail: "ahmed@zanzibar.tn"
+              ownerEmail: "ahmed@e-coffee.tn"
               password: "securePassword123"
               timezone: "Africa/Tunis"
               locale: "fr"
@@ -1164,8 +1164,8 @@ paths:
                 ok: true
                 restaurant:
                   id: "clx9a2b3c4d5e6f7g8h9i0"
-                  name: "Le Zanzibar"
-                  slug: "le-zanzibar"
+                  name: "Le E-Coffee"
+                  slug: "le-e-coffee"
         "400":
           description: Token invalide ou expiré
           content:
@@ -1283,8 +1283,8 @@ paths:
             example:
               restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
               plan: "PRO"
-              successUrl: "https://dashboard.zanzibar-lounge.com/billing/success"
-              cancelUrl: "https://dashboard.zanzibar-lounge.com/billing/cancel"
+              successUrl: "https://dashboard.e-coffee.node/billing/success"
+              cancelUrl: "https://dashboard.e-coffee.node/billing/cancel"
       responses:
         "200":
           description: Session de paiement créée
@@ -1352,7 +1352,7 @@ paths:
               $ref: "#/components/schemas/PortalRequest"
             example:
               restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
-              returnUrl: "https://dashboard.zanzibar-lounge.com/billing"
+              returnUrl: "https://dashboard.e-coffee.node/billing"
       responses:
         "200":
           description: Session du portail créée
@@ -1490,7 +1490,7 @@ paths:
                 ok: true
                 staff:
                   - id: "clx9a2b3c4d5e6f7g8h9i0"
-                    email: "ahmed@zanzibar.tn"
+                    email: "ahmed@e-coffee.tn"
                     name: "Ahmed Ben Salah"
                     role: "OWNER"
                     active: true
@@ -1535,7 +1535,7 @@ paths:
               $ref: "#/components/schemas/StaffCreateRequest"
             example:
               restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
-              email: "nouveau@zanzibar.tn"
+              email: "nouveau@e-coffee.tn"
               name: "Nouveau Membre"
               password: "securePassword123"
               role: "MANAGER"
@@ -1556,7 +1556,7 @@ paths:
                 ok: true
                 staff:
                   id: "clx9a2b3c4d5e6f7g8h9i1"
-                  email: "nouveau@zanzibar.tn"
+                  email: "nouveau@e-coffee.tn"
                   name: "Nouveau Membre"
                   role: "MANAGER"
                   active: true

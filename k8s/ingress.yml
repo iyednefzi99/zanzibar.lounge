@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: zanzibar-ingress
-  namespace: zanzibar-lounge
+  name: e-coffee-ingress
+  namespace: e-coffee-node
   labels:
-    app.kubernetes.io/name: zanzibar-lounge
+    app.kubernetes.io/name: e-coffee-node
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
@@ -15,16 +15,16 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - zanzibar.lounge
-      secretName: zanzibar-tls
+        - e-coffee.node
+      secretName: e-coffee-tls
   rules:
-    - host: zanzibar.lounge
+    - host: e-coffee.node
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: zanzibar-service
+                name: e-coffee-service
                 port:
                   number: 80

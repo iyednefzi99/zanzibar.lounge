@@ -8,8 +8,8 @@ services:
     env_file:
       - .env.local
     environment:
-      DATABASE_URL: postgresql://zanzibar:zanzibar@postgres:5432/zanzibar?schema=public
-      DIRECT_DATABASE_URL: postgresql://zanzibar:zanzibar@postgres:5432/zanzibar?schema=public
+      DATABASE_URL: postgresql://e_coffee:e_coffee@postgres:5432/e_coffee?schema=public
+      DIRECT_DATABASE_URL: postgresql://e_coffee:e_coffee@postgres:5432/e_coffee?schema=public
       REDIS_URL: redis://redis:6379
       NODE_ENV: development
     depends_on:
@@ -20,25 +20,25 @@ services:
     volumes:
       - ./src:/app/src
     networks:
-      - zanzibar
+      - e_coffee
 
   postgres:
     image: postgres:17-alpine
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: zanzibar
-      POSTGRES_USER: zanzibar
-      POSTGRES_PASSWORD: zanzibar
+      POSTGRES_DB: e_coffee
+      POSTGRES_USER: e_coffee
+      POSTGRES_PASSWORD: e_coffee
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U zanzibar -d zanzibar"]
+      test: ["CMD-SHELL", "pg_isready -U e_coffee -d e_coffee"]
       interval: 5s
       timeout: 3s
       retries: 5
     networks:
-      - zanzibar
+      - e_coffee
 
   redis:
     image: redis:7-alpine
@@ -52,12 +52,12 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - zanzibar
+      - e_coffee
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  zanzibar:
+  e_coffee:
     driver: bridge

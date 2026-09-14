@@ -597,7 +597,7 @@ export default function WidgetPage({
               color: "rgba(185,173,156,0.5)",
             }}
         >
-          Propulsé par Zanzibar Lounge
+          Propulsé par E-Coffee Node
         </p>
         </div>
       </div>

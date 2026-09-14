@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Database backup script for Zanzibar Lounge.
+# Database backup script for E-Coffee Node.
 # Usage: ./scripts/backup.sh [BACKUP_DIR] [S3_BUCKET]
 #
 # BACKUP_DIR defaults to ./backups
@@ -10,7 +10,7 @@ set -euo pipefail
 BACKUP_DIR="${1:-./backups}"
 S3_BUCKET="${2:-}"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-BACKUP_FILE="zanzibar_${TIMESTAMP}.sql.gz"
+BACKUP_FILE="e_coffee_${TIMESTAMP}.sql.gz"
 RETENTION_DAYS=30
 
 if [ -z "${DATABASE_URL:-}" ]; then
@@ -35,6 +35,6 @@ if [ -n "$S3_BUCKET" ]; then
 fi
 
 echo "Cleaning up backups older than $RETENTION_DAYS days ..."
-find "$BACKUP_DIR" -name "zanzibar_*.sql.gz" -type f -mtime +"$RETENTION_DAYS" -delete
+find "$BACKUP_DIR" -name "e_coffee_*.sql.gz" -type f -mtime +"$RETENTION_DAYS" -delete
 
 echo "Backup finished."

@@ -22,7 +22,7 @@ async function sendWithResend(options: EmailOptions): Promise<EmailResult> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: options.from || "Zanzibar Lounge <noreply@zanzibar-lounge.com>",
+        from: options.from || "E-Coffee Node <noreply@e-coffee-node.com>",
         to: [options.to],
         subject: options.subject,
         html: options.html,
@@ -72,13 +72,13 @@ function baseTemplate(content: string): string {
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">Zanzibar Lounge</div>
+      <div class="logo">E-Coffee Node</div>
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
-      <p>Zanzibar Lounge · Medjez el Bab, Tunisie</p>
+      <p>E-Coffee Node · Medjez el Bab, Tunisie</p>
       <p>Pour ne plus recevoir nos emails, <a href="#" style="color: #64748b;">cliquez ici</a>.</p>
     </div>
   </div>

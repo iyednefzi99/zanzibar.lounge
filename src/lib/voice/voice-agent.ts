@@ -58,9 +58,9 @@ type ConversationState = {
 const callStates = new Map<string, ConversationState>();
 
 const GREETING: Record<string, string> = {
-  fr: "Bienvenue au Zanzibar Lounge. Comment puis-je vous aider ?",
-  ar: "مرحبا بكم في زنجبار لاونج. كيف يمكنني مساعدتك؟",
-  en: "Welcome to Zanzibar Lounge. How can I help you?",
+  fr: "Bienvenue au E-Coffee Node. Comment puis-je vous aider ?",
+  ar: "مرحبا بكم في E-Coffee Node. كيف يمكنني مساعدتك؟",
+  en: "Welcome to E-Coffee Node. How can I help you?",
 };
 
 const FALLBACK: Record<string, string> = {
@@ -289,7 +289,7 @@ function buildVoiceSystemPrompt(state: ConversationState): string {
   const now = state.context.now;
   const today = now.toISOString().split("T")[0];
 
-  return `Tu es l'assistant téléphonique du Zanzibar Lounge, à ${site.address.city}, Tunisie. Tu réponds au téléphone.
+  return `Tu es l'assistant téléphonique du E-Coffee Node, à ${site.address.city}, Tunisie. Tu réponds au téléphone.
 
 # Ton
 Comme un employé au téléphone : bref, chaleureux, efficace. Pas plus de 2-3 phrases. Pas d'emoji. Pas de listes.

@@ -15,9 +15,9 @@ const LANGUAGES = [
 ] as const;
 
 const DEFAULT_GREETING: Record<string, string> = {
-  fr: "Bienvenue au Zanzibar Lounge. Dites-moi comment je peux vous aider.",
-  ar: "مرحبا بكم في زنجبار لاونج. قل لي كيف يمكنني مساعدتك.",
-  en: "Welcome to Zanzibar Lounge. Tell me how I can help you.",
+  fr: "Bienvenue au E-Coffee Node. Dites-moi comment je peux vous aider.",
+  ar: "مرحبا بكم في E-Coffee Node. قل لي كيف يمكنني مساعدتك.",
+  en: "Welcome to E-Coffee Node. Tell me how I can help you.",
 };
 
 /**

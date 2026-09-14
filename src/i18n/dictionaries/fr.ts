@@ -1,6 +1,6 @@
 const fr = {
   meta: {
-    title: "Zanzibar Lounge — Medjez el Bab",
+    title: "E-Coffee Node — Medjez el Bab",
     description:
       "Café, cuisine et chicha à Medjez el Bab. Terrasse ouverte du matin à tard le soir. Réservez une table par WhatsApp, SMS ou en ligne.",
   },
@@ -24,7 +24,7 @@ const fr = {
 
   hero: {
     eyebrow: "Medjez el Bab · Béja",
-    title: "Zanzibar is your happy place",
+    title: "E-Coffee is your happy place",
     lead: "Une terrasse, une carte courte, du café qui tient debout et de la chicha jusque tard. On garde une table pour vous.",
     book: "Réserver une table",
     bookWhatsapp: "Réserver sur WhatsApp",
@@ -195,14 +195,14 @@ const fr = {
   },
 
   footer: {
-    tagline: "Zanzibar is your happy place",
+    tagline: "E-Coffee is your happy place",
     follow: "Suivre",
     rights: "Tous droits réservés.",
   },
 
   reviews: {
     title: "Avis de nos clients",
-    lead: "Ce que nos clients disent de leur expérience au Zanzibar Lounge.",
+    lead: "Ce que nos clients disent de leur expérience au E-Coffee Node.",
     formTitle: "Laisser un avis",
     titleField: "Titre",
     rating: "Note",

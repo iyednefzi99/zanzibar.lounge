@@ -159,7 +159,7 @@ async function requireAdmin(
   return new NextResponse("Authentification requise", {
     status: 401,
     headers: {
-      "www-authenticate": 'Basic realm="Zanzibar Lounge", charset="UTF-8"',
+      "www-authenticate": 'Basic realm="E-Coffee Node", charset="UTF-8"',
     },
   });
 }

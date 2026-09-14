@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Database restore script for Zanzibar Lounge.
+# Database restore script for E-Coffee Node.
 # Usage: ./scripts/restore.sh [BACKUP_FILE]
 #
 # If BACKUP_FILE is omitted, lists available backups and prompts for selection.
@@ -23,7 +23,7 @@ else
 
   echo "Available backups:"
   echo "---"
-  ls -1t "$BACKUP_DIR"/zanzibar_*.sql.gz 2>/dev/null || { echo "No backups found in $BACKUP_DIR" >&2; exit 1; }
+  ls -1t "$BACKUP_DIR"/e_coffee_*.sql.gz 2>/dev/null || { echo "No backups found in $BACKUP_DIR" >&2; exit 1; }
   echo "---"
   echo ""
   read -rp "Enter the backup file path to restore: " BACKUP_FILE

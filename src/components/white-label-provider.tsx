@@ -15,7 +15,7 @@ const BrandContext = createContext<BrandContextValue>({
   secondary: "#1B2838",
   accent: "#E8734A",
   logoUrl: null,
-  restaurantName: "Zanzibar Lounge",
+  restaurantName: "E-Coffee Node",
 });
 
 export function useBrand() {

@@ -2,7 +2,7 @@ import type { Dictionary } from "./fr";
 
 const ar: Dictionary = {
   meta: {
-    title: "زنجبار لاونج — مجاز الباب",
+    title: "E-Coffee Node — مجاز الباب",
     description:
       "قهوة ومطبخ وشيشة في مجاز الباب. تراس مفتوح من الصباح حتى وقت متأخر. احجز طاولتك عبر واتساب أو رسالة قصيرة أو من الموقع.",
   },
@@ -26,7 +26,7 @@ const ar: Dictionary = {
 
   hero: {
     eyebrow: "مجاز الباب · باجة",
-    title: "زنجبار مكانك السعيد",
+    title: "E-Coffee مكانك السعيد",
     lead: "تراس، قائمة قصيرة، قهوة تُحترم، وشيشة حتى وقت متأخر. نحفظ لك طاولة.",
     book: "احجز طاولة",
     bookWhatsapp: "احجز عبر واتساب",
@@ -195,14 +195,14 @@ const ar: Dictionary = {
   },
 
   footer: {
-    tagline: "زنجبار مكانك السعيد",
+    tagline: "E-Coffee مكانك السعيد",
     follow: "تابعنا",
     rights: "كل الحقوق محفوظة.",
   },
 
   reviews: {
     title: "آراء ضيوفنا",
-    lead: "اطلع على ما يقوله ضيوفنا عن تجربتهم في زنجبار لاونج.",
+    lead: "اطلع على ما يقوله ضيوفنا عن تجربتهم في E-Coffee Node.",
     formTitle: "اترك تقييماً",
     titleField: "العنوان",
     rating: "التقييم",

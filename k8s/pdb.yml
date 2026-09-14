@@ -1,12 +1,12 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: zanzibar-pdb
-  namespace: zanzibar-lounge
+  name: e-coffee-pdb
+  namespace: e-coffee-node
   labels:
-    app.kubernetes.io/name: zanzibar-lounge
+    app.kubernetes.io/name: e-coffee-node
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: zanzibar-lounge
+      app.kubernetes.io/name: e-coffee-node

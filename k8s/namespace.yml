@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: zanzibar-lounge
+  name: e-coffee-node
   labels:
-    app.kubernetes.io/name: zanzibar-lounge
-    app.kubernetes.io/part-of: zanzibar-lounge
+    app.kubernetes.io/name: e-coffee-node
+    app.kubernetes.io/part-of: e-coffee-node

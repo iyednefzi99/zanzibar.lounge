@@ -198,7 +198,7 @@ export function buildVoicePrompt(
     ? `\nHistorique récent :\n${conversationHistory.join("\n")}`
     : "";
 
-  return `Tu es l'assistant vocal du Zanzibar Lounge, un café-restaurant-lounge à Medjez el Bab, Tunisie.
+  return `Tu es l'assistant vocal du E-Coffee Node, un café-restaurant-lounge à Medjez el Bab, Tunisie.
 
 L'appelant vient de dire (en ${langName}) :
 "${transcription}"

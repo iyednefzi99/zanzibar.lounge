@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: zanzibar-hpa
-  namespace: zanzibar-lounge
+  name: e-coffee-hpa
+  namespace: e-coffee-node
   labels:
-    app.kubernetes.io/name: zanzibar-lounge
+    app.kubernetes.io/name: e-coffee-node
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: zanzibar-app
+    name: e-coffee-app
   minReplicas: 2
   maxReplicas: 10
   metrics:

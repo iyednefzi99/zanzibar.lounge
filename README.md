@@ -1,4 +1,4 @@
-# Zanzibar Lounge
+# E-Coffee Node
 
 Plateforme complète de réservation de restaurant — vitrine trilingue, agent IA conversationnel,
 SaaS multi-établissement, analytics avancés, application mobile staff, et bien plus.
@@ -190,8 +190,8 @@ SaaS multi-établissement, analytics avancés, application mobile staff, et bien
 **Prérequis** — Node.js 20+ (développé sous 24), npm 10+, PostgreSQL 14+.
 
 ```bash
-git clone https://github.com/iyednefzi99/zanzibar.lounge.git
-cd zanzibar.lounge
+git clone https://github.com/iyednefzi99/e-coffee-node.git
+cd e-coffee-node
 npm install
 cp .env.example .env.local
 ```
@@ -339,8 +339,8 @@ npm run test:e2e    # 29 scénarios Playwright
 Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide complet.
 
 ```bash
-git clone https://github.com/iyednefzi99/zanzibar.lounge.git
-cd zanzibar.lounge
+git clone https://github.com/iyednefzi99/e-coffee-node.git
+cd e-coffee-node
 npm install
 npm run dev
 ```

@@ -109,7 +109,7 @@ ${options.suggestions.newItems ? `- ${options.suggestions.newItems}` : ""}`
   }
 
 # Multi-établissement
-Si le client mentionne un autre restaurant du groupe ou un slug (ex: « zanzibar-sfax »), utilise get_restaurant_info pour le retrouver. Chaque établissement a son propre menu et ses propres horaires — ne mélange pas les informations entre restaurants.`;
+Si le client mentionne un autre restaurant du groupe ou un slug (ex: « e-coffee-sfax »), utilise get_restaurant_info pour le retrouver. Chaque établissement a son propre menu et ses propres horaires — ne mélange pas les informations entre restaurants.`;
 }
 
 function dayName(day: number): string {

@@ -66,13 +66,13 @@ let count = 0;
 // 1. Restaurant par défaut
 const restaurantResult = await client.query(
   `INSERT INTO "Restaurant" ("id", "name", "slug", "address", "phone", "timezone", "locale", "active", "createdAt", "updatedAt")
-   VALUES (gen_random_uuid()::text, 'Zanzibar Lounge', 'zanzibar', 'Medjez el Bab, Tunisie', '+21620123456', 'Africa/Tunis', 'fr', true, NOW(), NOW())
+   VALUES (gen_random_uuid()::text, 'E-Coffee Node', 'e_coffee', 'Medjez el Bab, Tunisie', '+21620123456', 'Africa/Tunis', 'fr', true, NOW(), NOW())
    ON CONFLICT ("slug")
    DO UPDATE SET "name" = EXCLUDED."name"
    RETURNING "id"`,
 );
 const restaurantId = restaurantResult.rows[0].id;
-console.log(`Restaurant « Zanzibar Lounge » (${restaurantId}).`);
+console.log(`Restaurant « E-Coffee Node » (${restaurantId}).`);
 
 // 2. Tables
 for (const group of layout) {

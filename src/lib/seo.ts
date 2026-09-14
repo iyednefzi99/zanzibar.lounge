@@ -23,8 +23,8 @@ export type PageContext = {
 // --- Meta generators ---
 
 /**
- * Generate an optimized page title. Format: "Page — Zanzibar Lounge" or just
- * "Zanzibar Lounge" for the homepage.
+ * Generate an optimized page title. Format: "Page — E-Coffee Node" or just
+ * "E-Coffee Node" for the homepage.
  */
 export function generateMetaTitle(
   page: PageContext,

@@ -2,7 +2,7 @@ import type { Dictionary } from "./fr";
 
 const ja: Dictionary = {
   meta: {
-    title: "Zanzibar Lounge — メジェズ・エル・バブ",
+    title: "E-Coffee Node — メジェズ・エル・バブ",
     description:
       "コーヒー、料理、そしてシーザャーが楽しめるメジェズ・エル・バブ。テラスは朝から遅くまで営業。WhatsApp、SMS、またはオンラインで予約できます。",
   },
@@ -26,7 +26,7 @@ const ja: Dictionary = {
 
   hero: {
     eyebrow: "メジェズ・エル・バブ · ベジャ",
-    title: "ザンジバーはあなたの幸せな場所",
+    title: "E-Coffeeはあなたの幸せな場所",
     lead: "テラス、短いメニュー、しっかりしたコーヒー、そして遅くまでシーザャー。あなたの席を確保しています。",
     book: "テーブル予約",
     bookWhatsapp: "WhatsAppで予約",
@@ -173,14 +173,14 @@ const ja: Dictionary = {
   },
 
   footer: {
-    tagline: "ザンジバーはあなたの幸せな場所",
+    tagline: "E-Coffeeはあなたの幸せな場所",
     follow: "フォロー",
     rights: "全著作権所有。",
   },
 
   reviews: {
     title: "お客様の声",
-    lead: "ザンジバーラウンジでの体験について、お客様がどのように評価しているかご覧ください。",
+    lead: "E-Coffee Nodeでの体験について、お客様がどのように評価しているかご覧ください。",
     formTitle: "レビューを書く",
     titleField: "タイトル",
     rating: "評価",

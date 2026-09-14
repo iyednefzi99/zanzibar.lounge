@@ -24,9 +24,9 @@ const TTS_VOICE: Record<string, string> = {
 };
 
 const GREETING: Record<string, string> = {
-  fr: "Bienvenue au Zanzibar Lounge. Dites-moi comment je peux vous aider, par exemple réserver une table ou consulter nos horaires.",
-  ar: "مرحبا بكم في زنجبار لاونج. قل لي كيف يمكنني مساعدتك، مثل حجز طاولة أو الاطلاع على مواعيد العمل.",
-  en: "Welcome to Zanzibar Lounge. Tell me how I can help, for example booking a table or checking our hours.",
+  fr: "Bienvenue au E-Coffee Node. Dites-moi comment je peux vous aider, par exemple réserver une table ou consulter nos horaires.",
+  ar: "مرحبا بكم في E-Coffee Node. قل لي كيف يمكنني مساعدتك، مثل حجز طاولة أو الاطلاع على مواعيد العمل.",
+  en: "Welcome to E-Coffee Node. Tell me how I can help, for example booking a table or checking our hours.",
 };
 
 let client: ReturnType<typeof twilio> | null = null;

@@ -2,7 +2,7 @@ import type { Dictionary } from "./fr";
 
 const zh: Dictionary = {
   meta: {
-    title: "Zanzibar Lounge — 梅杰兹巴巴",
+    title: "E-Coffee Node — 梅杰兹巴巴",
     description:
       "咖啡、美食和水烟，在梅杰兹巴巴。露台从早开到晚。通过WhatsApp、短信或在线预订座位。",
   },
@@ -26,7 +26,7 @@ const zh: Dictionary = {
 
   hero: {
     eyebrow: "梅杰兹巴巴 · 比塞大",
-    title: "桑给巴尔是您的快乐之地",
+    title: "E-Coffee是您的快乐之地",
     lead: "一个露台，一份简洁的菜单，真正的好咖啡，以及深夜的水烟。我们为您保留一个座位。",
     book: "预订座位",
     bookWhatsapp: "通过WhatsApp预订",
@@ -173,14 +173,14 @@ const zh: Dictionary = {
   },
 
   footer: {
-    tagline: "桑给巴尔是您的快乐之地",
+    tagline: "E-Coffee是您的快乐之地",
     follow: "关注",
     rights: "版权所有。",
   },
 
   reviews: {
     title: "顾客评价",
-    lead: "了解顾客对桑给巴尔休息室体验的评价。",
+    lead: "了解顾客对E-Coffee Node体验的评价。",
     formTitle: "发表评价",
     titleField: "标题",
     rating: "评分",

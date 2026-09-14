@@ -9,7 +9,7 @@ type OfflineOrder = {
   createdAt: string;
 };
 
-const STORAGE_KEY = "zanzibar_offline_orders";
+const STORAGE_KEY = "e_coffee_offline_orders";
 
 export function useOfflineOrders() {
   const [isOnline, setIsOnline] = useState(

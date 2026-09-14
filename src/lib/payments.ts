@@ -107,7 +107,7 @@ export async function createCheckoutSession(
           currency,
           product_data: {
             name: `Commande ${order.reference}`,
-            description: `Zanzibar Lounge — ${order.items.length} article(s)`,
+            description: `E-Coffee Node — ${order.items.length} article(s)`,
           },
           unit_amount: Math.round(amount * 10), // Stripe utilise les sous-unités (centimes)
         },
@@ -197,7 +197,7 @@ export async function createDepositSession(
           currency,
           product_data: {
             name: `Dépôt — Réservation ${reservation.reference}`,
-            description: `Zanzibar Lounge — ${reservation.partySize} personne(s) le ${reservation.serviceDate}`,
+            description: `E-Coffee Node — ${reservation.partySize} personne(s) le ${reservation.serviceDate}`,
           },
           unit_amount: Math.round(amount * 10),
         },

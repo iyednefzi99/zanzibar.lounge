@@ -1,4 +1,4 @@
-const CACHE_NAME = "zanzibar-v1";
+const CACHE_NAME = "e-coffee-v1";
 const STATIC_ASSETS = [
   "/",
   "/offline",
@@ -85,7 +85,7 @@ async function syncOfflineOrders() {
 // Push notification handler
 self.addEventListener("push", (event: PushEvent) => {
   const data = event.data?.json() ?? {};
-  const title = data.title || "Zanzibar Lounge";
+  const title = data.title || "E-Coffee Node";
   const options = {
     body: data.body || "Nouvelle notification",
     icon: "/icons/icon-192.png",

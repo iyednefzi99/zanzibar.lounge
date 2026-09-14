@@ -4,13 +4,13 @@ import { db } from "@/lib/db";
  * Helper pour la multi-tenancy.
  *
  * Le restaurant par défaut est celui dont le slug correspond à
- * `DEFAULT_RESTAURANT_SLUG` dans `.env.local` (ou "zanzibar" par défaut).
+ * `DEFAULT_RESTAURANT_SLUG` dans `.env.local` (ou "e-coffee" par défaut).
  *
  * Pour les routes API, le restaurant peut être passé en query param
  * ou déduit du contexte (ex: slug dans l'URL).
  */
 
-const DEFAULT_SLUG = process.env.DEFAULT_RESTAURANT_SLUG ?? "zanzibar";
+const DEFAULT_SLUG = process.env.DEFAULT_RESTAURANT_SLUG ?? "e-coffee";
 
 /**
  * Trouver ou créer le restaurant par défaut.
@@ -39,7 +39,7 @@ export async function getOrCreateDefaultRestaurant(): Promise<{
 
   const created = await db.restaurant.create({
     data: {
-      name: "Zanzibar Lounge",
+      name: "E-Coffee Node",
       slug: DEFAULT_SLUG,
       address: "Medjez el Bab, Tunisie",
       phone: "+21620123456",

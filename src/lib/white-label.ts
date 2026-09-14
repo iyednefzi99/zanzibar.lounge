@@ -20,8 +20,8 @@ const DEFAULTS: BrandTheme = {
   accent: "#E8734A",
   logoUrl: null,
   customDomain: null,
-  restaurantName: "Zanzibar Lounge",
-  slug: "zanzibar-lounge",
+  restaurantName: "E-Coffee Node",
+  slug: "e-coffee-node",
 };
 
 export async function getBrandTheme(
@@ -79,7 +79,7 @@ export async function getWhiteLabelConfig(
     theme,
     css,
     isCustomDomain: !!theme.customDomain,
-    hostname: theme.customDomain ?? `${theme.slug}.zanzibar-lounge.com`,
+    hostname: theme.customDomain ?? `${theme.slug}.e-coffee-node.com`,
   };
 }
 

@@ -30,7 +30,7 @@ export default async function GuestLayout({
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-shell">
-              {session.name ?? "Zanzibar"}
+              {session.name ?? "E-Coffee"}
             </p>
             <p className="truncate text-[0.65rem] text-shell-dim">
               {locale === "fr" ? "Espace client" : locale === "ar" ? "مساحة العميل" : "Guest area"}

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tarifs | Zanzibar Lounge",
+  title: "Tarifs | E-Coffee Node",
   description: "Choisissez le plan adapté à votre restaurant",
 };
 

@@ -2,7 +2,7 @@ import type { Dictionary } from "./fr";
 
 const it: Dictionary = {
   meta: {
-    title: "Zanzibar Lounge — Medjez el Bab",
+    title: "E-Coffee Node — Medjez el Bab",
     description:
       "Caffè, cucina e narghilè a Medjez el Bab. Terrazza aperta dalla mattina fino a tardi. Prenota un tavolo via WhatsApp, SMS o online.",
   },
@@ -26,7 +26,7 @@ const it: Dictionary = {
 
   hero: {
     eyebrow: "Medjez el Bab · Béja",
-    title: "Zanzibar è il tuo posto felice",
+    title: "E-Coffee è il tuo posto felice",
     lead: "Una terrazza, un menu corto, un caffè che regge, e narghilè fino a tardi. Teniamo un tavolo per te.",
     book: "Prenota un tavolo",
     bookWhatsapp: "Prenota su WhatsApp",
@@ -173,14 +173,14 @@ const it: Dictionary = {
   },
 
   footer: {
-    tagline: "Zanzibar è il tuo posto felice",
+    tagline: "E-Coffee è il tuo posto felice",
     follow: "Segui",
     rights: "Tutti i diritti riservati.",
   },
 
   reviews: {
     title: "Cosa dicono i nostri ospiti",
-    lead: "Leggi cosa pensano i nostri ospiti della loro esperienza allo Zanzibar Lounge.",
+    lead: "Leggi cosa pensano i nostri ospiti della loro esperienza allo E-Coffee Node.",
     formTitle: "Lascia una recensione",
     titleField: "Titolo",
     rating: "Voto",

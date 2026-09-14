@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Changelog | Zanzibar Lounge",
+  title: "Changelog | E-Coffee Node",
   description: "Dernières mises à jour et nouveautés",
 };
 

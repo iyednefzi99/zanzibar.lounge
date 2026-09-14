@@ -1,6 +1,6 @@
-# Contribuer à Zanzibar Lounge
+# Contribuer à E-Coffee Node
 
-Merci de votre intérêt pour contribuer à Zanzibar Lounge ! Ce guide explique
+Merci de votre intérêt pour contribuer à E-Coffee Node ! Ce guide explique
 comment mettre en place votre environnement de développement et comment
 soumettre vos contributions.
 
@@ -20,8 +20,8 @@ soumettre vos contributions.
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/iyednefzi99/zanzibar.lounge.git
-cd zanzibar.lounge
+git clone https://github.com/iyednefzi99/e-coffee-node.git
+cd e-coffee-node
 
 # 2. Installer les dépendances
 npm install
@@ -52,7 +52,7 @@ npm run dev
 Seule `DATABASE_URL` est obligatoire pour le développement local :
 
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/zanzibar
+DATABASE_URL=postgresql://user:password@localhost:5432/e_coffee
 ```
 
 ## Workflow de développement

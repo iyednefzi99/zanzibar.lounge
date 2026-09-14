@@ -230,7 +230,7 @@ export function EmbedWidget({
     (data: Record<string, unknown>) => {
       try {
         iframeRef.current?.contentWindow?.postMessage(
-          { type: "zanzibar-widget", ...data },
+          { type: "e-coffee-widget", ...data },
           "*",
         );
       } catch {}
