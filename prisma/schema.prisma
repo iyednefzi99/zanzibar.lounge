@@ -15,6 +15,15 @@ datasource db {
   provider = "postgresql"
 }
 
+enum NotificationType {
+  RESERVATION_REMINDER
+  ORDER_READY
+  FLASH_OFFER
+  BIRTHDAY
+  SYSTEM
+  ANNOUNCEMENT
+}
+
 enum ReservationStatus {
   PENDING // créée, en attente de confirmation du client
   CONFIRMED // confirmée
@@ -100,6 +109,7 @@ model Restaurant {
   webhookEndpoints WebhookEndpoint[]
   auditLogs        AuditLog[]
   apiKeys          ApiKey[]
+  notifications    Notification[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -124,6 +134,7 @@ model Guest {
   loyaltyAccounts   LoyaltyAccount[]
   orders            Order[]
   payments          Payment[]
+  notifications     Notification[]
 
   @@index([createdAt])
 }
@@ -472,6 +483,7 @@ model Staff {
   updatedAt    DateTime @updatedAt
 
   sessions StaffSession[]
+  notifications Notification[]
 
   @@unique([restaurantId, email])
   @@index([restaurantId])
@@ -605,6 +617,36 @@ model AuditLog {
 
   @@index([restaurantId, createdAt])
   @@index([restaurantId, action])
+}
+
+/// Notifications in-app pour les clients et le personnel.
+model Notification {
+  id           String           @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  type         NotificationType
+  title        String
+  body         String
+  /// Données structurées (ex: { reservationRef: "ZL-4F2K" }).
+  data         Json?
+  read         Boolean          @default(false)
+  /// Lien de destination au clic (ex: "/reservation/ZL-4F2K").
+  actionUrl    String?
+  createdAt    DateTime         @default(now())
+  readAt       DateTime?
+
+  /// Cible : un client, un membre du personnel, ou les deux (broadcast).
+  guestId  String?
+  guest    Guest?   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  staffId  String?
+  staff    Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  /// Vrai si la notification s'adresse à tout le monde.
+  broadcast Boolean @default(false)
+
+  @@index([restaurantId, read, createdAt])
+  @@index([guestId, read])
+  @@index([staffId, read])
+  @@index([createdAt])
 }
 
 /// Clés API pour l'authentification des webhooks.
