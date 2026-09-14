@@ -98,6 +98,7 @@ model Restaurant {
 
   reservations     Reservation[]
   tables           RestaurantTable[]
+  menuCategories   MenuCategory[]
   menuItems        MenuItem[]
   orders           Order[]
   payments         Payment[]
@@ -110,6 +111,7 @@ model Restaurant {
   auditLogs        AuditLog[]
   apiKeys          ApiKey[]
   notifications    Notification[]
+  inventory        Inventory[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -135,8 +137,36 @@ model Guest {
   orders            Order[]
   payments          Payment[]
   notifications     Notification[]
+  profile           GuestProfile?
 
   @@index([createdAt])
+}
+
+/// Profil étendu du client pour l'app mobile.
+model GuestProfile {
+  id               String   @id @default(cuid())
+  guestId          String   @unique
+  guest            Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  displayName      String?
+  avatarUrl        String?
+  /// Préférences structurées (JSON : { notifications, dietary, ... }).
+  preferences      Json     @default("{}")
+  birthday         DateTime?
+  /// Zone préférée : TERRASSE | SALLE | SALON.
+  favoriteZone     String?
+  /// Taille de groupe par défaut pour les réservations rapides.
+  defaultPartySize Int      @default(2)
+  /// Langue de l'app : fr | ar | en.
+  language         String   @default("fr")
+  /// Notifications push activées.
+  pushEnabled      Boolean  @default(true)
+  /// Recevoir les offres par email.
+  emailOptIn       Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([guestId])
 }
 
 model RestaurantTable {
@@ -319,29 +349,105 @@ model LoyaltyTransaction {
   @@index([accountId, createdAt])
 }
 
-// ─── Commandes en ligne ───────────────────────────────────────────────
+// ─── Menu & Inventaire ──────────────────────────────────────────────
+
+/// Catégorie de menu (ex: Entrées, Plats, Boissons).
+model MenuCategory {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  sortOrder    Int     @default(0)
+  active       Boolean @default(true)
+  /// Emoji ou identifiant d'icône (ex: "🍽️", "🍷").
+  icon         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items MenuItem[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId, active, sortOrder])
+}
 
 /// Article du menu (boissons, plats à emporter, etc.).
 model MenuItem {
   id           String  @id @default(cuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Lien optionnel vers une catégorie structurée.
+  categoryId   String?
+  categoryRel  MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   name        String
   description String?
   /// Prix en millimes (ex: 12000 = 12.000 DT).
   price       Int
-  category    String  @default("general") // boisson | plat | dessert | general
+  /// Catégorie texte legacy (boisson | plat | dessert | general).
+  category    String  @default("general")
   imageUrl    String?
   available   Boolean @default(true)
   /// Ordre d'affichage dans la catégorie.
   sortOrder   Int     @default(0)
+  /// Allergènes (ex: ["gluten", "lactose", "noix"]).
+  allergens   String[]
+  /// Nombre de calories (optionnel).
+  calories    Int?
+  /// Temps de préparation en minutes (optionnel).
+  preparationTime Int?
+  /// Article saisonnier / spécial du jour.
+  seasonal    Boolean @default(false)
+  /// Fenêtre de disponibilité (optionnel, UTC).
+  availableFrom  DateTime?
+  availableUntil DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  items OrderItem[]
+  items       OrderItem[]
+  inventory   Inventory[]
 
   @@unique([restaurantId, name])
-  @@index([restaurantId, category, available])
+  @@index([restaurantId, available, seasonal])
+  @@index([categoryId, sortOrder])
+}
+
+/// Article d'inventaire (ingrédient, consommable).
+model Inventory {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Lien optionnel vers un article du menu (pour déduction automatique).
+  menuItemId   String?
+  menuItem     MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name         String
+  /// Quantité en stock.
+  quantity     Float
+  /// Unité (kg, L, pièce, etc.).
+  unit         String
+  /// Seuil minimum avant alerte.
+  minQuantity  Float
+  /// Dernière mise à jour.
+  lastUpdated  DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  logs InventoryLog[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
+}
+
+/// Journal des mouvements de stock.
+model InventoryLog {
+  id          String   @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  /// Variation de quantité (positif = réappro, négatif = consommation).
+  change      Float
+  /// Raison du mouvement (ex: "commande CMD-ABCD", "réappro manuelle").
+  reason      String
+  createdAt   DateTime @default(now())
+
+  @@index([inventoryId, createdAt])
 }
 
 /// Commande passée par un client (à emporter).

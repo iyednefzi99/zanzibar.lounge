@@ -113,6 +113,18 @@ export default async function AdminPage({
           >
             Commandes
           </Link>
+          <Link
+            href={`/${locale}/admin/menu`}
+            className="text-sm text-shell-dim hover:text-brass"
+          >
+            Menu
+          </Link>
+          <Link
+            href={`/${locale}/admin/inventory`}
+            className="text-sm text-shell-dim hover:text-brass"
+          >
+            Inventaire
+          </Link>
           <p className="font-mono text-sm text-shell-dim">
             {longDate(serviceDate)}
           </p>
