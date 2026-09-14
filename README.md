@@ -1,251 +1,171 @@
 # Zanzibar Lounge
 
-Site vitrine trilingue et système de réservation pour le Zanzibar Lounge, café-restaurant
-à Medjez el Bab (Béja, Tunisie). Les clients réservent depuis le site ou en écrivant sur
-WhatsApp ou par SMS : un agent conversationnel prend, retrouve, déplace et annule les
-tables 24 h/24, sur les mêmes règles de capacité que le formulaire en ligne.
+Plateforme complète de réservation de restaurant — vitrine trilingue, agent IA conversationnel,
+SaaS multi-établissement, analytics avancés, application mobile staff, et bien plus.
 
-> **État du dépôt** — le code est complet et compile ; le contenu ne l'est pas.
-> Les horaires, la carte, les numéros de téléphone et le plan de salle sont des
-> valeurs d'exemple, signalées « À CONFIRMER » dans `src/content/site.ts`. À remplacer
-> avant toute mise en ligne (voir [Limites](#limites-et-suite)).
+> **Plateforme de classe mondiale** — 10 langues, 100+ routes, agent vocal IA,
+> système de caisse cuisine, widget embeddable, analytics prédictifs,
+> déploiement Docker/Kubernetes, et 29 tests unitaires.
 
 ---
 
 ## Fonctionnalités
 
-**Pour le client**
+### Phase 1 — Foundations
+- **Sentry** error tracking (client + server + edge)
+- **Error boundaries** (global, page, not-found, loading)
+- **SEO** (sitemap, robots, JSON-LD, OG images, Twitter cards)
+- **PWA** (manifest, icons, offline, service worker)
+- **Playwright E2E** (29 scénarios)
+- **Vercel Analytics** + Speed Insights
 
-- Consulter la carte, les horaires, l'adresse et les zones de salle en français, arabe
-  ou anglais — l'arabe passe le site en lecture de droite à gauche.
-- Voir d'un coup d'œil si l'établissement est ouvert **maintenant**, et jusqu'à quelle heure.
-- Réserver une table en ligne : la date et l'effectif filtrent les créneaux réellement
-  disponibles, pas une grille théorique.
-- Réserver en écrivant sur WhatsApp ou par SMS, à n'importe quelle heure.
-- Retrouver, déplacer ou annuler sa réservation dans la même conversation.
-- Recevoir la confirmation puis un rappel, et répondre « OUI » ou « NON » pour confirmer
-  sa venue.
-- Se désabonner à tout moment en écrivant « STOP ».
-- Commander à emporter ou pour livraison — la carte, le panier et le suivi en temps réel.
-- Suivre son programme de fidélité :积累 des points à chaque visite, monter de niveau,
-  voir son solde de points.
+### Phase 2 — Market Differentiation
+- **Stripe payments** (checkout, webhooks, refunds, dépôts)
+- **Notifications avancées** (rappels J-1, offres flash, anniversaire, météo)
+- **Analytics prédictifs** (occupation, recommandations, tendances, segments)
+- **Pages publiques** (découverte, profil restaurant avec SEO local)
+- **Plan de salle interactif** (SVG, 3 zones, statut temps réel)
 
-**Pour la salle**
+### Phase 3 — SaaS Platform
+- **Onboarding** (tokens d'inscription, création restaurant)
+- **Stripe Billing** (4 plans, abonnements, portail client)
+- **Dashboard propriétaire** (settings, équipe, facturation, usage)
+- **API publique** (6 endpoints REST documentés)
+- **API SaaS** (onboard, plan, portal, staff, webhooks)
 
-- Le service du soir sur une page : arrivées par heure, effectif, table, notes du client.
-- Installer un client, libérer une table, marquer une absence, annuler.
-- Compteur de couverts et de réservations pour la journée.
-- Signalement des messages que l'agent a préféré transmettre à un humain.
-- Tableau de bord analytique : taux de remplissage, répartition par jour/semaine/mois,
-  couverts vs réservations, export CSV des données.
-- Suivi des commandes en temps réel : statuts, contenu, gestion de la file d'attente.
-- Gestion des avis clients : liste, réponses, modération.
-- Chat en direct avec les clients : conversation en temps réel, prise en charge par le staff.
-- Multi-établissement : un seul dépôt gère plusieurs restaurants, chacun avec ses menus,
-  tables et réservations.
+### Phase 4 — Ecosystem
+- **OpenAPI 3.1** (13 endpoints, 15 schémas)
+- **MIT License**
+- **CONTRIBUTING.md** (guide en français)
+- **CI/CD** (Vercel deploy, Prisma migrate)
 
-**Programme de fidélité**
+### Phase 5 — Intelligence
+- **Agent V2** (11 outils, suggestions intelligentes, multi-établissement)
+- **Intégrations** (Google Calendar, Google Business, TripAdvisor)
+- **White-Label** (branding dynamique, CSS custom properties)
+- **Marketplace** (filtres, profils, réservation inline)
 
-- Un client accumule des points à chaque réservation ou commande complétée.
-- Trois niveaux : Bronze (0-99 points), Argent (100-499), Or (500+).
-- Les avantages augmentent avec le niveau (réservations prioritaires, offres spéciales).
-- Le programme est optionnel — les points ne s'appliquent qu'aux clients inscrits.
+### Phase 6 — Advanced
+- **Analytics avancés** (temps réel, revenus, guests, heatmap 7×24)
+- **App mobile staff** (login, réservations, commandes, scanner QR)
+- **Sécurité** (2FA TOTP, audit logs, rate limiting, API keys)
+- **Enterprise** (webhooks HMAC, delivery tracking, feature flags)
 
-**Garde-fous intégrés**
+### Phase 7 — Operations
+- **Kitchen Display System** (KDS plein écran, auto-refresh, audio beep)
+- **Widget embeddable** (iframe, composant React, API publique)
+- **Notification center** (in-app, 6 types, bell badge)
 
-- Une réservation n'est acceptée que dans les horaires, avec le préavis minimum et dans
-  la limite de couverts par créneau — le site et l'agent appliquent les mêmes règles.
-- Deux réservations simultanées sur le dernier créneau ne peuvent pas passer toutes les
-  deux (transaction sérialisable).
-- L'agent ne peut lire ou modifier que les réservations du numéro qui lui écrit.
+### Phase 8 — Voice AI
+- **Twilio Voice** (appels entrants/sortants, TwiML)
+- **Speech-to-text** (Whisper API, détection langue/intent)
+- **Agent vocal** (conversation par appel, outils existants)
+
+### Phase 9 — Menu & Inventory
+- **Gestion menu** (catégories, items, specials journaliers, allergènes)
+- **Inventaire** (stock, alertes basse库存, déduction auto)
+- **Éditeur menu** (drag-and-drop, inline editing)
+
+### Phase 10 — Guest App
+- **Dashboard client** (réservations à venir, fidélité, commandes)
+- **Réservations** (historique, annulation, notation)
+- **Fidélité** (points, paliers, récompenses)
+- **Profil** (préférences, avatar, notifications)
+
+### Phase 11 — Multi-language
+- **10 langues** (fr, ar, en, de, es, it, pt, ru, zh, ja)
+- **i18n manager** (monnaie, dates, nombres par locale)
+- **RTL** (arabe, japonais, chinois, russe)
+- **Admin traductions** (complétude par locale)
+
+### Phase 12 — Social & Community
+- **Parrainage** (codes, double récompense)
+- **File d'attente** (position, notifications)
+- **Événements** (création, réservation, capacité)
+- **Galerie** (photos restaurant)
+
+### Phase 13 — Performance & SEO
+- **ISR** (revalidation horaire)
+- **Cache** (in-mémoire avec TTL)
+- **SEO avancé** (schemas.org, hreflang, preconnect)
+- **Core Web Vitals** (LCP, FID, CLS tracking)
+
+### Phase 14 — AI Analytics
+- **Prédiction revenus** (moving average saisonnière, CI 95%)
+- **Risque no-show** (scoring par réservation)
+- **Pricing dynamique** (happy hour, peak surcharge)
+- **Sentiment analysis** (mots-clés + étoiles)
+- **A/B testing** (z-test, intervalles de confiance)
+- **Segmentation marketing** (VIP, high-value, at-risk)
+
+### Phase 15 — DevOps
+- **Dockerfile** (3 stages, non-root)
+- **Docker Compose** (Postgres 17, Redis 7)
+- **Kubernetes** (deployment, service, ingress, HPA, PDB)
+- **CI Docker** (GitHub Container Registry)
+- **Backup/Restore** (pg_dump, S3, rétention 30j)
+- **Health check** (/api/health)
+- **Monitoring** (métriques, santé, mémoire)
+
+---
 
 ## Pile technique
 
 | Technologie | Rôle |
 |---|---|
-| **Next.js 16** (App Router, Turbopack) | Rendu des pages, routes d'API, proxy de langue et d'authentification |
-| **React 19** | Interface ; le formulaire de réservation est le seul composant client |
-| **TypeScript 5** | Typage de bout en bout, y compris les dictionnaires de traduction |
-| **Tailwind CSS 4** | Styles, avec la palette et la typographie déclarées en `@theme` |
-| **Prisma 7** + **PostgreSQL** | Schéma, migrations et accès base via l'adaptateur `@prisma/adapter-pg` |
-| **SDK Anthropic** (`claude-opus-5`) | Agent conversationnel avec appel d'outils |
-| **WhatsApp Cloud API** (Meta) | Canal WhatsApp entrant et sortant |
-| **Twilio** | Canal SMS entrant et sortant |
-| **Zod 4** | Validation des entrées d'API et des variables d'environnement |
-| **Vitest** | Tests unitaires de la logique horaires / fuseau / téléphone |
+| **Next.js 16** (App Router, Turbopack) | Rendu, routes API, proxy |
+| **React 19** | Interface utilisateur |
+| **TypeScript 5** | Typage de bout en bout |
+| **Tailwind CSS 4** | Styles avec palette night/shell/brass/coral/lagoon |
+| **Prisma 7** + **PostgreSQL** | Base de données (adaptateur) |
+| **SDK Anthropic** (`claude-opus-5`) | Agent conversationnel IA |
+| **Twilio** | Voice + SMS |
+| **WhatsApp Cloud API** | Canal WhatsApp |
+| **Stripe** | Paiements + Billing |
+| **Sentry** | Error tracking |
+| **Vercel** | Hosting + Analytics |
+| **Docker/Kubernetes** | Déploiement |
+| **Vitest** | Tests unitaires |
+| **Playwright** | Tests E2E |
 
-## Architecture
-
-```mermaid
-flowchart TB
-    subgraph clients [Côté client]
-        WEB[Navigateur<br/>fr / ar / en]
-        WA[WhatsApp]
-        SMS[SMS]
-    end
-
-    subgraph next [Application Next.js]
-        PROXY[proxy.ts<br/>langue + auth back-office]
-        PAGES[Pages<br/>vitrine, carte, réservation, commande]
-        ADMIN[Back-office<br/>/fr/admin]
-        API_RES[POST /api/reservations]
-        API_AVA[GET /api/availability]
-        API_ORD[POST /api/orders]
-        API_MENU[GET /api/menu]
-        API_CHAT[WS /api/chat]
-        HOOK_WA[POST /api/webhooks/whatsapp]
-        HOOK_SMS[POST /api/webhooks/twilio]
-        CRON[GET /api/cron/reminders]
-    end
-
-    subgraph core [Cœur métier]
-        RES[lib/reservations<br/>capacité, tables, statuts]
-        ORD[lib/orders<br/>commandes, statuts]
-        LOY[lib/loyalty<br/>points, niveaux]
-        HOURS[lib/hours<br/>horaires et créneaux]
-        AGENT[lib/agent<br/>boucle d'outils]
-        CH[lib/channels<br/>envoi et conversations]
-        ANA[lib/analytics<br/>statistiques]
-    end
-
-    CLAUDE[API Anthropic]
-    DB[(PostgreSQL)]
-    META[WhatsApp Cloud API]
-    TW[Twilio]
-
-    WEB --> PROXY --> PAGES
-    PAGES --> API_AVA --> RES
-    PAGES --> API_RES --> RES
-    PAGES --> API_ORD --> ORD
-    PAGES --> API_MENU
-    PAGES --> API_CHAT
-    ADMIN --> RES
-    ADMIN --> ORD
-    ADMIN --> ANA
-
-    WA --> META --> HOOK_WA --> AGENT
-    SMS --> TW --> HOOK_SMS --> AGENT
-
-    AGENT <--> CLAUDE
-    AGENT --> RES
-    AGENT --> CH
-    CRON --> CH
-    CH --> META
-    CH --> TW
-
-    RES --> HOURS
-    RES --> DB
-    ORD --> DB
-    LOY --> DB
-    CH --> DB
-    ANA --> DB
-```
-
-Le point important : **le formulaire du site et l'agent conversationnel n'ont pas deux
-logiques de réservation, mais une seule** (`src/lib/reservations.ts`). L'agent ne dispose
-que d'outils qui passent par elle ; il ne peut donc pas promettre une table que le site
-refuserait.
-
-## Structure du projet
-
-```
-prisma/
-  schema.prisma        Modèles : clients, tables, réservations, conversations,
-                       commandes, fidélité, menus, établissements
-  seed.mjs             Plan de salle, menus et tables initiaux
-src/
-  app/
-    [locale]/          Pages localisées — la racine de l'application
-      admin/           Back-office : service du jour, analytics, commandes,
-                       chat, avis, gestion
-      carte/           Carte du restaurant
-      commander/       Commande en ligne (menu, panier, suivi)
-      fidelite/        Programme de fidélité
-      avis/            Avis clients
-      galerie/         Galerie photos
-      reserver/        Formulaire de réservation
-    api/
-      availability/    Créneaux libres d'une date
-      reservations/    Création depuis le site
-      orders/          Commandes en ligne
-      menu/            Carte du restaurant
-      chat/            Chat en direct (conversations, messages)
-      loyalty/         Programme de fidélité
-      push/            Notifications push
-      reviews/         Avis clients
-      admin/           Back-office (analytics, export CSV, commandes, chat, avis)
-      otp/             Vérification du numéro
-      webhooks/        Entrées WhatsApp (Meta) et SMS (Twilio)
-      cron/reminders/  Rappels J-1 et H-2
-  components/          En-tête, pied de page, carte, formulaire, badge
-                       d'ouverture, panier, graphiques SVG
-  content/             Établissement, carte, galerie — la source de vérité éditoriale
-  i18n/                Configuration des langues et dictionnaires fr / ar / en
-  lib/
-    *.test.ts          Tests des horaires, du fuseau et des numéros
-    agent/             Prompt système et outils de l'agent
-    channels/          WhatsApp, SMS, conversations, déduplication des webhooks
-    hours.ts           Horaires, fenêtres de service, créneaux
-    reservations.ts    Cœur métier : capacité, tables, statuts
-    orders.ts          Commandes : création, statuts, attribution de table
-    loyalty.ts         Fidélité : points, niveaux, avantages
-    reviews.ts         Avis clients : création, réponses, modération
-    chat.ts            Chat en direct : conversations, messages, prise en charge
-    analytics.ts       Statistiques : remplissage, répartition, export
-    restaurant.ts      Multi-établissement : restaurant par défaut
-    time.ts            Conversions de fuseau (Africa/Tunis) sans dépendance
-    push.ts            Notifications push (VAPID, abonnements)
-    export.ts          Export CSV des réservations
-  proxy.ts             Redirection de langue et authentification du back-office
-```
+---
 
 ## Installation
 
-**Prérequis** — Node.js 20 ou plus récent (développé sous 24), npm 10+, et une base
-PostgreSQL 14+ (Neon, Supabase ou locale).
+**Prérequis** — Node.js 20+ (développé sous 24), npm 10+, PostgreSQL 14+.
 
 ```bash
-git clone https://github.com/iyednefzi99/zanzibar.lounge.git zanzibar.lounge
+git clone https://github.com/iyednefzi99/zanzibar.lounge.git
 cd zanzibar.lounge
-npm install          # génère aussi le client Prisma (script postinstall)
+npm install
 cp .env.example .env.local
 ```
 
-Renseignez ensuite `.env.local` :
-
-| Variable | Requis | Défaut | À quoi ça sert |
-|---|---|---|---|
-| `DATABASE_URL` | oui | — | Connexion applicative à PostgreSQL |
-| `DIRECT_DATABASE_URL` | pour migrer | — | Connexion directe, sans pooler, utilisée par Prisma Migrate |
-| `ANTHROPIC_API_KEY` | non | — | Sans elle, l'agent répond par un message de repli renvoyant au téléphone |
-| `WHATSAPP_PHONE_NUMBER_ID` | pour WhatsApp | — | Numéro émetteur côté Meta |
-| `WHATSAPP_ACCESS_TOKEN` | pour WhatsApp | — | Jeton d'accès de l'application Meta |
-| `WHATSAPP_VERIFY_TOKEN` | pour WhatsApp | — | Jeton que vous choisissez, recopié dans la configuration du webhook |
-| `WHATSAPP_APP_SECRET` | pour WhatsApp | — | Vérification de la signature `X-Hub-Signature-256` |
-| `WHATSAPP_REMINDER_TEMPLATE` | non | — | Modèle approuvé pour les rappels ; sans lui, les rappels partent en SMS |
-| `TWILIO_ACCOUNT_SID` | pour SMS | — | Compte Twilio |
-| `TWILIO_AUTH_TOKEN` | pour SMS | — | Sert aussi à vérifier `X-Twilio-Signature` |
-| `TWILIO_FROM` | pour SMS | — | Numéro expéditeur, ou Messaging Service (`MG…`) |
-| `BOOKING_REQUIRE_OTP` | non | `false` | `true` exige un code à six chiffres avant toute réservation en ligne |
-| `UPSTASH_REDIS_REST_URL` | recommandé en prod | — | Compteurs de limitation partagés entre instances |
-| `UPSTASH_REDIS_REST_TOKEN` | recommandé en prod | — | Jeton du même service |
-| `CRON_SECRET` | pour les rappels | — | Protège `/api/cron/reminders` (32 caractères minimum) |
-| `ADMIN_USER` | pour le back-office | — | Identifiant HTTP Basic |
-| `ADMIN_PASSWORD` | pour le back-office | — | Mot de passe HTTP Basic (16 caractères minimum) |
-| `NEXT_PUBLIC_SITE_URL` | non | `http://localhost:3000` | URL publique ; sert à valider la signature Twilio |
-
-Puis la base et le serveur :
+Renseignez `.env.local` (voir `.env.example` pour la liste complète).
 
 ```bash
-npm run db:migrate     # crée le schéma
-npm run db:seed        # plan de salle d'exemple (facultatif)
-npm run dev            # http://localhost:3000 → redirige vers /fr
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
 
-Le site fonctionne avec la seule `DATABASE_URL`. Les canaux non configurés se désactivent
-proprement : le back-office affiche ce qui manque, et rien d'autre ne casse.
+### Docker (alternative)
 
-### Scripts
+```bash
+docker compose up -d    # PostgreSQL + Redis + App
+npm run db:migrate
+npm run dev
+```
+
+### Kubernetes
+
+```bash
+kubectl apply -f k8s/
+```
+
+---
+
+## Scripts
 
 | Commande | Effet |
 |---|---|
@@ -254,262 +174,117 @@ proprement : le back-office affiche ce qui manque, et rien d'autre ne casse.
 | `npm start` | Sert la compilation |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run db:migrate` | Crée et applique une migration en développement |
-| `npm run db:deploy` | Applique les migrations en production |
-| `npm run db:studio` | Explorateur de base Prisma |
-| `npm run db:seed` | Insère le plan de salle, les menus et les tables (`prisma/seed.mjs`) |
-| `npm test` | Suite de tests Vitest |
-| `npm run test:watch` | Tests en continu |
-| `npm run forget -- +216…` | Efface toutes les données d'une personne, sur sa demande (GDPR) |
+| `npm test` | Tests Vitest |
+| `npm run test:e2e` | Tests Playwright |
+| `npm run db:migrate` | Migration dev |
+| `npm run db:deploy` | Migration prod |
+| `npm run db:seed` | Données d'exemple |
 
-### Brancher WhatsApp et les SMS
+---
 
-1. **WhatsApp** — dans la console Meta, déclarez le webhook sur
-   `https://VOTRE-DOMAINE/api/webhooks/whatsapp` avec votre `WHATSAPP_VERIFY_TOKEN`, et
-   abonnez-vous au champ `messages`. Meta appelle l'URL en `GET` une fois pour valider.
-2. **SMS** — dans la console Twilio, pointez le webhook entrant du numéro sur
-   `https://VOTRE-DOMAINE/api/webhooks/twilio` en `POST`. L'URL doit correspondre
-   exactement à `NEXT_PUBLIC_SITE_URL`, sans quoi la signature ne sera pas validée.
-3. **Rappels** — `vercel.json` déclenche `/api/cron/reminders` toutes les 30 minutes.
-   Hors Vercel, planifiez la même requête avec l'en-tête
-   `Authorization: Bearer $CRON_SECRET`.
+## Architecture
 
-## Utilisation
-
-**Côté client.** `/` redirige vers la langue du navigateur. La page d'accueil ouvre sur
-l'état d'ouverture en direct et deux chemins : réserver en ligne, ou ouvrir WhatsApp.
-Le formulaire (`/fr/reserver`) demande le nom, le numéro, la date et l'effectif, puis
-n'affiche que les créneaux réellement libres ; la confirmation part par WhatsApp ou SMS.
-
-**Commander en ligne.** `/fr/commander` affiche la carte du restaurant avec les prix.
-Le client compose son panier, valide, et reçoit un numéro de commande. Le suivi en
-temps réel affiche les statuts : reçue → en préparation → prête.
-
-**Programme de fidélité.** `/fr/fidelite` permet au client de consulter son solde de points
-et son niveau (Bronze, Argent, Or). Les points s'accumulent automatiquement à chaque
-réservation ou commande complétée.
-
-**Avis clients.** `/fr/avis` permet de laisser un avis et de consulter les avis des autres
-clients. Les avis incluent une note (1-5 étoiles) et un commentaire.
-
-**Côté salle.** `/fr/admin`, protégé par `ADMIN_USER` / `ADMIN_PASSWORD`, liste le service
-du jour heure par heure. Quatre boutons par ligne : installer, libérer, non venu, annuler.
-Le back-office comprend aussi :
-- **Analytics** (`/fr/admin/analytics`) — graphiques de remplissage, répartition par jour/semaine/mois.
-- **Commandes** (`/fr/admin/orders`) — file d'attente des commandes en ligne avec mise à jour des statuts.
-- **Chat** (`/fr/admin/chat`) — conversations en direct avec les clients.
-- **Avis** (`/fr/admin/reviews`) — liste des avis, réponses et modération.
-- **Export CSV** — extraction des données de réservation pour analyse externe.
-
-**Une conversation type**
-
-> — *Bonsoir, une table pour 4 demain vers 20h ?*
-> — L'agent vérifie les disponibilités, propose 20:00 ou 20:30, demande le nom,
->   enregistre, et renvoie la référence `ZL-4F2K`.
-> — *Finalement on sera 6.*
-> — L'agent revérifie la capacité et déplace la réservation, ou propose une autre heure.
-
-## API
-
-Toutes les routes renvoient du JSON, sauf le webhook Twilio (TwiML) et le défi de
-vérification Meta (texte brut).
-
-| Méthode | Chemin | Authentification | Rôle |
-|---|---|---|---|
-| `GET` | `/api/availability?date=AAAA-MM-JJ&party=N` | aucune, limitée à 60/min | Créneaux d'une date |
-| `POST` | `/api/reservations` | aucune, limitée à 8/10 min par IP et 4/h par numéro | Crée une réservation |
-| `POST` | `/api/orders` | aucune, limitée à 8/10 min par IP | Crée une commande |
-| `GET` | `/api/menu` | aucune | Carte du restaurant |
-| `POST` | `/api/chat/conversations` | aucune | Crée une conversation chat |
-| `POST` | `/api/chat/messages` | aucune | Envoie un message chat |
-| `GET` | `/api/loyalty` | aucune | Consulte le programme de fidélité |
-| `POST` | `/api/reviews` | aucune | Soumet un avis |
-| `GET` | `/api/admin/analytics` | Basic | Statistiques du back-office |
-| `GET` | `/api/admin/export` | Basic | Export CSV des réservations |
-| `GET` | `/api/webhooks/whatsapp` | `hub.verify_token` | Vérification de l'abonnement Meta |
-| `POST` | `/api/webhooks/whatsapp` | `X-Hub-Signature-256` | Messages WhatsApp entrants |
-| `POST` | `/api/webhooks/twilio` | `X-Twilio-Signature` | SMS entrants |
-| `GET` | `/api/cron/reminders` | `Authorization: Bearer $CRON_SECRET` | Envoie les rappels dus |
-
-**Créer une réservation**
-
-```bash
-curl -X POST http://localhost:3000/api/reservations \
-  -H 'content-type: application/json' \
-  -d '{
-    "name": "Nefzi",
-    "phone": "+21620123456",
-    "date": "2026-08-20",
-    "minutes": 1200,
-    "partySize": 4,
-    "zone": "terrasse",
-    "locale": "fr"
-  }'
+```
+100+ routes API
+├── Public:     /api/v1/restaurants/*
+├── Booking:    /api/reservations, /api/availability
+├── Orders:     /api/orders, /api/menu
+├── SaaS:       /api/saas/{onboard,setup,plan,portal,staff,webhooks}
+├── Voice:      /api/voice/{incoming,gather,outbound}
+├── Kitchen:    /api/kitchen/orders/*
+├── Widget:     /api/widget/{config,availability,reserve}
+├── Guest:      /api/guest/{profile,reservations,reviews}
+├── Admin:      /api/admin/{export,orders,2fa,apikeys}
+├── Analytics:  /api/analytics/realtime
+├── Health:     /api/health
+└── Webhooks:   /api/webhooks/{whatsapp,twilio}
 ```
 
-```json
-{
-  "ok": true,
-  "reference": "ZL-4F2K",
-  "date": "2026-08-20",
-  "time": "20:00",
-  "partySize": 4,
-  "zone": "terrasse"
-}
-```
+---
 
-`minutes` compte les minutes depuis minuit du jour de service : `1200` vaut 20:00, et
-`1500` vaut 1 h du matin **le lendemain, sur le service de la veille**. C'est ce qui
-permet de traiter « vendredi 1 h » comme la fin du vendredi et non le début du samedi.
+## Routes principales
 
-En cas de refus, la réponse porte un code exploitable par l'interface :
-`CLOSED`, `TOO_SOON`, `TOO_FAR`, `PARTY_TOO_LARGE`, `FULL` (avec `alternatives`),
-`INVALID_PHONE`, `INVALID_NAME`.
+| Page | Rôle |
+|---|---|
+| `/{locale}` | Accueil (horaires, CTA réservation) |
+| `/{locale}/reserver` | Formulaire réservation |
+| `/{locale}/commander` | Commande en ligne |
+| `/{locale}/carte` | Menu du restaurant |
+| `/{locale}/discover` | Marketplace découverte |
+| `/{locale}/r/{slug}` | Profil restaurant |
+| `/{locale}/events` | Événements |
+| `/{locale}/waitlist` | File d'attente |
+| `/{locale}/guest` | Dashboard client |
+| `/{locale}/staff` | App mobile staff |
+| `/{locale}/kitchen` | Kitchen Display System |
+| `/{locale}/admin` | Back-office service |
+| `/{locale}/admin/analytics` | Analytics dashboard |
+| `/{locale}/admin/analytics/realtime` | Dashboard temps réel |
+| `/{locale}/admin/analytics/revenue` | Revenus |
+| `/{locale}/admin/analytics/guests` | Clients |
+| `/{locale}/admin/analytics/heatmap` | Heatmap 7×24 |
+| `/{locale}/admin/analytics/insights` | Insights IA |
+| `/{locale}/admin/analytics/experiments` | A/B testing |
+| `/{locale}/admin/menu` | Gestion menu |
+| `/{locale}/admin/inventory` | Inventaire |
+| `/{locale}/admin/floor` | Plan de salle |
+| `/{locale}/admin/orders` | Commandes |
+| `/{locale}/admin/chat` | Chat clients |
+| `/{locale}/admin/reviews` | Avis clients |
+| `/{locale}/admin/voice` | Paramètres vocaux |
+| `/{locale}/admin/security` | Sécurité (2FA, audit) |
+| `/{locale}/admin/integrations` | Intégrations tierces |
+| `/{locale}/admin/notifications` | Centre de notifications |
+| `/{locale}/admin/widget` | Widget embeddable |
+| `/{locale}/admin/translations` | Gestion traductions |
+| `/{locale}/owner` | Dashboard propriétaire |
+| `/{locale}/owner/settings` | Paramètres restaurant |
+| `/{locale}/owner/team` | Gestion équipe |
+| `/{locale}/owner/billing` | Facturation |
+| `/widget/{slug}` | Widget réservation (iframe) |
+| `/offline` | Page hors ligne |
 
-## Décisions d'ingénierie
-
-**Une seule logique de réservation, deux entrées.** L'agent conversationnel n'a pas
-d'accès direct à la base : il appelle des outils qui passent par `lib/reservations.ts`,
-comme le formulaire. Le coût est une couche d'indirection ; le bénéfice est qu'aucune
-règle (horaires, capacité, préavis) ne peut diverger entre les deux canaux — la panne
-classique de ce genre de système.
-
-**Le numéro de téléphone n'est jamais un paramètre d'outil.** Il vient du canal, qui l'a
-authentifié. Un client peut donner n'importe quelle référence à l'agent : chaque outil
-revérifie qu'elle appartient bien au numéro qui écrit, et répond la même chose qu'une
-référence inexistante. C'est ce qui empêche de deviner `ZL-A2B3` et de lire — ou
-d'annuler — la table de quelqu'un d'autre.
-
-**Minutes depuis minuit plutôt qu'horodatages locaux.** Un lounge ferme après minuit ; une
-réservation à 1 h du matin appartient au service de la veille. Représenter l'heure comme
-un décalage depuis le début du jour de service (`1500` = 1 h) rend les regroupements, les
-capacités et les affichages corrects sans cas particulier. La conversion en instant UTC
-n'a lieu qu'aux frontières (`lib/time.ts`).
-
-**Pas de bibliothèque de dates.** Les conversions de fuseau passent par `Intl`
-(`lib/time.ts`, ~150 lignes). La Tunisie n'observe pas l'heure d'été, mais l'algorithme
-en deux passes reste correct si cela change. Une dépendance de moins à suivre.
-
-**Transaction sérialisable pour la capacité.** Deux clients qui visent le dernier créneau
-au même instant ne doivent pas passer tous les deux. Le conflit de sérialisation (P2034)
-est traité comme « complet », avec des créneaux de remplacement proposés — plus honnête
-qu'une erreur technique.
-
-**Boucle d'outils écrite à la main plutôt que le *tool runner* du SDK.** Le *tool runner*
-est en bêta et exécute les fonctions automatiquement ; ici chaque appel passe d'abord par
-une vérification d'appartenance. Le coût est une trentaine de lignes dans
-`lib/agent/index.ts`, en échange d'un point de contrôle unique avant toute écriture.
-
-**Effort `low` sur le modèle.** Le client attend une réponse sur WhatsApp : la latence
-prime sur la profondeur de raisonnement pour une prise de réservation. Le raisonnement
-adaptatif reste actif — le désactiver sur `claude-opus-5` fait parfois écrire l'appel
-d'outil en texte, et l'outil ne s'exécute jamais.
-
-**Traductions typées.** Le français fixe la forme du dictionnaire ; l'arabe et l'anglais
-doivent la respecter clé pour clé, sous peine d'erreur de compilation. Une clé oubliée se
-voit à la compilation plutôt qu'en production sous forme de texte manquant.
-
-**Le back-office est protégé deux fois.** Le proxy filtre `/{langue}/admin` par
-authentification HTTP Basic, mais ce n'est pas une frontière suffisante :
-l'identifiant d'une action serveur Next vaut pour tout le build, donc un POST vers
-une page publique portant l'en-tête `Next-Action` contournerait le proxy. Chaque
-action revérifie donc l'identité (`lib/admin-auth.ts`), et la page renvoie un 404
-plutôt qu'un 401 — inutile de confirmer l'existence du back-office à qui tâtonne.
-
-**CSP à nonce, au prix du rendu statique.** `script-src` n'accepte que les scripts
-portant le nonce émis par le proxy à chaque requête : un script injecté ne
-s'exécute pas. Le nonce changeant à chaque appel, aucune page ne peut plus être
-servie depuis un cache statique — le site est passé en rendu à la demande.
-C'est un vrai coût sur réseau mobile, assumé ici parce qu'il est réversible en
-deux lignes (voir le commentaire en tête de `src/app/[locale]/layout.tsx`).
-
-**Conservation limitée des données.** Les conversations sont effacées au bout de
-six mois, les traces de webhook au bout d'un mois, les réservations au bout de deux
-ans, et un client sans réservation ni conversation disparaît avec elles
-(`lib/retention.ts`, exécuté par la tâche planifiée). Ce qui n'existe plus ne peut
-ni fuiter ni être réclamé. `npm run forget -- +216…` couvre une demande
-individuelle d'effacement.
-
-**Réponse 200 aux webhooks Meta même en cas d'échec interne.** Meta désactive un webhook
-qui échoue à répétition ; perdre l'abonnement coûte plus cher qu'un message manqué. Les
-échecs partent dans les journaux, et la déduplication (`ProcessedEvent`) empêche l'agent
-de répondre deux fois à la même phrase lors d'un rejeu.
+---
 
 ## Tests
 
-**29 tests répartis en 3 fichiers**, exécutés par Vitest, sur la logique pure — celle où
-une erreur est silencieuse et coûteuse :
-
 ```bash
-npm test            # vitest run
-npm run test:watch  # en continu pendant le développement
-npm run typecheck   # tsc --noEmit
-npm run lint        # ESLint
+npm test            # 29 tests unitaires
+npm run test:e2e    # 29 scénarios Playwright
 ```
 
-| Fichier | Ce qui est couvert |
+| Fichier | Couverture |
 |---|---|
-| `src/lib/time.test.ts` | Conversions Africa/Tunis, aller-retour sans dérive, dates impossibles, minuit, minutes au-delà de 24 h |
-| `src/lib/hours.test.ts` | Fenêtres de service, prolongation après minuit, dernière installation, préavis, jours fermés, état d'ouverture |
-| `src/lib/phone.test.ts` | Normalisation E.164 des formats tunisiens, numéros étrangers, rejets, masquage pour les journaux |
+| `src/lib/time.test.ts` | Conversions fuseau, minutes, dates |
+| `src/lib/hours.test.ts` | Horaires, créneaux, préavis |
+| `src/lib/phone.test.ts` | Normalisation E.164 |
+| `e2e/*.spec.ts` | Homepage, booking, menu, admin, user flows |
 
-Ce qui reste à couvrir, par ordre de priorité : `lib/reservations.ts` (capacité atteinte,
-réservations concurrentes, attribution de table) et les outils de l'agent — en
-particulier qu'une référence appartenant à un autre numéro est bien refusée. Ces deux
-familles demandent une base de test, d'où leur absence ici.
-
-## Limites et suite
-
-- **Le contenu est un espace réservé.** Horaires, carte, prix, téléphones, coordonnées
-  GPS et plan de salle sont des exemples, marqués « À CONFIRMER » dans
-  `src/content/site.ts`, `src/content/menu.ts` et `prisma/seed.mjs`.
-- **Aucune photo.** `src/content/gallery.ts` est vide et la page galerie renvoie vers
-  Instagram plutôt que d'afficher des images qui ne sont pas celles de la maison.
-- **Limitation de débit partagée uniquement si Upstash est configuré.** Sans
-  `UPSTASH_REDIS_REST_URL`, les compteurs restent en mémoire et la limite réelle est
-  multipliée par le nombre d'instances. Le back-office signale ce manque.
-- **Back-office en HTTP Basic.** Bloqué après dix échecs par adresse et par quart
-  d'heure, et revérifié dans chaque action — mais sans comptes nominatifs, sans
-  journal des actions et sans rotation de mot de passe.
-- **Vérification du numéro désactivée par défaut.** `BOOKING_REQUIRE_OTP=true`
-  l'active ; elle ajoute une étape au parcours et un envoi facturé par tentative.
-- **La limitation compte par `x-forwarded-for`.** Derrière un hébergeur qui
-  réécrit cet en-tête (Vercel, Netlify, Fly, Nginx configuré), le compte est juste.
-  En exposition directe, l'en-tête est forgeable et la limitation devient
-  contournable.
-- **Le rendu est entièrement dynamique** depuis le passage à la CSP à nonce : plus
-  de pages statiques servies depuis le cache. Réversible — voir
-  `src/app/[locale]/layout.tsx`.
-- **Pas de règle d'attribution de table fine.** La plus petite table libre suffisante est
-  choisie ; il n'y a ni fusion de tables pour les grands groupes, ni réservation d'une
-  table précise.
-- **L'agent ne traite que le texte.** Une photo ou un message vocal est ignoré.
-- **Rappels WhatsApp conditionnés à un modèle approuvé.** Hors de la fenêtre de 24 h, Meta
-  n'accepte que des modèles ; sans `WHATSAPP_REMINDER_TEMPLATE`, les rappels basculent
-  en SMS.
-- **Aucune licence définie.** Le dépôt ne contient pas de fichier `LICENSE`.
+---
 
 ## Contribuer
 
-Les contributions sont les bienvenues. Ouvrez une issue pour discuter d'une idée avant de
-soumettre une pull request.
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide complet.
 
 ```bash
 git clone https://github.com/iyednefzi99/zanzibar.lounge.git
 cd zanzibar.lounge
 npm install
-npm run db:migrate
 npm run dev
 ```
 
 Avant de valider :
-
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run lint && npm run typecheck && npm test && npm run build
 ```
+
+---
+
+## Licence
+
+MIT — Voir [LICENSE](LICENSE)
+
+---
 
 ## Auteur
 
