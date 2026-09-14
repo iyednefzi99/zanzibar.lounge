@@ -162,8 +162,14 @@ const ru: Dictionary = {
 
   discover: {
     title: "Откройте наши рестораны",
-    description:
-      "Найдите ближайший к вам Занзибар Лаунж.",
+    description: "Найдите идеальный ресторан рядом с вами.",
+    search: "Поиск ресторана или кухни...",
+    filters: { cuisine: "Тип кухни", price: "Бюджет", rating: "Минимальный рейтинг", openNow: "Открыто сейчас", sort: "Сортировать по" },
+    sort: { relevance: "Релевантность", rating: "По рейтингу", price: "По цене", distance: "По расстоянию", popularity: "По популярности", name: "По имени", newest: "Сначала новые" },
+    cards: { reviews: "отзывов", book: "Забронировать", open: "Открыто", closed: "Закрыто", featured: "Популярное" },
+    empty: "Нет ресторанов, соответствующих вашим критериям.",
+    loading: "Поиск...",
+    pagination: { previous: "Назад", next: "Далее" },
   },
 
   footer: {

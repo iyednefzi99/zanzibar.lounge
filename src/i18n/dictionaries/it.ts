@@ -162,8 +162,14 @@ const it: Dictionary = {
 
   discover: {
     title: "Scopri i nostri ristoranti",
-    description:
-      "Trova il Zanzibar Lounge più vicino a te.",
+    description: "Trova il ristorante perfetto vicino a te.",
+    search: "Cerca ristorante o cucina...",
+    filters: { cuisine: "Tipo di cucina", price: "Budget", rating: "Valutazione minima", openNow: "Aperto ora", sort: "Ordina per" },
+    sort: { relevance: "Rilevanza", rating: "Più votati", price: "Prezzo", distance: "Distanza", popularity: "Popolarità", name: "Nome A-Z", newest: "Più recente" },
+    cards: { reviews: "recensioni", book: "Prenota", open: "Aperto", closed: "Chiuso", featured: "Popolare" },
+    empty: "Nessun ristorante corrisponde ai tuoi criteri.",
+    loading: "Ricerca in corso...",
+    pagination: { previous: "Precedente", next: "Successivo" },
   },
 
   footer: {

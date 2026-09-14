@@ -162,8 +162,14 @@ const zh: Dictionary = {
 
   discover: {
     title: "发现我们的餐厅",
-    description:
-      "找到离您最近的桑给巴尔休息室。",
+    description: "找到您附近的完美餐厅。",
+    search: "搜索餐厅或菜系...",
+    filters: { cuisine: "菜系类型", price: "预算", rating: "最低评分", openNow: "现在营业", sort: "排序方式" },
+    sort: { relevance: "相关性", rating: "评分最高", price: "价格", distance: "距离", popularity: "最受欢迎", name: "名称 A-Z", newest: "最新" },
+    cards: { reviews: "条评论", book: "预订", open: "营业中", closed: "已关闭", featured: "热门" },
+    empty: "没有符合条件的餐厅。",
+    loading: "搜索中...",
+    pagination: { previous: "上一页", next: "下一页" },
   },
 
   footer: {

@@ -161,7 +161,37 @@ const ar: Dictionary = {
   discover: {
     title: "اكتشف مطاعمنا",
     description:
-      "اعثر على أقرب فرع لزنجبار لاونج من موقعك.",
+      "اعثر على المطعم المثالي بالقرب منك.",
+    search: "ابحث عن مطعم أو نوع مطبخ...",
+    filters: {
+      cuisine: "نوع المطبخ",
+      price: "الميزانية",
+      rating: "أقل تقييم",
+      openNow: "مفتوح الآن",
+      sort: "ترتيب حسب",
+    },
+    sort: {
+      relevance: "الصلة",
+      rating: "الأعلى تقييماً",
+      price: "السعر",
+      distance: "المسافة",
+      popularity: "الشعبية",
+      name: "الاسم أ-ي",
+      newest: "الأحدث",
+    },
+    cards: {
+      reviews: "تقييمات",
+      book: "احجز",
+      open: "مفتوح",
+      closed: "مغلق",
+      featured: "شعبية",
+    },
+    empty: "لا يوجد مطاعم تطابق معاييرك.",
+    loading: "جارٍ البحث...",
+    pagination: {
+      previous: "السابق",
+      next: "التالي",
+    },
   },
 
   footer: {

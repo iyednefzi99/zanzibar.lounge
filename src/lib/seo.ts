@@ -202,6 +202,78 @@ export function generateReservationSchema(
   };
 }
 
+/**
+ * Generate a Restaurant schema for a specific restaurant (discovery page).
+ */
+export function generateRestaurantSchema(restaurant: {
+  name: string;
+  slug: string;
+  address?: string | null;
+  phone?: string | null;
+  description?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  cuisineTypes?: string[];
+  priceRange?: number;
+  rating?: number;
+  reviewCount?: number;
+}): Record<string, unknown> {
+  const base = baseUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    name: restaurant.name,
+    description: restaurant.description ?? `${restaurant.name} — Restaurant`,
+    url: `${base}/r/${restaurant.slug}`,
+    telephone: restaurant.phone ?? undefined,
+    address: restaurant.address
+      ? {
+          "@type": "PostalAddress",
+          streetAddress: restaurant.address,
+          addressCountry: "TN",
+        }
+      : undefined,
+    geo: restaurant.latitude && restaurant.longitude
+      ? {
+          "@type": "GeoCoordinates",
+          latitude: restaurant.latitude,
+          longitude: restaurant.longitude,
+        }
+      : undefined,
+    priceRange: "$".repeat(restaurant.priceRange ?? 2),
+    servesCuisine: restaurant.cuisineTypes ?? ["Tunisian"],
+    acceptsReservations: "True",
+    aggregateRating:
+      restaurant.reviewCount && restaurant.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: restaurant.rating,
+            reviewCount: restaurant.reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
+  };
+}
+
+/**
+ * Generate a BreadcrumbList schema.
+ */
+export function generateBreadcrumbSchema(
+  items: Array<{ name: string; url: string }>,
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: `${baseUrl()}${item.url}`,
+    })),
+  };
+}
+
 // --- Helpers ---
 
 function capitalize(str: string): string {

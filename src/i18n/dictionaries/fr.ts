@@ -161,7 +161,37 @@ const fr = {
   discover: {
     title: "Découvrir nos restaurants",
     description:
-      "Trouvez le Zanzibar Lounge le plus proche de vous.",
+      "Trouvez le restaurant parfait près de chez vous.",
+    search: "Rechercher un restaurant ou une cuisine...",
+    filters: {
+      cuisine: "Type de cuisine",
+      price: "Budget",
+      rating: "Note minimum",
+      openNow: "Ouvert maintenant",
+      sort: "Trier par",
+    },
+    sort: {
+      relevance: "Pertinence",
+      rating: "Meilleures notes",
+      price: "Prix",
+      distance: "Distance",
+      popularity: "Popularité",
+      name: "Nom A-Z",
+      newest: "Plus récent",
+    },
+    cards: {
+      reviews: "avis",
+      book: "Réserver",
+      open: "Ouvert",
+      closed: "Fermé",
+      featured: "Populaire",
+    },
+    empty: "Aucun restaurant ne correspond à vos critères.",
+    loading: "Recherche en cours...",
+    pagination: {
+      previous: "Précédent",
+      next: "Suivant",
+    },
   },
 
   footer: {

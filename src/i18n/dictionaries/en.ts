@@ -162,7 +162,37 @@ const en: Dictionary = {
   discover: {
     title: "Discover our restaurants",
     description:
-      "Find the Zanzibar Lounge location closest to you.",
+      "Find the perfect restaurant near you.",
+    search: "Search for a restaurant or cuisine...",
+    filters: {
+      cuisine: "Cuisine type",
+      price: "Budget",
+      rating: "Minimum rating",
+      openNow: "Open now",
+      sort: "Sort by",
+    },
+    sort: {
+      relevance: "Relevance",
+      rating: "Highest rated",
+      price: "Price",
+      distance: "Distance",
+      popularity: "Popularity",
+      name: "Name A-Z",
+      newest: "Newest",
+    },
+    cards: {
+      reviews: "reviews",
+      book: "Book",
+      open: "Open",
+      closed: "Closed",
+      featured: "Popular",
+    },
+    empty: "No restaurants match your criteria.",
+    loading: "Searching...",
+    pagination: {
+      previous: "Previous",
+      next: "Next",
+    },
   },
 
   footer: {

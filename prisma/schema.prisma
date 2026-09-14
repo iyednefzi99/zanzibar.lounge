@@ -93,6 +93,17 @@ model Restaurant {
   /// Paramètres d'intégrations (JSON : { googleCalendar: bool, googleBusiness: bool, tripadvisor: bool }).
   integrationSettings Json?
 
+  // ─── Discovery / Marketplace fields ─────────────────────────────────
+  description     String?
+  cuisineTypes    String[]
+  priceRange      Int      @default(2) // 1-4
+  latitude        Float?
+  longitude       Float?
+  coverImage      String?
+  galleryImages   String[]
+  featured        Boolean  @default(false)
+  featuredAt      DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -162,8 +162,14 @@ const ja: Dictionary = {
 
   discover: {
     title: "レストランを探す",
-    description:
-      "お近くのザンジバーラウンジをお探しください。",
+    description: "お近くの完璧なレストランを見つけましょう。",
+    search: "レストランや料理を検索...",
+    filters: { cuisine: "料理の種類", price: "予算", rating: "最低評価", openNow: "営業中", sort: "並べ替え" },
+    sort: { relevance: "関連性", rating: "評価順", price: "価格順", distance: "距離順", popularity: "人気順", name: "名前順", newest: "新しい順" },
+    cards: { reviews: "件のレビュー", book: "予約", open: "営業中", closed: "閉店", featured: "人気" },
+    empty: "条件に合うレストランがありません。",
+    loading: "検索中...",
+    pagination: { previous: "前へ", next: "次へ" },
   },
 
   footer: {
