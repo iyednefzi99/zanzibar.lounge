@@ -3,10 +3,23 @@ import { notFound } from "next/navigation";
 
 import { isLocale } from "@/i18n/config";
 import { isAdmin } from "@/lib/admin-auth";
+import { db } from "@/lib/db";
 import { env, hasSms } from "@/lib/env";
 import { site } from "@/content/site";
+import { getCallAnalytics } from "@/lib/voice/call-analytics";
 
 export const dynamic = "force-dynamic";
+
+async function getRestaurantId() {
+  return process.env.OWNER_RESTAURANT_SLUG
+    ? (
+        await db.restaurant.findUnique({
+          where: { slug: process.env.OWNER_RESTAURANT_SLUG },
+          select: { id: true },
+        })
+      )?.id ?? null
+    : null;
+}
 
 const LANGUAGES = [
   { code: "fr", label: "Français", voice: "Polly.Mathieu" },
@@ -37,6 +50,9 @@ export default async function AdminVoicePage({
 
   const configured = hasSms;
   const baseUrl = env.NEXT_PUBLIC_SITE_URL;
+
+  const restaurantId = await getRestaurantId();
+  const analytics = restaurantId ? await getCallAnalytics(restaurantId) : null;
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
@@ -266,19 +282,174 @@ export default async function AdminVoicePage({
         </form>
       </section>
 
-      {/* Call logs placeholder */}
+      {/* Voice Commerce — Call Analytics */}
       <section className="mt-10">
-        <h2 className="font-display text-2xl text-shell">Journal des appels</h2>
+        <h2 className="font-display text-2xl text-shell">Call Analytics</h2>
         <p className="mt-2 text-sm text-shell-dim">
-          Les appels vocaux sont tracés dans les logs du serveur. Consultez
-          les logs de l&apos;application pour voir l&apos;historique des appels.
+          Statistiques des appels vocaux des 30 derniers jours.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-3xl text-brass">
+              {analytics?.totalCalls ?? 0}
+            </p>
+            <p className="mt-1 text-xs text-shell-dim">Appels totaux</p>
+          </div>
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-3xl text-lagoon">
+              {analytics?.aiHandled ?? 0}
+            </p>
+            <p className="mt-1 text-xs text-shell-dim">Gérés par IA</p>
+          </div>
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-3xl text-shell">
+              {analytics?.avgDuration ?? 0}s
+            </p>
+            <p className="mt-1 text-xs text-shell-dim">Durée moyenne</p>
+          </div>
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-3xl text-coral">
+              {analytics?.staffHandled ?? 0}
+            </p>
+            <p className="mt-1 text-xs text-shell-dim">Transférés au staff</p>
+          </div>
+        </div>
+
+        {/* Call breakdown */}
+        {analytics && analytics.totalCalls > 0 && (
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+              <p className="font-display text-2xl text-brass">
+                {analytics.inboundCalls}
+              </p>
+              <p className="mt-1 text-xs text-shell-dim">Entrants</p>
+            </div>
+            <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+              <p className="font-display text-2xl text-brass">
+                {analytics.outboundCalls}
+              </p>
+              <p className="mt-1 text-xs text-shell-dim">Sortants</p>
+            </div>
+            <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+              <p className="font-display text-2xl text-shell">
+                {analytics.avgSentiment > 0 ? "+" : ""}
+                {analytics.avgSentiment}
+              </p>
+              <p className="mt-1 text-xs text-shell-dim">Sentiment moyen</p>
+            </div>
+          </div>
+        )}
+
+        {/* Recent calls table */}
+        {analytics && analytics.calls.length > 0 && (
+          <div className="mt-6 overflow-x-auto rounded-xl border border-shell/12 bg-deep/40">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-shell/12 text-xs text-shell-dim">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Direction</th>
+                  <th className="px-4 py-3">Numéro</th>
+                  <th className="px-4 py-3">Durée</th>
+                  <th className="px-4 py-3">Géré par</th>
+                  <th className="px-4 py-3">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-shell/8">
+                {analytics.calls.slice(0, 20).map((call) => (
+                  <tr key={call.id} className="text-shell hover:bg-deep/60">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs">
+                      {new Date(call.createdAt).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
+                          call.direction === "inbound"
+                            ? "bg-lagoon/15 text-lagoon"
+                            : "bg-brass/15 text-brass"
+                        }`}
+                      >
+                        {call.direction === "inbound" ? "Entrant" : "Sortant"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                      {call.direction === "inbound"
+                        ? call.callerNumber
+                        : call.calledNumber ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs">{call.duration}s</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
+                          call.handledBy === "ai"
+                            ? "bg-lagoon/15 text-lagoon"
+                            : "bg-shell/15 text-shell"
+                        }`}
+                      >
+                        {call.handledBy === "ai" ? "IA" : "Staff"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
+                          call.status === "completed"
+                            ? "bg-lagoon/15 text-lagoon"
+                            : call.status === "missed"
+                              ? "bg-coral/15 text-coral"
+                              : "bg-shell/15 text-shell"
+                        }`}
+                      >
+                        {call.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Voice Orders */}
+      <section className="mt-10">
+        <h2 className="font-display text-2xl text-shell">Voice Orders</h2>
+        <p className="mt-2 text-sm text-shell-dim">
+          Commandes passées par appel vocal.
         </p>
 
         <div className="mt-6 rounded-xl border border-shell/12 bg-deep/40 p-8 text-center">
           <p className="text-sm text-shell-dim">
-            Les journaux d&apos;appels apparaîtront ici une fois que le canal
-            vocal sera configuré et que des appels seront traités.
+            Les commandes vocales apparaîtront ici une fois que des appels
+            avec commandes seront traités.
           </p>
+        </div>
+      </section>
+
+      {/* Upsell Stats */}
+      <section className="mt-10">
+        <h2 className="font-display text-2xl text-shell">Upsell Suggestions</h2>
+        <p className="mt-2 text-sm text-shell-dim">
+          Suggestions d&apos;upsell contextuelles générées pendant les appels.
+        </p>
+
+        <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-2xl text-brass">ordering</p>
+            <p className="mt-1 text-xs text-shell-dim">En commande</p>
+          </div>
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-2xl text-brass">seated</p>
+            <p className="mt-1 text-xs text-shell-dim">À table</p>
+          </div>
+          <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
+            <p className="font-display text-2xl text-brass">post_meal</p>
+            <p className="mt-1 text-xs text-shell-dim">Après le repas</p>
+          </div>
         </div>
       </section>
     </div>

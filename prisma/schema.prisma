@@ -136,6 +136,9 @@ model Restaurant {
   timeEntries      TimeEntry[]
   preAuthorizations PreAuthorization[]
   billSplits       BillSplit[]
+  callLogs         CallLog[]
+  voiceOrders      VoiceOrder[]
+  upsellSuggestions UpsellSuggestion[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -1338,4 +1341,60 @@ model MenuEngineering {
 
   @@unique([restaurantId, menuItemId, period, periodType])
   @@index([restaurantId, period])
+}
+
+// ─── Voice Commerce ─────────────────────────────────────────────
+
+/// Appels téléphoniques reçus / passés.
+model CallLog {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  direction     String   // inbound | outbound
+  callerNumber  String
+  calledNumber  String?
+  duration      Int      @default(0) // seconds
+  status        String   @default("completed") // completed | missed | failed
+  transcript    String?
+  summary       String?
+  sentiment     Float?   // -1 to 1
+  handledBy     String   @default("ai") // ai | staff
+  staffId       String?
+  metadata      Json?    @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, direction])
+}
+
+/// Commandes vocales en restaurant.
+model VoiceOrder {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  reservationId String?
+  tableNumber   String?
+  items         Json     // [{name, quantity, price, modifiers}]
+  totalCents    Int      @default(0)
+  status        String   @default("pending") // pending | confirmed | sent_to_kitchen | completed
+  language      String   @default("fr")
+  transcript    String?
+  kdsSentAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, status])
+}
+
+/// Suggestions d'upsell contextuelles.
+model UpsellSuggestion {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  reservationId String?
+  context       String   // ordering | seated | post_meal
+  suggestion    String   // "Try our dessert of the day"
+  reason        String   // complementary | seasonal | popular | high_margin
+  accepted      Boolean?
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
 }
