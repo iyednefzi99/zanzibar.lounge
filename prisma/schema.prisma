@@ -1210,3 +1210,65 @@ model BillSplitItem {
 
   @@index([splitId])
 }
+
+// ─── AI Brain ──────────────────────────────────────────────────────
+
+/// Configuration IA du restaurant (provider, modèle, seuils).
+model AiConfig {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  provider      String   @default("anthropic") // anthropic | openai | local
+  model         String   @default("claude-sonnet-4-20250514")
+  maxTokens     Int      @default(1024)
+  temperature   Float    @default(0.7)
+  dailyBudgetCents Int   @default(5000) // 50 USD
+  monthlyBudgetCents Int @default(100000) // 1000 USD
+  enabled       Boolean  @default(true)
+  fallbackProvider String? // provider de secours
+  fallbackModel    String?
+  metadata      Json?    @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([restaurantId])
+  @@index([restaurantId])
+}
+
+/// Journal d'audit de toutes les requêtes IA.
+model AiAuditLog {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  provider      String   // anthropic | openai
+  model         String
+  operation     String   // chat | voice | menu_gen | review_reply | ...
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  costCents     Int      @default(0)
+  latencyMs     Int      @default(0)
+  success       Boolean  @default(true)
+  errorMessage  String?
+  metadata      Json?    @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, provider])
+  @@index([restaurantId, operation])
+}
+
+/// Suivi des coûts IA agrégés par jour/provider/modèle.
+model AiCostEntry {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  provider      String
+  model         String
+  date          DateTime @db.Date
+  requestCount  Int      @default(0)
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  costCents     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([restaurantId, provider, model, date])
+  @@index([restaurantId, date])
+}
