@@ -128,6 +128,14 @@ model Restaurant {
   events           Event[]
   gallery          Gallery[]
   posIntegrations  PosIntegration[]
+  guestTags        GuestTag[]
+  guestNotes       GuestNote[]
+  campaigns        Campaign[]
+  shifts           Shift[]
+  availabilities   StaffAvailability[]
+  timeEntries      TimeEntry[]
+  preAuthorizations PreAuthorization[]
+  billSplits       BillSplit[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -158,6 +166,10 @@ model Guest {
   referralsReceived Referral[] @relation("ReferralsReceived")
   waitlist          Waitlist[]
   eventBookings     EventBooking[]
+  tags              GuestTagAssignment[]
+  notes             GuestNote[]
+  campaignDeliveries CampaignDelivery[]
+  preAuthorizations PreAuthorization[]
 
   @@index([createdAt])
 }
@@ -242,6 +254,8 @@ model Reservation {
 
   reviews     Review[]
   payments    Payment[]
+  preAuthorizations PreAuthorization[]
+  billSplits  BillSplit[]
 
   @@index([serviceDate, status])
   @@index([startsAt, status])
@@ -610,6 +624,10 @@ model Staff {
 
   sessions StaffSession[]
   notifications Notification[]
+  shifts         Shift[]
+  availabilities StaffAvailability[]
+  timeEntries    TimeEntry[]
+  authoredNotes  GuestNote[]
 
   @@unique([restaurantId, email])
   @@index([restaurantId])
@@ -968,4 +986,227 @@ model PosSyncLog {
   createdAt     DateTime @default(now())
 
   @@index([integrationId, createdAt])
+}
+
+// ─── CRM & Marketing ───────────────────────────────────────────────
+
+/// Tag personnalisé pour les clients.
+model GuestTag {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  color        String   @default("#C9A96E")
+  createdAt    DateTime @default(now())
+
+  assignments GuestTagAssignment[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
+}
+
+/// Assignment d'un tag à un client.
+model GuestTagAssignment {
+  id         String    @id @default(cuid())
+  guestId    String
+  guest      Guest     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        GuestTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([guestId, tagId])
+  @@index([guestId])
+  @@index([tagId])
+}
+
+/// Note interne du staff sur un client.
+model GuestNote {
+  id           String   @id @default(cuid())
+  guestId      String
+  guest        Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  staffId      String
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([guestId])
+  @@index([restaurantId])
+}
+
+/// Campagne marketing.
+model Campaign {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name            String
+  /// Type : "email" | "sms" | "push" | "whatsapp"
+  type            String
+  subject         String?
+  /// Contenu HTML ou texte.
+  content         String
+  /// Statut : "draft" | "scheduled" | "sending" | "sent" | "paused"
+  status          String   @default("draft")
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  sentCount       Int      @default(0)
+  openCount       Int      @default(0)
+  clickCount      Int      @default(0)
+  conversionCount Int      @default(0)
+  /// Filtres cible (JSON).
+  targetSegment   Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deliveries CampaignDelivery[]
+
+  @@index([restaurantId, status])
+  @@index([restaurantId, createdAt])
+}
+
+/// Livraison d'une campagne à un client.
+model CampaignDelivery {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  /// Canal : "email" | "sms" | "push" | "whatsapp"
+  channel    String
+  /// Statut : "pending" | "sent" | "delivered" | "opened" | "clicked" | "failed"
+  status     String   @default("pending")
+  sentAt     DateTime?
+  deliveredAt DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  errorMessage String?
+  createdAt  DateTime @default(now())
+
+  @@index([campaignId, status])
+  @@index([guestId])
+  @@index([campaignId, createdAt])
+}
+
+// ─── Scheduling / Staff ────────────────────────────────────────────
+
+/// Shift de travail.
+model Shift {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  staffId      String
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date         DateTime @db.Date
+  startTime    String
+  endTime      String
+  /// Rôle : "SERVER" | "HOST" | "KITCHEN" | "BAR"
+  role         String   @default("SERVER")
+  /// Statut : "scheduled" | "confirmed" | "completed" | "cancelled"
+  status       String   @default("scheduled")
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId, date])
+  @@index([staffId, date])
+}
+
+/// Disponibilité d'un membre du staff.
+model StaffAvailability {
+  id           String   @id @default(cuid())
+  staffId      String
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Jour de la semaine (0=Dim, 6=Sam)
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([staffId, dayOfWeek])
+}
+
+/// Pointage (entrée/sortie).
+model TimeEntry {
+  id           String   @id @default(cuid())
+  staffId      String
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  clockIn      DateTime
+  clockOut     DateTime?
+  breakMinutes Int      @default(0)
+  totalHours   Float?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([staffId, createdAt])
+  @@index([restaurantId, clockIn])
+}
+
+// ─── Payments Advanced ─────────────────────────────────────────────
+
+/// Pré-autorisation Stripe.
+model PreAuthorization {
+  id                     String   @id @default(cuid())
+  reservationId          String
+  reservation            Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  guestId                String
+  guest                  Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  restaurantId           String
+  restaurant             Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  stripePaymentIntentId  String
+  amount                 Int
+  currency               String   @default("TND")
+  /// Statut : "pending" | "authorized" | "captured" | "cancelled" | "refunded"
+  status                 String   @default("pending")
+  authorizedAt           DateTime?
+  capturedAt             DateTime?
+  cancelledAt            DateTime?
+  refundedAt             DateTime?
+  metadata               Json?
+  createdAt              DateTime @default(now())
+
+  @@index([reservationId])
+  @@index([guestId])
+  @@index([restaurantId, status])
+}
+
+/// Split d'addition.
+model BillSplit {
+  id           String   @id @default(cuid())
+  reservationId String
+  reservation  Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  totalAmount  Int
+  tipAmount    Int      @default(0)
+  /// Statut : "pending" | "partial" | "completed"
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items BillSplitItem[]
+
+  @@index([reservationId])
+  @@index([restaurantId])
+}
+
+/// Ligne d'un split d'addition.
+model BillSplitItem {
+  id          String    @id @default(cuid())
+  splitId     String
+  split       BillSplit @relation(fields: [splitId], references: [id], onDelete: Cascade)
+  orderItemId String
+  guestId     String?
+  amount      Int
+  createdAt   DateTime @default(now())
+
+  @@index([splitId])
 }
