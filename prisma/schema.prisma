@@ -94,9 +94,12 @@ model Restaurant {
   payments         Payment[]
   loyaltyAccounts  LoyaltyAccount[]
   staff            Staff[]
+  staffSessions    StaffSession[]
   subscription     Subscription?
   setupTokens      SetupToken[]
   webhookEndpoints WebhookEndpoint[]
+  auditLogs        AuditLog[]
+  apiKeys          ApiKey[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -461,10 +464,32 @@ model Staff {
   /// Dernière connexion.
   lastLoginAt  DateTime?
   active       Boolean @default(true)
+  /// 2FA TOTP activé.
+  twoFactorEnabled Boolean @default(false)
+  /// Secret TOTP chiffré (null si 2FA désactivée).
+  twoFactorSecret  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  sessions StaffSession[]
+
   @@unique([restaurantId, email])
+  @@index([restaurantId])
+}
+
+/// Sessions actives du personnel (PWA staff).
+model StaffSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([staffId])
   @@index([restaurantId])
 }
 
@@ -519,6 +544,8 @@ model WebhookEndpoint {
   id           String  @id @default(cuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Nom descriptif de l'endpoint.
+  name         String?
   /// URL de l'endpoint.
   url          String
   /// Événements écoutés (ex: ["reservation.created", "order.updated"]).
@@ -526,8 +553,77 @@ model WebhookEndpoint {
   /// Secret pour signer les payloads.
   secret       String
   active       Boolean @default(true)
+  /// Dernière tentative de livraison.
+  lastDeliveryAt    DateTime?
+  /// Dernier statut de livraison : success | failed | pending.
+  lastDeliveryStatus String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  deliveries WebhookDelivery[]
+
   @@index([restaurantId])
+}
+
+/// Livraisons de webhooks avec suivi de statut et retry.
+model WebhookDelivery {
+  id           String  @id @default(cuid())
+  webhookId    String
+  webhook      WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event        String
+  payload      Json
+  /// Statut : pending | success | failed.
+  status       String  @default("pending")
+  /// Nombre de tentatives (max 3).
+  attempts     Int     @default(0)
+  /// Dernière erreur si échec.
+  lastError    String?
+  /// Réponse HTTP du endpoint (code + headers).
+  responseStatus Int?
+  createdAt    DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([webhookId, createdAt])
+  @@index([status])
+}
+
+/// Journal d'audit des actions de sécurité.
+model AuditLog {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Type d'action (ex: "2fa.enabled", "webhook.created", "staff.login").
+  action       String
+  /// ID de l'acteur (staffId ou null pour les actions système).
+  actorId      String?
+  actorEmail   String?
+  /// Détails supplémentaires (JSON serializable).
+  details      Json?
+  /// Adresse IP de la requête.
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, action])
+}
+
+/// Clés API pour l'authentification des webhooks.
+model ApiKey {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Nom descriptif de la clé.
+  name         String
+  /// Préfixe de la clé (premes 8 caractères) pour l'identification.
+  keyPrefix    String
+  /// Hash de la clé complète (SHA-256).
+  keyHash      String
+  active       Boolean @default(true)
+  /// Dernière utilisation.
+  lastUsedAt   DateTime?
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+
+  @@index([restaurantId])
+  @@index([keyPrefix])
 }

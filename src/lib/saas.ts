@@ -443,3 +443,46 @@ export async function getRestaurantUsage(
     plan: restaurant.plan,
   };
 }
+
+// ─── Enterprise features ──────────────────────────────────────────────
+
+export type EnterpriseFeatures = {
+  customDomain: boolean;
+  whiteLabel: boolean;
+  prioritySupport: boolean;
+  sla: boolean;
+  dedicatedAccountManager: boolean;
+};
+
+const ENTERPRISE_FEATURES: EnterpriseFeatures = {
+  customDomain: true,
+  whiteLabel: true,
+  prioritySupport: true,
+  sla: true,
+  dedicatedAccountManager: true,
+};
+
+/**
+ * Vérifier si un restaurant dispose des fonctionnalités entreprise.
+ * Seuls les restaurants au plan ENTERPRISE ont accès à ces features.
+ */
+export async function getEnterpriseFeatures(
+  restaurantId: string,
+): Promise<EnterpriseFeatures> {
+  const restaurant = await db.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { plan: true },
+  });
+
+  if (!restaurant || restaurant.plan !== "ENTERPRISE") {
+    return {
+      customDomain: false,
+      whiteLabel: false,
+      prioritySupport: false,
+      sla: false,
+      dedicatedAccountManager: false,
+    };
+  }
+
+  return ENTERPRISE_FEATURES;
+}

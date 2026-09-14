@@ -31,6 +31,13 @@ export async function proxy(request: NextRequest) {
     if (denied) return denied;
   }
 
+  // Staff PWA routes are protected by Basic auth as the first barrier.
+  // Session-based auth is verified server-side in each page/action.
+  if (/^\/(?:[a-z]{2}\/)?staff(?:\/|$)/.test(pathname)) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+  }
+
   // Les routes d'API, les fichiers statiques et les internes de Next ne sont
   // pas localisés.
   if (
