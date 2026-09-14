@@ -1,0 +1,1759 @@
+openapi: "3.1.0"
+
+info:
+  title: Zanzibar Lounge API
+  description: |
+    API de réservation pour restaurants —plateforme SaaS multi-tenancy.
+
+    ## Authentification
+
+    Les endpoints publics (`/api/v1/*`) sont protégés par une clé API transmise
+    dans l'en-tête `X-API-Key`. Les endpoints SaaS (`/api/saas/*`) utilisent
+    une authentification Basic (identifiants admin).
+
+    ## Format des réponses
+
+    Toutes les réponses suivent un format standardisé :
+    - **Succès** : `{ "ok": true, "data": { ... } }`
+    - **Erreur** : `{ "ok": false, "error": "message" }`
+
+    ## Limites
+
+    - Réservations : maximum 12 personnes par groupe
+    - Webhooks : maximum 10 actifs par restaurant
+    - Requêtes : limitées par rate-limiting (Upstash Redis si configuré)
+  version: "1.0.0"
+  contact:
+    name: Zanzibar Lounge
+    url: https://zanzibar-lounge.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://zanzibar-lounge.com
+    description: Production
+  - url: http://localhost:3000
+    description: Développement local
+
+tags:
+  - name: Public - Restaurants
+    description: Endpoints publics de lecture des restaurants
+  - name: Public - Reservations
+    description: Réservation de tables
+  - name: Public - Menu
+    description: Consultation du menu
+  - name: Public - Reviews
+    description: Avis clients
+  - name: SaaS - Onboarding
+    description: Inscription et configuration d'un restaurant
+  - name: SaaS - Plan
+    description: Gestion de l'abonnement et du plan
+  - name: SaaS - Usage
+    description: Statistiques d'utilisation
+  - name: SaaS - Staff
+    description: Gestion de l'équipe
+  - name: SaaS - Webhooks
+    description: Endpoints webhook de notification
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Clé API pour les endpoints publics (/api/v1/*)
+
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Authentification Basic pour les endpoints SaaS (/api/saas/*)
+
+  schemas:
+    # --- Schémas réutilisables ---
+
+    ErrorResponse:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+          description: Message d'erreur lisible
+      example:
+        ok: false
+        error: "Restaurant not found"
+
+    ValidationErrorResponse:
+      type: object
+      required: [ok, error, details]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+          example: "Validation failed"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              message:
+                type: string
+      example:
+        ok: false
+        error: "Validation failed"
+        details:
+          - path: "phone"
+            message: "Invalid phone number"
+
+    # --- Restaurant ---
+
+    RestaurantSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identifiant unique (CUID)
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        name:
+          type: string
+          example: "Le Zanzibar"
+        slug:
+          type: string
+          description: Identifiant URL-friendly
+          example: "le-zanzibar"
+        address:
+          type: string
+          nullable: true
+          example: "42 Avenue Habib Bourguiba, Tunis"
+        phone:
+          type: string
+          nullable: true
+          example: "+21671234567"
+        timezone:
+          type: string
+          example: "Africa/Tunis"
+
+    RestaurantFull:
+      allOf:
+        - $ref: "#/components/schemas/RestaurantSummary"
+        - type: object
+          properties:
+            locale:
+              type: string
+              enum: [fr, ar, en]
+              description: Langue principale du restaurant
+              example: "fr"
+
+    # --- Availability ---
+
+    AvailabilitySlot:
+      type: object
+      properties:
+        minutes:
+          type: integer
+          description: Minutes depuis minuit (ex: 1140 = 19h00)
+          example: 1140
+        label:
+          type: string
+          description: Heure affichée (HH:MM)
+          example: "19:00"
+        remaining:
+          type: integer
+          description: Nombre de créneaux restants
+          example: 3
+        available:
+          type: boolean
+          description: true si au moins un créneau est disponible
+          example: true
+
+    # --- Reservation ---
+
+    ReservationRequest:
+      type: object
+      required: [name, phone, date, minutes, partySize]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Nom du client
+          example: "Ahmed Ben Salah"
+        phone:
+          type: string
+          minLength: 6
+          maxLength: 24
+          description: Numéro de téléphone (E.164 recommandé)
+          example: "+21620123456"
+        date:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          description: Date du service (YYYY-MM-DD)
+          example: "2024-12-24"
+        minutes:
+          type: integer
+          minimum: 0
+          maximum: 2879
+          description: "Heure du service en minutes depuis minuit (ex: 1140 = 19h00)"
+          example: 1140
+        partySize:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Nombre de convives
+          example: 4
+        zone:
+          type: string
+          enum: [terrasse, salle, salon]
+          nullable: true
+          description: Zone souhaitée
+          example: "terrasse"
+        notes:
+          type: string
+          maxLength: 400
+          nullable: true
+          description: Notes ou demandes spéciales
+          example: "Anniversaire — gâteau prévu"
+
+    ReservationResponse:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: Référence courte (ex: ZL-4F2K)
+          example: "ZL-4F2K"
+        date:
+          type: string
+          example: "2024-12-24"
+        time:
+          type: string
+          description: Heure affichée (HH:MM)
+          example: "19:00"
+        partySize:
+          type: integer
+          example: 4
+        zone:
+          type: string
+          enum: [terrasse, salle, salon]
+          nullable: true
+          example: "terrasse"
+
+    # --- Menu ---
+
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        name:
+          type: string
+          example: "Couscous Royal"
+        description:
+          type: string
+          nullable: true
+          example: "Couscous aux légumes, agneau et merguez"
+        price:
+          type: integer
+          description: Prix en millimes (ex: 12000 = 12.000 DT)
+          example: 18000
+        category:
+          type: string
+          example: "plat"
+        imageUrl:
+          type: string
+          nullable: true
+          format: uri
+          example: "https://example.com/couscous.jpg"
+        available:
+          type: boolean
+          example: true
+        sortOrder:
+          type: integer
+          example: 0
+
+    # --- Reviews ---
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        title:
+          type: string
+          nullable: true
+          example: "Excellent !"
+        body:
+          type: string
+          nullable: true
+          example: "Service impeccable, ambiance magnifique."
+        locale:
+          type: string
+          example: "fr"
+        guest:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+              example: "Ahmed B."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-12-24T19:30:00Z"
+
+    # --- SaaS ---
+
+    OnboardRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email du propriétaire
+          example: "ahmed@zanzibar.tn"
+        restaurantName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nom du restaurant (optionnel)
+          example: "Le Zanzibar"
+
+    SetupRequest:
+      type: object
+      required: [token, restaurantName, slug, ownerName, ownerEmail, password]
+      properties:
+        token:
+          type: string
+          description: Token d'onboarding reçu par email
+          example: "abc123def456"
+        restaurantName:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: "Le Zanzibar"
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 60
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          description: Slug du restaurant (lowercase, tirets)
+          example: "le-zanzibar"
+        ownerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Ahmed Ben Salah"
+        ownerEmail:
+          type: string
+          format: email
+          example: "ahmed@zanzibar.tn"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Mot de passe du compte owner
+          example: "securePassword123"
+        timezone:
+          type: string
+          maxLength: 50
+          description: Fuseau horaire IANA
+          example: "Africa/Tunis"
+        locale:
+          type: string
+          enum: [fr, ar, en]
+          example: "fr"
+
+    PlanUpgradeRequest:
+      type: object
+      required: [restaurantId, plan, successUrl, cancelUrl]
+      properties:
+        restaurantId:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        plan:
+          type: string
+          enum: [STARTER, PRO, ENTERPRISE]
+          description: "Plan d'abonnement : STARTER (29€/mois), PRO (79€/mois), ENTERPRISE (199€/mois)"
+          example: "PRO"
+        successUrl:
+          type: string
+          format: uri
+          description: URL de redirection après paiement réussi
+          example: "https://dashboard.zanzibar-lounge.com/billing/success"
+        cancelUrl:
+          type: string
+          format: uri
+          description: URL de redirection si annulation
+          example: "https://dashboard.zanzibar-lounge.com/billing/cancel"
+
+    UsageResponse:
+      type: object
+      properties:
+        plan:
+          type: string
+          enum: [FREE, STARTER, PRO, ENTERPRISE]
+          example: "FREE"
+        reservationsThisMonth:
+          type: integer
+          example: 23
+        reservationLimit:
+          type: integer
+          description: -1 si illimité
+          example: 50
+        ordersThisMonth:
+          type: integer
+          example: 12
+        guestsThisMonth:
+          type: integer
+          example: 87
+        revenueThisMonth:
+          type: integer
+          description: Revenu total en millimes
+          example: 2450000
+
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        email:
+          type: string
+          format: email
+          example: "ahmed@zanzibar.tn"
+        name:
+          type: string
+          example: "Ahmed Ben Salah"
+        role:
+          type: string
+          enum: [OWNER, MANAGER, STAFF]
+          example: "OWNER"
+        active:
+          type: boolean
+          example: true
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-12-24T10:30:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T08:00:00Z"
+
+    StaffCreateRequest:
+      type: object
+      required: [restaurantId, email, name, password]
+      properties:
+        restaurantId:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        email:
+          type: string
+          format: email
+          example: "nouveau@zanzibar.tn"
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Nouveau Membre"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          example: "securePassword123"
+        role:
+          type: string
+          enum: [OWNER, MANAGER, STAFF]
+          description: "Défaut : STAFF"
+          example: "MANAGER"
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        url:
+          type: string
+          format: uri
+          example: "https://myapp.com/webhook"
+        events:
+          type: array
+          items:
+            type: string
+          example: ["reservation.created", "reservation.cancelled"]
+        active:
+          type: boolean
+          example: true
+        secret:
+          type: string
+          description: Secret pour vérifier la signature (renvoyé uniquement à la création)
+          example: "a1b2c3d4e5f6..."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-12-24T10:30:00Z"
+
+    WebhookCreateRequest:
+      type: object
+      required: [restaurantId, url, events]
+      properties:
+        restaurantId:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        url:
+          type: string
+          format: uri
+          description: URL qui recevra les notifications
+          example: "https://myapp.com/webhook"
+        events:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          minItems: 1
+          maxItems: 20
+          description: "Événements écoutés (ex: reservation.created, order.updated)"
+          example: ["reservation.created", "reservation.cancelled"]
+
+    PortalRequest:
+      type: object
+      required: [restaurantId, returnUrl]
+      properties:
+        restaurantId:
+          type: string
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+        returnUrl:
+          type: string
+          format: uri
+          description: URL de redirection après le portail Stripe
+          example: "https://dashboard.zanzibar-lounge.com/billing"
+
+# =====================================================================
+# Paths
+# =====================================================================
+
+paths:
+
+  # ===================================================================
+  # PUBLIC API — /api/v1/*
+  # ===================================================================
+
+  /api/v1/restaurants:
+    get:
+      operationId: listRestaurants
+      tags: [Public - Restaurants]
+      summary: Lister les restaurants actifs
+      description: |
+        Retourne la liste de tous les restaurants actifs. Cette opération
+        ne requiert pas de filtres — tous les restaurants publics sont renvoyés.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Liste des restaurants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      restaurants:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/RestaurantSummary"
+              example:
+                ok: true
+                data:
+                  restaurants:
+                    - id: "clx9a2b3c4d5e6f7g8h9i0"
+                      name: "Le Zanzibar"
+                      slug: "le-zanzibar"
+                      address: "42 Avenue Habib Bourguiba, Tunis"
+                      phone: "+21671234567"
+                      timezone: "Africa/Tunis"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                ok: false
+                error: "Internal server error"
+
+  /api/v1/restaurants/{slug}:
+    get:
+      operationId: getRestaurant
+      tags: [Public - Restaurants]
+      summary: Détails d'un restaurant
+      description: |
+        Retourne les informations détaillées d'un restaurant identifié
+        par son slug.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Slug du restaurant
+          example: "le-zanzibar"
+      responses:
+        "200":
+          description: Détails du restaurant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      restaurant:
+                        $ref: "#/components/schemas/RestaurantFull"
+              example:
+                ok: true
+                data:
+                  restaurant:
+                    id: "clx9a2b3c4d5e6f7g8h9i0"
+                    name: "Le Zanzibar"
+                    slug: "le-zanzibar"
+                    address: "42 Avenue Habib Bourguiba, Tunis"
+                    phone: "+21671234567"
+                    timezone: "Africa/Tunis"
+                    locale: "fr"
+        "400":
+          description: Paramètre slug manquant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                ok: false
+                error: "Missing slug"
+        "404":
+          description: Restaurant non trouvé ou inactif
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                ok: false
+                error: "Restaurant not found"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/restaurants/{slug}/availability:
+    get:
+      operationId: checkAvailability
+      tags: [Public - Reservations]
+      summary: Vérifier la disponibilité
+      description: |
+        Retourne les créneaux disponibles pour une date et un nombre de
+        convives donnés. Si le restaurant est fermé ce jour-là, un objet
+        `closed: true` est retourné sans créneaux.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Slug du restaurant
+          example: "le-zanzibar"
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          description: "Date du service (YYYY-MM-DD)"
+          example: "2024-12-24"
+        - name: party
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 2
+          description: Nombre de convives
+          example: 4
+      responses:
+        "200":
+          description: Créneaux disponibles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                        example: "2024-12-24"
+                      partySize:
+                        type: integer
+                        example: 4
+                      closed:
+                        type: boolean
+                        example: false
+                      slots:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AvailabilitySlot"
+              example:
+                ok: true
+                data:
+                  date: "2024-12-24"
+                  partySize: 4
+                  closed: false
+                  slots:
+                    - minutes: 1080
+                      label: "18:00"
+                      remaining: 5
+                      available: true
+                    - minutes: 1110
+                      label: "18:30"
+                      remaining: 2
+                      available: true
+                    - minutes: 1140
+                      label: "19:00"
+                      remaining: 0
+                      available: false
+                    - minutes: 1170
+                      label: "19:30"
+                      remaining: 1
+                      available: true
+        "400":
+          description: Paramètre date invalide ou manquant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                ok: false
+                error: "Invalid or missing date param (YYYY-MM-DD)"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/restaurants/{slug}/reservations:
+    post:
+      operationId: createReservation
+      tags: [Public - Reservations]
+      summary: Créer une réservation
+      description: |
+        Crée une nouvelle réservation pour le restaurant donné. Le système
+        vérifie automatiquement la disponibilité et assigne une table
+        appropriée. Un numéro de référence (ex: ZL-4F2K) est retourné.
+
+        Le champ `minutes` représente l'heure en minutes depuis minuit :
+        - 1080 = 18h00
+        - 1140 = 19h00
+        - 1200 = 20h00
+
+        Les minutes > 1440 (24h00) sont regroupées avec le service du jour
+        suivant.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Slug du restaurant
+          example: "le-zanzibar"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationRequest"
+            example:
+              name: "Ahmed Ben Salah"
+              phone: "+21620123456"
+              date: "2024-12-24"
+              minutes: 1140
+              partySize: 4
+              zone: "terrasse"
+              notes: "Anniversaire — gâteau prévu"
+      responses:
+        "201":
+          description: Réservation créée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    $ref: "#/components/schemas/ReservationResponse"
+              example:
+                ok: true
+                data:
+                  reference: "ZL-4F2K"
+                  date: "2024-12-24"
+                  time: "19:00"
+                  partySize: 4
+                  zone: "terrasse"
+        "400":
+          description: Validation échouée ou données invalides
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                validation:
+                  summary: Erreur de validation
+                  value:
+                    ok: false
+                    error: "Validation failed"
+                    details:
+                      - path: "phone"
+                        message: "Invalid phone number"
+                invalid_phone:
+                  summary: Numéro invalide
+                  value:
+                    ok: false
+                    error: "Invalid phone number"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Aucun créneau disponible (complet)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                ok: false
+                error: "FULL"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/restaurants/{slug}/menu:
+    get:
+      operationId: getMenu
+      tags: [Public - Menu]
+      summary: Consulter le menu
+      description: |
+        Retourne la liste des articles du menu pour le restaurant donné,
+        triés par catégorie et ordre d'affichage.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Slug du restaurant
+          example: "le-zanzibar"
+      responses:
+        "200":
+          description: Articles du menu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MenuItem"
+              example:
+                ok: true
+                data:
+                  items:
+                    - id: "clx9a2b3c4d5e6f7g8h9i0"
+                      name: "Couscous Royal"
+                      description: "Couscous aux légumes, agneau et merguez"
+                      price: 18000
+                      category: "plat"
+                      imageUrl: "https://example.com/couscous.jpg"
+                      available: true
+                      sortOrder: 0
+                    - id: "clx9a2b3c4d5e6f7g8h9i1"
+                      name: "Thé à la menthe"
+                      description: null
+                      price: 3000
+                      category: "boisson"
+                      imageUrl: null
+                      available: true
+                      sortOrder: 1
+        "400":
+          description: Slug manquant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/restaurants/{slug}/reviews:
+    get:
+      operationId: getReviews
+      tags: [Public - Reviews]
+      summary: Lister les avis approuvés
+      description: |
+        Retourne les avis publics approuvés du restaurant. Pagination
+        possible via les paramètres `limit` et `offset`.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Slug du restaurant
+          example: "le-zanzibar"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Nombre maximum d'avis retournés
+          example: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Index de départ pour la pagination
+          example: 0
+      responses:
+        "200":
+          description: Liste des avis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      reviews:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Review"
+              example:
+                ok: true
+                data:
+                  reviews:
+                    - id: "clx9a2b3c4d5e6f7g8h9i0"
+                      rating: 5
+                      title: "Excellent !"
+                      body: "Service impeccable, ambiance magnifique."
+                      locale: "fr"
+                      guest:
+                        name: "Ahmed B."
+                      createdAt: "2024-12-24T19:30:00Z"
+        "400":
+          description: Paramètres invalides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ===================================================================
+  # SaaS API — /api/saas/*
+  # ===================================================================
+
+  /api/saas/onboard:
+    post:
+      operationId: onboardRestaurant
+      tags: [SaaS - Onboarding]
+      summary: Créer un token d'onboarding
+      description: |
+        Initie le processus d'inscription d'un nouveau restaurant. Un token
+        unique est généré et doit être utilisé dans un délai de 24h via
+        l'endpoint `/api/saas/setup`.
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardRequest"
+            example:
+              email: "ahmed@zanzibar.tn"
+              restaurantName: "Le Zanzibar"
+      responses:
+        "200":
+          description: Token d'onboarding créé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  token:
+                    type: string
+                    description: Token à utiliser avec /api/saas/setup
+                    example: "abc123def456ghi789"
+              example:
+                ok: true
+                token: "abc123def456ghi789"
+        "400":
+          description: Corps de requête invalide
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_body"
+        "500":
+          description: Échec de la création du token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "onboard_failed"
+                  code:
+                    type: string
+                    example: "EMAIL_FAILED"
+
+  /api/saas/setup:
+    post:
+      operationId: completeSetup
+      tags: [SaaS - Onboarding]
+      summary: Finaliser l'inscription
+      description: |
+        Crée le restaurant et le compte owner à partir du token d'onboarding.
+        Le token ne peut être utilisé qu'une seule fois et expire après 24h.
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupRequest"
+            example:
+              token: "abc123def456ghi789"
+              restaurantName: "Le Zanzibar"
+              slug: "le-zanzibar"
+              ownerName: "Ahmed Ben Salah"
+              ownerEmail: "ahmed@zanzibar.tn"
+              password: "securePassword123"
+              timezone: "Africa/Tunis"
+              locale: "fr"
+      responses:
+        "200":
+          description: Restaurant créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  restaurant:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      slug:
+                        type: string
+              example:
+                ok: true
+                restaurant:
+                  id: "clx9a2b3c4d5e6f7g8h9i0"
+                  name: "Le Zanzibar"
+                  slug: "le-zanzibar"
+        "400":
+          description: Token invalide ou expiré
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "setup_failed"
+                  code:
+                    type: string
+                    enum: [TOKEN_INVALID, TOKEN_EXPIRED]
+                    example: "TOKEN_INVALID"
+        "409":
+          description: Slug ou email déjà pris
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "setup_failed"
+                  code:
+                    type: string
+                    example: "SLUG_TAKEN"
+
+  /api/saas/plan:
+    get:
+      operationId: getPlan
+      tags: [SaaS - Plan]
+      summary: Voir le plan actuel et l'utilisation
+      description: |
+        Retourne le plan d'abonnement du restaurant et les statistiques
+        d'utilisation du mois en cours.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: restaurantId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identifiant du restaurant
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+      responses:
+        "200":
+          description: Plan et utilisation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  plan:
+                    type: string
+                    enum: [FREE, STARTER, PRO, ENTERPRISE]
+                  reservationsThisMonth:
+                    type: integer
+                  reservationLimit:
+                    type: integer
+                  ordersThisMonth:
+                    type: integer
+                  guestsThisMonth:
+                    type: integer
+                  revenueThisMonth:
+                    type: integer
+              example:
+                ok: true
+                plan: "FREE"
+                reservationsThisMonth: 23
+                reservationLimit: 50
+                ordersThisMonth: 12
+                guestsThisMonth: 87
+                revenueThisMonth: 2450000
+        "400":
+          description: restaurantId manquant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "missing restaurantId"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "restaurant_not_found"
+
+    post:
+      operationId: upgradePlan
+      tags: [SaaS - Plan]
+      summary: Upgrade de plan (Stripe Checkout)
+      description: |
+        Crée une session Stripe Checkout pour passer à un plan supérieur.
+        L'utilisateur est redirigé vers Stripe pour finaliser le paiement.
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanUpgradeRequest"
+            example:
+              restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
+              plan: "PRO"
+              successUrl: "https://dashboard.zanzibar-lounge.com/billing/success"
+              cancelUrl: "https://dashboard.zanzibar-lounge.com/billing/cancel"
+      responses:
+        "200":
+          description: Session de paiement créée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  url:
+                    type: string
+                    format: uri
+                    description: URL de la session Stripe Checkout
+              example:
+                ok: true
+                url: "https://checkout.stripe.com/pay/cs_test_..."
+        "400":
+          description: Plan invalide ou paramètres manquants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_plan"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "restaurant_not_found"
+        "500":
+          description: Échec de la création de la session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "checkout_failed"
+
+  /api/saas/portal:
+    post:
+      operationId: createPortalSession
+      tags: [SaaS - Plan]
+      summary: Ouvrir le portail Stripe
+      description: |
+        Crée une session du portail Stripe permettant au client de gérer
+        son abonnement (annuler, modifier le moyen de paiement, etc.).
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortalRequest"
+            example:
+              restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
+              returnUrl: "https://dashboard.zanzibar-lounge.com/billing"
+      responses:
+        "200":
+          description: Session du portail créée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  url:
+                    type: string
+                    format: uri
+                    description: URL du portail Stripe
+              example:
+                ok: true
+                url: "https://billing.stripe.com/p/session/..."
+        "400":
+          description: Aucun client Stripe associé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "no_stripe_customer"
+        "500":
+          description: Échec de la création de la session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "portal_failed"
+
+  /api/saas/usage:
+    get:
+      operationId: getUsage
+      tags: [SaaS - Usage]
+      summary: Statistiques d'utilisation
+      description: |
+        Retourne les statistiques d'utilisation du restaurant pour le mois
+        en cours : réservations, commandes, clients et revenu.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: restaurantId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identifiant du restaurant
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+      responses:
+        "200":
+          description: Statistiques d'utilisation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  usage:
+                    $ref: "#/components/schemas/UsageResponse"
+              example:
+                ok: true
+                usage:
+                  plan: "FREE"
+                  reservationsThisMonth: 23
+                  reservationLimit: 50
+                  ordersThisMonth: 12
+                  guestsThisMonth: 87
+                  revenueThisMonth: 2450000
+        "400":
+          description: restaurantId manquant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "missing restaurantId"
+        "404":
+          description: Restaurant non trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "restaurant_not_found"
+
+  /api/saas/staff:
+    get:
+      operationId: listStaff
+      tags: [SaaS - Staff]
+      summary: Lister les membres de l'équipe
+      description: |
+        Retourne la liste de tous les membres de l'équipe du restaurant,
+        avec leur rôle et statut d'activité.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: restaurantId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identifiant du restaurant
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+      responses:
+        "200":
+          description: Liste des membres
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  staff:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StaffMember"
+              example:
+                ok: true
+                staff:
+                  - id: "clx9a2b3c4d5e6f7g8h9i0"
+                    email: "ahmed@zanzibar.tn"
+                    name: "Ahmed Ben Salah"
+                    role: "OWNER"
+                    active: true
+                    lastLoginAt: "2024-12-24T10:30:00Z"
+                    createdAt: "2024-01-15T08:00:00Z"
+        "400":
+          description: restaurantId manquant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "missing restaurantId"
+        "403":
+          description: Accès refusé (non authentifié ou non autorisé)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "forbidden"
+
+    post:
+      operationId: createStaff
+      tags: [SaaS - Staff]
+      summary: Ajouter un membre à l'équipe
+      description: |
+        Crée un nouveau compte staff pour le restaurant. L'email doit être
+        unique au sein du restaurant. Le mot de passe doit faire entre 8
+        et 128 caractères.
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffCreateRequest"
+            example:
+              restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
+              email: "nouveau@zanzibar.tn"
+              name: "Nouveau Membre"
+              password: "securePassword123"
+              role: "MANAGER"
+      responses:
+        "201":
+          description: Membre créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  staff:
+                    $ref: "#/components/schemas/StaffMember"
+              example:
+                ok: true
+                staff:
+                  id: "clx9a2b3c4d5e6f7g8h9i1"
+                  email: "nouveau@zanzibar.tn"
+                  name: "Nouveau Membre"
+                  role: "MANAGER"
+                  active: true
+                  lastLoginAt: null
+                  createdAt: "2024-12-24T12:00:00Z"
+        "400":
+          description: Corps de requête invalide
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_body"
+        "403":
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "forbidden"
+        "409":
+          description: Email déjà utilisé dans ce restaurant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "email_taken"
+
+  /api/saas/webhooks:
+    get:
+      operationId: listWebhooks
+      tags: [SaaS - Webhooks]
+      summary: Lister les endpoints webhook
+      description: |
+        Retourne la liste des endpoints webhook configurés pour le restaurant.
+        Les secrets ne sont pas retournés (uniquement renvoyés à la création).
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: restaurantId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identifiant du restaurant
+          example: "clx9a2b3c4d5e6f7g8h9i0"
+      responses:
+        "200":
+          description: Liste des endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookEndpoint"
+              example:
+                ok: true
+                webhooks:
+                  - id: "clx9a2b3c4d5e6f7g8h9i0"
+                    url: "https://myapp.com/webhook"
+                    events: ["reservation.created", "reservation.cancelled"]
+                    active: true
+                    createdAt: "2024-12-24T10:30:00Z"
+        "400":
+          description: restaurantId manquant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "missing restaurantId"
+        "403":
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "forbidden"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "webhook_list_failed"
+
+    post:
+      operationId: createWebhook
+      tags: [SaaS - Webhooks]
+      summary: Créer un endpoint webhook
+      description: |
+        Enregistre un nouvel endpoint webhook pour recevoir des notifications.
+        Un secret unique est généré pour signer les payloads (algorithme HMAC-SHA256).
+
+        Maximum 10 endpoints actifs par restaurant.
+
+        Événements disponibles :
+        - `reservation.created` — Nouvelle réservation
+        - `reservation.confirmed` — Réservation confirmée par le client
+        - `reservation.cancelled` — Réservation annulée
+        - `reservation.no_show` — Client absent
+        - `order.created` — Nouvelle commande
+        - `order.updated` — Statut de commande modifié
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookCreateRequest"
+            example:
+              restaurantId: "clx9a2b3c4d5e6f7g8h9i0"
+              url: "https://myapp.com/webhook"
+              events: ["reservation.created", "reservation.cancelled"]
+      responses:
+        "201":
+          description: Endpoint créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  webhook:
+                    $ref: "#/components/schemas/WebhookEndpoint"
+              example:
+                ok: true
+                webhook:
+                  id: "clx9a2b3c4d5e6f7g8h9i0"
+                  url: "https://myapp.com/webhook"
+                  events: ["reservation.created", "reservation.cancelled"]
+                  active: true
+                  secret: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+                  createdAt: "2024-12-24T12:00:00Z"
+        "400":
+          description: Corps de requête invalide ou limite atteinte
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                invalid:
+                  summary: Corps invalide
+                  value:
+                    error: "invalid_body"
+                limit:
+                  summary: Limite de webhooks atteinte
+                  value:
+                    error: "webhook_limit_reached"
+                    message: "Maximum 10 active webhooks per restaurant"
+        "403":
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "forbidden"
+        "500":
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "webhook_creation_failed"

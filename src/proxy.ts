@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
 
   // Le back-office vit sous /fr/admin, /ar/admin… : on le protège quelle que
   // soit la langue, avant toute autre décision de routage.
-  if (/^\/(?:[a-z]{2}\/)?admin(?:\/|$)/.test(pathname)) {
+  if (/^\/(?:[a-z]{2}\/)?(?:admin|owner)(?:\/|$)/.test(pathname)) {
     const denied = await requireAdmin(request);
     if (denied) return denied;
   }

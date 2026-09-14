@@ -63,16 +63,41 @@ model Restaurant {
   /// Langue principale : fr | ar | en.
   locale    String  @default("fr")
   active    Boolean @default(true)
+
+  // ─── SaaS fields ─────────────────────────────────────────────────
+  /// Plan d'abonnement.
+  plan          SubscriptionPlan @default(FREE)
+  /// Stripe Customer ID (cus_…).
+  stripeCustomerId String?   @unique
+  /// Domaine personnalisé (ex: "reservation.monrestaurant.com").
+  customDomain  String?   @unique
+  /// Logo URL du restaurant.
+  logoUrl       String?
+  /// Couleur principale (hex sans #).
+  brandColor    String?
+  /// Fuseau de limite mensuelle de réservations.
+  monthlyReservationLimit Int @default(50)
+  /// Nombre de réservations ce mois-ci.
+  monthlyReservationCount Int @default(0)
+  /// Compteur réinitialisé le premier du mois.
+  reservationCountResetAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reservations Reservation[]
-  tables       RestaurantTable[]
-  menuItems    MenuItem[]
-  orders       Order[]
-  loyaltyAccounts LoyaltyAccount[]
+  reservations     Reservation[]
+  tables           RestaurantTable[]
+  menuItems        MenuItem[]
+  orders           Order[]
+  payments         Payment[]
+  loyaltyAccounts  LoyaltyAccount[]
+  staff            Staff[]
+  subscription     Subscription?
+  setupTokens      SetupToken[]
+  webhookEndpoints WebhookEndpoint[]
 
   @@index([slug])
+  @@index([stripeCustomerId])
 }
 
 model Guest {
@@ -93,6 +118,7 @@ model Guest {
   pushSubscriptions PushSubscription[]
   loyaltyAccounts   LoyaltyAccount[]
   orders            Order[]
+  payments          Payment[]
 
   @@index([createdAt])
 }
@@ -148,7 +174,8 @@ model Reservation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews Review[]
+  reviews     Review[]
+  payments    Payment[]
 
   @@index([serviceDate, status])
   @@index([startsAt, status])
@@ -317,11 +344,14 @@ model Order {
   notes    String?
   /// Total en millimes.
   total    Int
+  /// Montant du dépôt en millimes (0 = pas de dépôt).
+  depositAmount Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items OrderItem[]
+  items   OrderItem[]
+  payments Payment[]
 
   @@unique([restaurantId, reference])
   @@index([status, createdAt])
@@ -341,4 +371,161 @@ model OrderItem {
 
   @@index([orderId])
   @@index([menuItemId])
+}
+
+// ─── Paiements ─────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING // en attente de paiement
+  SUCCEEDED // paiement réussi
+  FAILED // paiement échoué
+  REFUNDED // remboursé
+  PARTIALLY_REFUNDED // partiellement remboursé
+}
+
+enum StaffRole {
+  OWNER // propriétaire du restaurant
+  MANAGER // gérant
+  STAFF // personnel
+}
+
+enum SubscriptionPlan {
+  FREE // gratuit, 50 réservations/mois
+  STARTER // 29€/mois, 500 réservations/mois
+  PRO // 79€/mois, illimité
+  ENTERPRISE // 199€/mois, white-label, API
+}
+
+/// Paiement lié à une commande ou une réservation.
+model Payment {
+  id        String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  /// Lien optionnel vers une commande.
+  orderId String?
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  /// Lien optionnel vers une réservation.
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  guestId String
+  guest   Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  /// ID de session Stripe (cs_test_… ou cs_live_…).
+  stripeSessionId String?   @unique
+  /// ID de paiement Stripe (pi_…).
+  stripePaymentId String?
+  /// Statut interne du paiement.
+  status     PaymentStatus @default(PENDING)
+  /// Montant en millimes.
+  amount     Int
+  /// Devise ISO 4217 (TND, EUR, USD…).
+  currency   String   @default("TND")
+  /// Description lisible.
+  description String?
+  /// Métadonnées JSON (ex: { "type": "deposit", "reservationRef": "ZL-4F2K" }).
+  metadata   Json?
+  /// Date du paiement réussi.
+  paidAt     DateTime?
+  /// Date du remboursement.
+  refundedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([guestId, createdAt])
+  @@index([orderId])
+  @@index([reservationId])
+  @@index([status])
+}
+
+// ─── SaaS / Multi-tenancy ────────────────────────────────────────
+
+/// Membres de l'équipe d'un restaurant.
+model Staff {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Email de connexion (unique par restaurant).
+  email        String
+  /// Nom affiché.
+  name         String
+  /// Rôle : owner | manager | staff.
+  role         StaffRole @default(STAFF)
+  /// Hash du mot de passe (argon2 ou bcrypt).
+  passwordHash String
+  /// Dernière connexion.
+  lastLoginAt  DateTime?
+  active       Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([restaurantId, email])
+  @@index([restaurantId])
+}
+
+/// Abonnement Stripe d'un restaurant.
+model Subscription {
+  id           String  @id @default(cuid())
+  restaurantId String  @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// ID d'abonnement Stripe (sub_…).
+  stripeSubscriptionId String?   @unique
+  /// ID du prix Stripe (price_…).
+  stripePriceId String?
+  /// Statut : trialing | active | past_due | canceled | unpaid
+  status        String   @default("inactive")
+  /// Date de début.
+  currentPeriodStart DateTime?
+  /// Date de fin.
+  currentPeriodEnd   DateTime?
+  /// Annulation en fin de période.
+  cancelAtPeriodEnd  Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId])
+  @@index([stripeSubscriptionId])
+}
+
+/// Tokens d'onboarding (utilisés lors de l'inscription).
+model SetupToken {
+  id        String   @id @default(cuid())
+  /// Token unique (sécurisé, aléatoire).
+  token     String   @unique
+  /// Email du propriétaire.
+  email     String
+  /// Nom du restaurant.
+  restaurantName String?
+  /// Statut : pending | used | expired
+  status    String   @default("pending")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+
+  @@index([token])
+  @@index([email])
+}
+
+/// Endpoints webhooks de l'API publique.
+model WebhookEndpoint {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// URL de l'endpoint.
+  url          String
+  /// Événements écoutés (ex: ["reservation.created", "order.updated"]).
+  events       String[]
+  /// Secret pour signer les payloads.
+  secret       String
+  active       Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId])
 }

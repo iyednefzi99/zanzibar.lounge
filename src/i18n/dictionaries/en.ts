@@ -153,6 +153,18 @@ const en: Dictionary = {
     },
   },
 
+  notFound: {
+    title: "Page not found",
+    description: "The page you're looking for doesn't exist or has been moved.",
+    backHome: "Back to home",
+  },
+
+  discover: {
+    title: "Discover our restaurants",
+    description:
+      "Find the Zanzibar Lounge location closest to you.",
+  },
+
   footer: {
     tagline: "Zanzibar is your happy place",
     follow: "Follow",
