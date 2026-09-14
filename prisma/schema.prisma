@@ -1349,6 +1349,7 @@ model MenuEngineering {
 model CallLog {
   id            String   @id @default(cuid())
   restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
   direction     String   // inbound | outbound
   callerNumber  String
   calledNumber  String?
@@ -1366,10 +1367,178 @@ model CallLog {
   @@index([restaurantId, direction])
 }
 
+/// Profil IA d'un guest pour la personnalisation.
+model GuestAiProfile {
+  id            String   @id @default(cuid())
+  guestId       String   @unique
+  preferences   Json     @default("{}") // cuisine, ambiance, dietary
+  visitPatterns Json     @default("{}") // frequency, avg_spend, favorite_times
+  loyaltyTier   String   @default("standard")
+  lifetimeValue Int      @default(0) // cents
+  lastAnalyzed  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([guestId])
+}
+
+/// Groupe de propriétés multi-établissements.
+model PropertyGroup {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  ownerEmail    String
+  restaurants   Json     @default("[]") // restaurant IDs
+  settings      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([slug])
+}
+
+/// Agrégats analytics cross-property.
+model GroupAnalytics {
+  id            String   @id @default(cuid())
+  groupId       String
+  period        DateTime @db.Date
+  totalRevenue  Int      @default(0)
+  totalCovers   Int      @default(0)
+  avgSpend      Int      @default(0)
+  topPerformers Json     @default("[]")
+  createdAt     DateTime @default(now())
+
+  @@unique([groupId, period])
+  @@index([groupId, period])
+}
+
+/// Suivi carbone par établissement.
+model CarbonLog {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  category      String   // energy | transport | waste | water
+  amount        Float
+  unit          String   // kgCO2 | kWh | liters
+  source        String?
+  period        DateTime @db.Date
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, period])
+}
+
+/// Vérifications de conformité.
+model ComplianceCheck {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  type          String   // allergen | food_safety | hygiene
+  status        String   @default("pending") // pending | passed | failed
+  details       Json     @default("{}")
+  checkedAt     DateTime @default(now())
+  expiresAt     DateTime?
+
+  @@index([restaurantId, type])
+}
+
+/// Métriques temps réel.
+model LiveMetric {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  metricType    String   // covers | revenue | wait_time | kitchen_load | staff_utilization
+  value         Float
+  unit          String?
+  metadata      Json?    @default("{}")
+  recordedAt    DateTime @default(now())
+
+  @@index([restaurantId, metricType, recordedAt])
+}
+
+/// Règles de tarification dynamique.
+model DynamicPricingRule {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  menuItemId    String
+  ruleType      String   // happy_hour | demand_surge | off_peak | loyalty
+  multiplier    Float    @default(1.0)
+  conditions    Json     @default("{}") // {minCovers, maxCovers, timeRange}
+  active        Boolean  @default(true)
+  validFrom     DateTime?
+  validUntil    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, menuItemId])
+}
+
+/// Badges de gamification.
+model GamificationBadge {
+  id            String   @id @default(cuid())
+  guestId       String
+  badgeType     String   // first_visit | power_user | reviewer | social_sharer | loyal
+  name          String
+  description   String?
+  icon          String?
+  earnedAt      DateTime @default(now())
+
+  @@index([guestId])
+}
+
+/// Événements de preuve sociale.
+model SocialProofEvent {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  type          String   // recent_booking | popular_time | trending_dish | review_highlights
+  payload       Json
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, type])
+}
+
+/// Alertes de maintenance.
+model MaintenanceAlert {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  assetType     String   // hvac | kitchen | sound | lighting | wifi
+  severity      String   @default("info") // info | warning | critical
+  title         String
+  description   String?
+  status        String   @default("active") // active | acknowledged | resolved
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
+
+  @@index([restaurantId, status])
+}
+
+/// Menu personnalisé généré pour un guest.
+model PersonalizedMenu {
+  id            String   @id @default(cuid())
+  guestId       String
+  restaurantId  String
+  menuItems     Json     // [{itemId, score, reason}]
+  generatedAt   DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([guestId, restaurantId])
+}
+
+/// Recommandations IA pour un guest.
+model Recommendation {
+  id            String   @id @default(cuid())
+  guestId       String
+  restaurantId  String
+  type          String   // dish | drink | upsell | return_visit
+  title         String
+  description   String?
+  score         Float    @default(0)
+  accepted      Boolean?
+  createdAt     DateTime @default(now())
+
+  @@index([guestId, restaurantId])
+}
+
 /// Commandes vocales en restaurant.
 model VoiceOrder {
   id            String   @id @default(cuid())
   restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
   reservationId String?
   tableNumber   String?
   items         Json     // [{name, quantity, price, modifiers}]
@@ -1389,6 +1558,7 @@ model VoiceOrder {
 model UpsellSuggestion {
   id            String   @id @default(cuid())
   restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
   reservationId String?
   context       String   // ordering | seated | post_meal
   suggestion    String   // "Try our dessert of the day"
