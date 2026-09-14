@@ -1,108 +1,186 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { isLocale } from "@/i18n/config";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Changelog | E-Coffee Node",
-  description: "Dernières mises à jour et nouveautés",
+  description:
+    "Suivez les évolutions d'E-Coffee Node : nouvelles fonctionnalités, améliorations et corrections.",
+  openGraph: {
+    title: "Changelog | E-Coffee Node",
+    description:
+      "Suivez les évolutions d'E-Coffee Node : nouvelles fonctionnalités, améliorations et corrections.",
+  },
 };
 
-const entries = [
+type ChangelogEntry = {
+  version: string;
+  date: string;
+  phase: string;
+  features: string[];
+};
+
+const entries: ChangelogEntry[] = [
   {
-    version: "2.0",
+    version: "0.9.0",
     date: "Septembre 2026",
-    title: "Phase 19 — Paiements & Anti No-Show",
-    changes: [
-      "Configuration des paiements (acompte, pré-autorisation)",
-      "Split de addition entre convives",
-      "Frais d'annulation et no-show configurables",
-      "Intégration Stripe pour pré-autorisations",
+    phase: "Bêta publique",
+    features: [
+      "Widget de réservation intégrable",
+      "Chat IA WhatsApp (assistant conversationnel)",
+      "Kitchen Display System",
+      "Plan de salle interactif",
     ],
   },
   {
-    version: "2.0",
-    date: "Septembre 2026",
-    title: "Phase 18 — CRM & Marketing",
-    changes: [
-      "Segmentation clients (VIP, réguliers, occasionnels, nouveaux)",
-      "Système de tags pour les invités",
-      "Notes et timeline par invité",
-      "Campagnes email automatiques",
-      "Vue Guest360 complète",
-    ],
-  },
-  {
-    version: "2.0",
-    date: "Septembre 2026",
-    title: "Phase 17 — POS & Intégrations",
-    changes: [
-      "Intégration Toast POS",
-      "Intégration Square POS",
-      "Synchronisation automatique des commandes",
-      "Email transactionnels via Resend",
-      "Google Maps pour géocodage",
-    ],
-  },
-  {
-    version: "2.0",
-    date: "Septembre 2026",
-    title: "Phase 16 — Marketplace & Découverte",
-    changes: [
-      "Page de découverte avec recherche avancée",
-      "Filtres par cuisine, prix, localisation",
-      "Restaurants mis en avant",
-      "SEO optimisé avec schema.org",
-      "Réservation directe depuis la découverte",
-    ],
-  },
-  {
-    version: "1.0",
+    version: "0.8.0",
     date: "Août 2026",
-    title: "Lancement initial",
-    changes: [
-      "Réservations en ligne",
-      "Gestion du menu",
-      "Affichage cuisine (KDS)",
-      "Widget de réservation",
-      "Chat IA multilingue",
-      "Application mobile staff",
+    phase: "Bêta privée",
+    features: [
+      "Commandes en ligne",
+      "CRM & gestion des clients",
+      "Système de fidélité",
+      "Notifications push",
+      "Analytics de base",
+    ],
+  },
+  {
+    version: "0.7.0",
+    date: "Juillet 2026",
+    phase: "Bêta privée",
+    features: [
+      "Voice AI (appels sortants / entrants)",
+      "POS intégré (Toast, Square)",
+      "A/B testing pour les menus",
+      "Système de parrainage",
+      "File d'attente virtuelle",
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "Juin 2026",
+    phase: "Alpha",
+    features: [
+      "Multi-langues (10 langues)",
+      "Gestion des événements",
+      "Intégration Google Calendar",
+      "Apple Wallet passes",
+    ],
+  },
+  {
+    version: "0.5.0",
+    date: "Mai 2026",
+    phase: "Alpha",
+    features: [
+      "Authentification staff (session HMAC)",
+      "Authentification invité (basée sur le téléphone)",
+      "Double authentification (2FA TOTP)",
+      "Journal d'audit de sécurité",
+      "Clés API & webhooks signés",
+    ],
+  },
+  {
+    version: "0.4.0",
+    date: "Avril 2026",
+    phase: "Prototype",
+    features: [
+      "Gestion des réservations (CRUD)",
+      "Disponibilité en temps réel",
+      "Système de menu (catégories & articles)",
+      "Gestion des stocks",
+    ],
+  },
+  {
+    version: "0.3.0",
+    date: "Mars 2026",
+    phase: "Prototype",
+    features: [
+      "Architecture multi-tenancy",
+      "Authentification back-office (Basic Auth)",
+      "Système de rôles (owner, manager, staff)",
+    ],
+  },
+  {
+    version: "0.2.0",
+    date: "Février 2026",
+    phase: "Conception",
+    features: [
+      "Modèle de données Prisma (55+ modèles)",
+      "Configuration i18n (10 locales)",
+      "Système de proxy edge (locale routing, CSP nonce)",
+      "Validation d'environnement au démarrage",
+    ],
+  },
+  {
+    version: "0.1.0",
+    date: "Janvier 2026",
+    phase: "Conception",
+    features: [
+      "Initialisation du projet Next.js (App Router)",
+      "Configuration Docker & Kubernetes",
+      "Pipeline CI (lint, typecheck, test, build)",
+      "Premiers tests unitaires (time, hours, phone)",
     ],
   },
 ];
 
-export default function ChangelogPage() {
+export default async function ChangelogPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <h1 className="font-display text-3xl text-shell">Changelog</h1>
-        <p className="mt-2 text-sm text-shell-dim">Dernières mises à jour de la plateforme</p>
-      </div>
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      <header className="text-center">
+        <h1 className="font-display text-4xl text-shell sm:text-5xl">
+          Changelog
+        </h1>
+        <p className="mt-4 text-shell-dim">
+          Les évolutions d&apos;E-Coffee Node, version après version.
+        </p>
+      </header>
 
-      <div className="space-y-8">
-        {entries.map((entry, i) => (
-          <div key={i} className="relative pl-8">
-            {/* Timeline line */}
-            {i < entries.length - 1 && (
-              <div className="absolute left-3 top-8 bottom-0 w-px bg-shell/10" />
-            )}
-            {/* Dot */}
-            <div className="absolute left-1 top-1.5 size-3 rounded-full bg-brass" />
+      <div className="mt-12">
+        <div className="relative border-l-2 border-shell/15 ps-8">
+          {entries.map((entry, i) => (
+            <div key={entry.version} className="relative pb-12 last:pb-0">
+              <span
+                aria-hidden="true"
+                className="absolute -start-[1.35rem] top-1 size-3 rounded-full border-2 border-brass bg-deep"
+              />
 
-            <div className="rounded-xl border border-shell/10 bg-deep/40 p-4">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-brass">v{entry.version}</span>
-                <span className="text-xs text-shell-dim">{entry.date}</span>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="font-mono text-sm text-brass">
+                  v{entry.version}
+                </span>
+                <span className="font-mono text-xs text-shell-dim">
+                  {entry.date}
+                </span>
+                <span className="rounded-full border border-shell/20 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-shell-dim">
+                  {entry.phase}
+                </span>
               </div>
-              <h2 className="mt-2 font-display text-lg text-shell">{entry.title}</h2>
-              <ul className="mt-3 space-y-1">
-                {entry.changes.map((c, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm text-shell-dim">
-                    <span className="mt-0.5 text-brass">→</span>
-                    {c}
+
+              <ul className="mt-3 space-y-1.5">
+                {entry.features.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex items-start gap-2 text-sm text-shell-dim"
+                  >
+                    <span className="mt-0.5 text-lagoon">+</span>
+                    {feature}
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

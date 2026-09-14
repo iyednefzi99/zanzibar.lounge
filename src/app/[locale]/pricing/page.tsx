@@ -1,138 +1,178 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { isLocale } from "@/i18n/config";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Tarifs | E-Coffee Node",
-  description: "Choisissez le plan adapté à votre restaurant",
+  description:
+    "Choisissez le plan adapté à votre restaurant. Gratuit, Starter à 29€/mois, Pro à 79€/mois ou Enterprise à 199€/mois.",
+  openGraph: {
+    title: "Tarifs | E-Coffee Node",
+    description:
+      "Choisissez le plan adapté à votre restaurant. Gratuit, Starter à 29€/mois, Pro à 79€/mois ou Enterprise à 199€/mois.",
+  },
 };
 
 const plans = [
   {
-    name: "Starter",
-    price: "29",
+    name: "Gratuit",
+    price: "0",
     period: "/mois",
-    description: "Pour les petits restaurants",
+    description: "Pour découvrir E-Coffee Node sans engagement.",
     features: [
-      "Réservations en ligne",
-      "Jusqu'à 50 réservations/mois",
-      "1 compte staff",
+      "50 réservations/mois",
+      "1 membre d'équipe",
       "Widget de réservation",
-      "Notifications email",
       "Support par email",
     ],
-    cta: "Commencer gratuitement",
-    popular: false,
+    cta: "Commencer",
+    ctaHref: "/onboard",
+    highlight: false,
   },
   {
-    name: "Professional",
+    name: "Starter",
+    price: "29",
+    period: "€/mois",
+    description: "Pour les petits restaurants qui veulent se structurer.",
+    features: [
+      "500 réservations/mois",
+      "5 membres d'équipe",
+      "Gestion du menu",
+      "Chat IA (WhatsApp)",
+      "Statistiques de base",
+      "Notifications push",
+    ],
+    cta: "Choisir Starter",
+    ctaHref: "/onboard?plan=STARTER",
+    highlight: false,
+  },
+  {
+    name: "Pro",
     price: "79",
-    period: "/mois",
-    description: "Le plus populaire",
+    period: "€/mois",
+    description: "Pour les restaurants ambitieux. Notre plan le plus populaire.",
     features: [
       "Réservations illimitées",
-      "10 comptes staff",
-      "Gestion du floor plan",
-      "POS integration",
-      "CRM & campagnes",
+      "15 membres d'équipe",
+      "Commandes en ligne",
+      "CRM & fidélité",
       "Analytics avancés",
+      "Voice AI",
+      "POS intégré",
+      "A/B testing",
       "Support prioritaire",
     ],
-    cta: "Essayer 14 jours",
-    popular: true,
+    cta: "Choisir Pro",
+    ctaHref: "/onboard?plan=PRO",
+    highlight: true,
   },
   {
     name: "Enterprise",
     price: "199",
-    period: "/mois",
-    description: "Pour les chaînes et groupes",
+    period: "€/mois",
+    description: "Pour les groupes et chaînes multi-établissements.",
     features: [
-      "Multi-sites",
-      "Staff illimité",
-      "API complète",
-      "Intégrations avancées",
-      "White-label",
-      "Account manager dédié",
+      "Tout du plan Pro",
+      "Équipes illimitées",
+      "Multi-propriétés",
+      "API dédiée",
+      "Personnalisation blanche",
+      "Successeur dédié",
       "SLA garanti",
+      "Facturation sur mesure",
     ],
-    cta: "Contacter les ventes",
-    popular: false,
+    cta: "Contacter l'équipe",
+    ctaHref: "/contact",
+    highlight: false,
   },
 ];
 
-export default function PricingPage() {
-  return (
-    <div className="mx-auto max-w-5xl space-y-12">
-      <div className="text-center">
-        <h1 className="font-display text-4xl text-shell">Des tarifs simples</h1>
-        <p className="mt-4 text-shell-dim">
-          Pas de frais cachés. Annulez quand vous voulez.
-        </p>
-      </div>
+export default async function PricingPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
 
-      <div className="grid gap-6 md:grid-cols-3">
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+      <header className="text-center">
+        <h1 className="font-display text-4xl text-shell sm:text-5xl">
+          Tarifs simples, transparents
+        </h1>
+        <p className="mt-4 text-lg text-shell-dim">
+          Pas de frais cachés. Pas de surprises. Annulez quand vous voulez.
+        </p>
+      </header>
+
+      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl border p-6 ${
-              plan.popular
-                ? "border-brass bg-brass/5 ring-2 ring-brass"
-                : "border-shell/10 bg-deep/40"
+            className={`relative flex flex-col rounded-xl border p-6 ${
+              plan.highlight
+                ? "border-brass bg-brass/5"
+                : "border-shell/12 bg-deep/40"
             }`}
           >
-            {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brass px-3 py-1 text-xs font-medium text-deep">
+            {plan.highlight && (
+              <span className="absolute -top-3 start-6 rounded-full bg-brass px-3 py-1 font-mono text-xs font-medium text-deep">
                 Populaire
-              </div>
+              </span>
             )}
-            <p className="font-display text-lg text-shell">{plan.name}</p>
-            <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-4xl font-bold text-shell">{plan.price}</span>
-              <span className="text-sm text-shell-dim">DT{plan.period}</span>
-            </div>
+
+            <h2 className="font-display text-2xl text-shell">{plan.name}</h2>
             <p className="mt-2 text-sm text-shell-dim">{plan.description}</p>
-            <ul className="mt-6 space-y-3">
-              {plan.features.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-shell-dim">
-                  <span className="text-brass">✓</span>
-                  {f}
+
+            <div className="mt-6 flex items-baseline gap-1">
+              <span className="font-display text-4xl text-shell">
+                {plan.price}
+              </span>
+              <span className="text-sm text-shell-dim">{plan.period}</span>
+            </div>
+
+            <ul className="mt-6 flex-1 space-y-3">
+              {plan.features.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-2 text-sm text-shell-dim"
+                >
+                  <span className="mt-0.5 text-lagoon">✓</span>
+                  {feature}
                 </li>
               ))}
             </ul>
-            <button
-              className={`mt-8 w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                plan.popular
-                  ? "bg-brass text-deep hover:bg-brass-glow"
-                  : "border border-shell/10 text-shell hover:bg-shell/5"
+
+            <Link
+              href={`/${locale}${plan.ctaHref}`}
+              className={`mt-8 inline-flex min-h-12 items-center justify-center rounded-full border px-6 text-sm font-medium transition-colors ${
+                plan.highlight
+                  ? "border-brass bg-brass text-deep hover:bg-brass/90"
+                  : "border-shell/25 text-shell hover:border-brass hover:text-brass"
               }`}
             >
               {plan.cta}
-            </button>
+            </Link>
           </div>
         ))}
       </div>
 
-      {/* FAQ */}
-      <div className="mx-auto max-w-2xl space-y-6">
-        <h2 className="font-display text-2xl text-shell">Questions fréquentes</h2>
-        <div className="space-y-4">
-          <div className="rounded-xl border border-shell/10 bg-deep/40 p-4">
-            <p className="font-medium text-shell">Puis-je changer de plan ?</p>
-            <p className="mt-2 text-sm text-shell-dim">
-              Oui, vous pouvez passer à un plan supérieur ou inférieur à tout moment.
-            </p>
-          </div>
-          <div className="rounded-xl border border-shell/10 bg-deep/40 p-4">
-            <p className="font-medium text-shell">Y a-t-il un engagement ?</p>
-            <p className="mt-2 text-sm text-shell-dim">
-              Non, tous nos plans sont sans engagement. Annulez quand vous voulez.
-            </p>
-          </div>
-          <div className="rounded-xl border border-shell/10 bg-deep/40 p-4">
-            <p className="font-medium text-shell">Offrez-vous une réduction annuelle ?</p>
-            <p className="mt-2 text-sm text-shell-dim">
-              Oui, payez annuellement et économisez 20%.
-            </p>
-          </div>
-        </div>
+      <div className="mt-16 text-center">
+        <p className="text-sm text-shell-dim">
+          Tous les plans incluent l&apos;hébergement, les mises à jour et le
+          support technique.
+        </p>
+        <p className="mt-2 text-sm text-shell-dim">
+          Besoin d&apos;un plan sur mesure ?{" "}
+          <Link href={`/${locale}/contact`} className="text-brass hover:underline">
+            Contactez-nous
+          </Link>
+        </p>
       </div>
     </div>
   );
