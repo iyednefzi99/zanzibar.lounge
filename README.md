@@ -3,7 +3,7 @@
 Plateforme complète de réservation de restaurant — vitrine trilingue, agent IA conversationnel,
 SaaS multi-établissement, analytics avancés, application mobile staff, et bien plus.
 
-> **Plateforme de classe mondiale** — 10 langues, 100+ routes, agent vocal IA,
+> **Plateforme de classe mondiale** — 10 langues, 150+ routes, agent vocal IA,
 > système de caisse cuisine, widget embeddable, analytics prédictifs,
 > déploiement Docker/Kubernetes, et 29 tests unitaires.
 
@@ -107,6 +107,59 @@ SaaS multi-établissement, analytics avancés, application mobile staff, et bien
 - **Health check** (/api/health)
 - **Monitoring** (métriques, santé, mémoire)
 
+### Phase 16 — Marketplace & Discovery
+- **Discovery engine** (recherche avancée, filtres, tri)
+- **Restaurant profiles** (galerie, avis, menus, horaires)
+- **SEO optimisé** (schema.org, breadcrumbs, OG)
+- **Réservation directe** depuis la découverte
+- **10 composants** discovery (cards, filtres, grille, hero)
+
+### Phase 17 — POS & Integrations
+- **Toast POS** (sync commandes, webhook)
+- **Square POS** (sync commandes, webhook)
+- **Email transactionnels** (Resend, templates HTML)
+- **Google Maps** (géocodage, nearby, statiques)
+- **Admin POS** (configuration, historique sync)
+
+### Phase 18 — CRM & Marketing
+- **Guest360** (vue complète, timeline, notes)
+- **Segmentation** (VIP, réguliers, occasionnels, nouveaux)
+- **Tags** (assignation, filtrage)
+- **Campagnes email** (création, envoi, stats)
+- **3 pages admin** (CRM, guests, campaigns)
+
+### Phase 19 — Paiements & Anti No-Show
+- **Config paiements** (acompte, pré-autorisation)
+- **Bill splitting** (également, par items, tips)
+- **Frais d'annulation** configurables
+- **Stripe pre-auth** (autorisation, capture, annulation)
+
+### Phase 20 — Staff Management & Scheduling
+- **Shift management** (CRUD, bulk, copy week)
+- **Disponibilités** (horaires hebdo, vérification)
+- **Timeclock** (clock in/out, pauses, heures)
+- **Performance** (couvertures, heures, notes)
+
+### Phase 21 — Onboarding & Growth
+- **Wizard 3 étapes** (infos, cuisine, modèle menu)
+- **5 modèles** (Tunisienne, Italienne, Japonaise, Française, Mexicaine)
+- **Page pricing** (3 plans : Starter 29€, Pro 79€, Enterprise 199€)
+- **Page comparaison** (vs OpenTable, Resy, TheFork)
+- **Changelog** (timeline des versions)
+
+### Phase 22 — Excellence Technique
+- **Redis caching** (Upstash REST, TTL, invalidation)
+- **Background jobs** (queue mémoire, handlers)
+- **Health checks** (DB, mémoire, uptime, metrics)
+- **API health** (/api/health, /api/admin/jobs)
+
+### Phase 23 — Mobile App & Offline
+- **PWA premium** (manifest, service worker, install)
+- **Offline orders** (queue locale, sync automatique)
+- **Push notifications** (VAPID, subscriptions)
+- **Apple Wallet** (pass HTML pour réservations)
+- **Géolocalisation** (nearby restaurants)
+
 ---
 
 ## Pile technique
@@ -122,6 +175,8 @@ SaaS multi-établissement, analytics avancés, application mobile staff, et bien
 | **Twilio** | Voice + SMS |
 | **WhatsApp Cloud API** | Canal WhatsApp |
 | **Stripe** | Paiements + Billing |
+| **Resend** | Email transactionnels |
+| **Google Maps** | Géocodage, nearby |
 | **Sentry** | Error tracking |
 | **Vercel** | Hosting + Analytics |
 | **Docker/Kubernetes** | Déploiement |
@@ -185,19 +240,26 @@ kubectl apply -f k8s/
 ## Architecture
 
 ```
-100+ routes API
-├── Public:     /api/v1/restaurants/*
-├── Booking:    /api/reservations, /api/availability
-├── Orders:     /api/orders, /api/menu
-├── SaaS:       /api/saas/{onboard,setup,plan,portal,staff,webhooks}
-├── Voice:      /api/voice/{incoming,gather,outbound}
-├── Kitchen:    /api/kitchen/orders/*
-├── Widget:     /api/widget/{config,availability,reserve}
-├── Guest:      /api/guest/{profile,reservations,reviews}
-├── Admin:      /api/admin/{export,orders,2fa,apikeys}
-├── Analytics:  /api/analytics/realtime
-├── Health:     /api/health
-└── Webhooks:   /api/webhooks/{whatsapp,twilio}
+150+ routes API
+├── Public:      /api/v1/restaurants/*
+├── Booking:     /api/reservations, /api/availability
+├── Orders:      /api/orders, /api/menu
+├── SaaS:        /api/saas/{onboard,setup,plan,portal,staff,webhooks}
+├── Voice:       /api/voice/{incoming,gather,outbound}
+├── Kitchen:     /api/kitchen/orders/*
+├── Widget:      /api/widget/{config,availability,reserve}
+├── Guest:       /api/guest/{profile,reservations,reviews}
+├── Admin:       /api/admin/{export,orders,2fa,apikeys,jobs}
+├── Analytics:   /api/analytics/realtime
+├── Discovery:   /api/discovery/{search,featured,restaurants}
+├── CRM:         /api/crm/{guests,tags,campaigns}
+├── Payments:    /api/payments/{config,preauth,split}
+├── Staff:       /api/staff/{schedule,timeclock,performance}
+├── Onboarding:  /api/onboarding/complete
+├── Push:        /api/notifications/push
+├── Wallet:      /api/wallet/pass
+├── Health:      /api/health
+└── Webhooks:    /api/webhooks/{whatsapp,twilio}
 ```
 
 ---
@@ -211,9 +273,12 @@ kubectl apply -f k8s/
 | `/{locale}/commander` | Commande en ligne |
 | `/{locale}/carte` | Menu du restaurant |
 | `/{locale}/discover` | Marketplace découverte |
-| `/{locale}/r/{slug}` | Profil restaurant |
+| `/{locale}/r/[slug]` | Profil restaurant |
 | `/{locale}/events` | Événements |
 | `/{locale}/waitlist` | File d'attente |
+| `/{locale}/pricing` | Tarifs (3 plans) |
+| `/{locale}/compare` | Comparaison concurrents |
+| `/{locale}/changelog` | Changelog |
 | `/{locale}/guest` | Dashboard client |
 | `/{locale}/staff` | App mobile staff |
 | `/{locale}/kitchen` | Kitchen Display System |
@@ -234,13 +299,20 @@ kubectl apply -f k8s/
 | `/{locale}/admin/voice` | Paramètres vocaux |
 | `/{locale}/admin/security` | Sécurité (2FA, audit) |
 | `/{locale}/admin/integrations` | Intégrations tierces |
+| `/{locale}/admin/integrations/pos` | Configuration POS |
 | `/{locale}/admin/notifications` | Centre de notifications |
 | `/{locale}/admin/widget` | Widget embeddable |
 | `/{locale}/admin/translations` | Gestion traductions |
+| `/{locale}/admin/crm` | CRM & Marketing |
+| `/{locale}/admin/crm/guests` | Liste clients |
+| `/{locale}/admin/crm/campaigns` | Campagnes email |
+| `/{locale}/admin/payments` | Configuration paiements |
 | `/{locale}/owner` | Dashboard propriétaire |
 | `/{locale}/owner/settings` | Paramètres restaurant |
 | `/{locale}/owner/team` | Gestion équipe |
 | `/{locale}/owner/billing` | Facturation |
+| `/{locale}/owner/schedule` | Planning staff |
+| `/{locale}/owner/onboarding` | Configuration initiale |
 | `/widget/{slug}` | Widget réservation (iframe) |
 | `/offline` | Page hors ligne |
 

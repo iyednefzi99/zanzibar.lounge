@@ -22,7 +22,7 @@ npm run build
 ## Prisma 7 specifics
 
 - Schema is at `prisma/schema.prisma`. Client is generated to `src/generated/prisma` (gitignored).
-- 25+ models: Restaurant, Guest, Reservation, Order, MenuItem, Staff, Subscription, Payment, Review, Conversation, Message, PushSubscription, LoyaltyAccount, LoyaltyTransaction, PhoneVerification, ProcessedEvent, StaffSession, SetupToken, WebhookEndpoint, Notification, MenuCategory, Inventory, InventoryLog, Referral, Waitlist, Event, EventBooking, Gallery, GuestProfile, AuditLog, ApiKey, WebhookDelivery
+- 35+ models: Restaurant, Guest, Reservation, Order, MenuItem, Staff, Subscription, Payment, Review, Conversation, Message, PushSubscription, LoyaltyAccount, LoyaltyTransaction, PhoneVerification, ProcessedEvent, StaffSession, SetupToken, WebhookEndpoint, Notification, MenuCategory, Inventory, InventoryLog, Referral, Waitlist, Event, EventBooking, Gallery, GuestProfile, AuditLog, ApiKey, WebhookDelivery, GuestTag, GuestTagAssignment, GuestNote, Campaign, CampaignDelivery, Shift, StaffAvailability, TimeEntry, PreAuthorization, BillSplit, BillSplitItem, PosIntegration, PosSyncLog
 - `npm install` triggers `prisma generate` via `postinstall`.
 - Database URL is in `prisma.config.ts` (reads `DATABASE_URL` from `.env.local`).
 - `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod.
@@ -32,7 +32,7 @@ npm run build
 Environment variables are validated at startup via Zod in `src/lib/env.ts`. Missing or invalid values throw immediately.
 
 Required: `DATABASE_URL`
-Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google Business, TripAdvisor, VAPID keys
+Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google Business, TripAdvisor, VAPID keys, Resend, Google Maps
 
 ## Architecture shortcuts
 
@@ -71,14 +71,26 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 | SEO | `lib/seo.ts` | Meta, schemas, keywords |
 | i18n | `lib/i18n-manager.ts` | Locale utilities |
 | Monitoring | `lib/monitoring.ts` | Health checks, metrics |
-| Payments | `lib/payments.ts` | Stripe integration |
+| Payments | `lib/payments/` | Stripe preauth, split |
 | Forecast | `lib/forecast.ts` | Predictive analytics |
 | Analytics | `lib/analytics.ts` | Basic statistics |
 | Notifier | `lib/notifier.ts` | Push notifications |
+| Discovery | `lib/discovery.ts` | Marketplace search engine |
+| POS | `lib/pos/` | Toast, Square integration |
+| Email | `lib/integrations/email.ts` | Resend email |
+| Maps | `lib/integrations/google-maps.ts` | Geocoding, nearby |
+| CRM | `lib/crm/` | Guest360, tags, campaigns |
+| Staff | `lib/staff/` | Scheduling, availability, timeclock, performance |
+| Onboarding | `lib/onboarding/` | Wizard, menu templates |
+| Cache | `lib/cache.ts` | Redis caching (Upstash REST) |
+| Health | `lib/health.ts` | Health checks, metrics |
+| Jobs | `lib/jobs.ts` | Background job queue |
+| Push | `lib/notifications/push.ts` | Push subscriptions |
+| Wallet | `lib/wallet/` | Apple Wallet passes |
 
 ## Routes overview
 
-**100+ API routes:**
+**150+ API routes:**
 - Public: `/api/v1/restaurants/*` (6 endpoints)
 - Booking: `/api/reservations`, `/api/availability`
 - Orders: `/api/orders`, `/api/menu`
@@ -87,20 +99,30 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 - Kitchen: `/api/kitchen/orders/*`
 - Widget: `/api/widget/{config,availability,reserve}`
 - Guest: `/api/guest/{profile,reservations,reviews}`
-- Admin: `/api/admin/{export,orders,2fa,apikeys}`
+- Discovery: `/api/discovery/{search,featured,restaurants}`
+- CRM: `/api/crm/{guests,tags,campaigns}`
+- Payments: `/api/payments/{config,preauth,split}`
+- Staff: `/api/staff/{schedule,timeclock,performance}`
+- Onboarding: `/api/onboarding/complete`
+- Push: `/api/notifications/push`
+- Wallet: `/api/wallet/pass`
+- Admin: `/api/admin/{export,orders,2fa,apikeys,jobs}`
 - Analytics: `/api/analytics/realtime`
 - Health: `/api/health`
 - Webhooks: `/api/webhooks/{whatsapp,twilio}`
 - Notifications: `/api/notifications/*`
 
 **Key pages:**
-- `/{locale}/admin` — 30+ admin pages (analytics, menu, inventory, floor, orders, chat, reviews, voice, security, integrations, notifications, widget, translations)
+- `/{locale}/admin` — 35+ admin pages (analytics, menu, inventory, floor, orders, chat, reviews, voice, security, integrations, POS, notifications, widget, translations, CRM, payments)
 - `/{locale}/staff` — Mobile staff app (reservations, orders, QR scanner)
 - `/{locale}/kitchen` — Kitchen Display System
-- `/{locale}/owner` — Owner dashboard (settings, team, billing)
+- `/{locale}/owner` — Owner dashboard (settings, team, billing, schedule, onboarding)
 - `/{locale}/guest` — Guest app (reservations, loyalty, profile)
 - `/{locale}/discover` — Marketplace
 - `/{locale}/events` — Events
+- `/{locale}/pricing` — Pricing plans
+- `/{locale}/compare` — Comparison page
+- `/{locale}/changelog` — Changelog
 - `/widget/{slug}` — Embeddable booking widget
 
 ## Testing
@@ -121,9 +143,11 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 
 - **CSP nonce**: Every page renders dynamically (nonce changes per request).
 - **Prisma generated client**: Do not edit `src/generated/`. Gitignored, regenerated on install.
-- **Upstash Redis**: Rate limiting shared only if `UPSTASH_REDIS_REST_URL` is set.
+- **Upstash Redis**: Caching uses REST API, not @upstash/redis package.
 - **`npm run forget -- +216…`**: GDPR data erasure script.
 - **Next.js 16**: App Router with Turbopack. `proxy.ts` replaces `middleware.ts`.
 - **Widget**: Runs in iframes — uses `<img>` not `next/image` intentionally.
 - **Voice AI**: Requires `OPENAI_API_KEY` for Whisper STT (falls back gracefully).
 - **Kitchen Display**: Auto-refreshes every 10s — optimize for tablet screens.
+- **POS integration**: Prisma `Json` fields need type casting (`as unknown as Record<string, string>`).
+- **Schema relations**: New models require explicit opposite relation fields on parent models.

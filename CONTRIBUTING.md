@@ -13,6 +13,8 @@ soumettre vos contributions.
 - (Optionnel) Compte **Twilio** pour les SMS et Voice
 - (Optionnel) Clé **Anthropic** pour l'agent IA
 - (Optionnel) Clé **Google Calendar** pour l'intégration agenda
+- (Optionnel) Clé **Resend** pour les emails transactionnels
+- (Optionnel) Clé **Google Maps** pour la géocodage
 
 ## Mise en place du projet
 
@@ -118,36 +120,103 @@ src/
 │   │   ├── kitchen/         # Kitchen Display
 │   │   ├── widget/          # Widget embeddable
 │   │   ├── guest/           # App client
-│   │   ├── notifications/   # Notification center
-│   │   ├── admin/           # Admin (2FA, API keys)
+│   │   ├── crm/             # CRM & Marketing
+│   │   ├── payments/        # Paiements
+│   │   ├── staff/           # Staff scheduling
+│   │   ├── onboarding/      # Onboarding
+│   │   ├── notifications/   # Notifications (push, in-app)
+│   │   ├── wallet/          # Apple Wallet
+│   │   ├── discovery/       # Marketplace
+│   │   ├── admin/           # Admin (2FA, API keys, jobs)
 │   │   └── health/          # Health check
 │   ├── [locale]/
-│   │   ├── admin/           # Back-office (30+ pages)
+│   │   ├── admin/           # Back-office (35+ pages)
 │   │   ├── staff/           # App mobile staff
 │   │   ├── kitchen/         # Kitchen Display
 │   │   ├── owner/           # Dashboard propriétaire
 │   │   ├── guest/           # App client
 │   │   ├── discover/        # Marketplace
 │   │   ├── events/          # Événements
+│   │   ├── pricing/         # Tarifs
+│   │   ├── compare/         # Comparaison
+│   │   ├── changelog/       # Changelog
 │   │   └── r/[slug]/        # Profil restaurant
 │   └── widget/              # Widget iframe
-├── components/              # 40+ composants
+├── components/              # 50+ composants
+│   ├── discovery/           # Marketplace
+│   ├── pos/                 # POS integration
+│   ├── payments/            # Paiements
+│   ├── onboarding/          # Onboarding wizard
+│   ├── mobile/              # PWA banner
+│   └── ...
+├── hooks/                   # Custom hooks
+│   ├── use-install-prompt.ts
+│   ├── use-geolocation.ts
+│   └── use-offline-orders.ts
 ├── lib/
 │   ├── agent/               # Agent IA (11 outils)
 │   ├── voice/               # Voice AI
-│   ├── integrations/        # Google, TripAdvisor
-│   ├── *.ts                 # 30+ modules métier
+│   ├── pos/                 # POS integration
+│   ├── crm/                 # CRM & Marketing
+│   ├── payments/            # Paiements
+│   ├── staff/               # Staff management
+│   ├── onboarding/          # Onboarding
+│   ├── notifications/       # Push notifications
+│   ├── wallet/              # Apple Wallet
+│   ├── integrations/        # Google, TripAdvisor, Resend
+│   ├── cache.ts             # Redis caching
+│   ├── health.ts            # Health checks
+│   ├── jobs.ts              # Background jobs
+│   └── *.ts                 # 30+ modules métier
 ├── i18n/                    # 10 langues
 └── proxy.ts                 # Edge proxy
 
 prisma/
-├── schema.prisma            # 25+ modèles
+├── schema.prisma            # 35+ modèles
 ├── migrations/
 └── seed.mjs
 
 k8s/                         # Kubernetes manifests
 scripts/                     # Backup/restore
+public/
+└── sw.js                    # Service worker
 ```
+
+## Modules clés
+
+| Module | Path | Purpose |
+|---|---|---|
+| Reservations | `lib/reservations.ts` | Core booking logic |
+| Orders | `lib/orders.ts` | Online orders |
+| Agent | `lib/agent/` | AI conversation (11 tools) |
+| Voice | `lib/voice/` | Voice AI (Twilio, STT, TTS) |
+| SaaS | `lib/saas.ts` | Multi-tenancy, billing |
+| Staff auth | `lib/staff-session.ts` | Staff session management |
+| Guest app | `lib/guest-app.ts` | Guest dashboard logic |
+| Menu | `lib/menu-manager.ts` | Menu CRUD |
+| Inventory | `lib/inventory.ts` | Stock management |
+| Social | `lib/social.ts` | Referrals, waitlist, events |
+| AI Analytics | `lib/ai-analytics.ts` | Predictions, insights |
+| A/B Testing | `lib/ab-testing.ts` | Experiments framework |
+| Notifications | `lib/notifications.ts` | In-app notifications |
+| Security | `lib/security.ts` | 2FA, audit logs, API keys |
+| Webhooks | `lib/webhooks.ts` | Webhook delivery + signing |
+| White-label | `lib/white-label.ts` | Branding, integrations |
+| Performance | `lib/performance.ts` | Cache, throttle, debounce |
+| SEO | `lib/seo.ts` | Meta, schemas, keywords |
+| i18n | `lib/i18n-manager.ts` | Locale utilities |
+| Monitoring | `lib/monitoring.ts` | Health checks, metrics |
+| Discovery | `lib/discovery.ts` | Marketplace search |
+| POS | `lib/pos/` | Toast, Square integration |
+| CRM | `lib/crm/` | Guest360, tags, campaigns |
+| Payments | `lib/payments/` | Config, preauth, split |
+| Staff | `lib/staff/` | Scheduling, timeclock |
+| Onboarding | `lib/onboarding/` | Wizard, templates |
+| Cache | `lib/cache.ts` | Redis (Upstash) caching |
+| Health | `lib/health.ts` | Health checks |
+| Jobs | `lib/jobs.ts` | Background jobs |
+| Push | `lib/notifications/push.ts` | Push notifications |
+| Wallet | `lib/wallet/` | Apple Wallet passes |
 
 ## Contribution guide
 
