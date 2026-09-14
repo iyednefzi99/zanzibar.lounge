@@ -127,6 +127,7 @@ model Restaurant {
   waitlist         Waitlist[]
   events           Event[]
   gallery          Gallery[]
+  posIntegrations  PosIntegration[]
 
   @@index([slug])
   @@index([stripeCustomerId])
@@ -900,7 +901,7 @@ model EventBooking {
   @@index([guestId])
 }
 
-/// Galerie photos du restaurant.
+  /// Galerie photos du restaurant.
 model Gallery {
   id           String     @id @default(cuid())
   restaurantId String
@@ -911,4 +912,60 @@ model Gallery {
   createdAt    DateTime   @default(now())
 
   @@index([restaurantId, sortOrder])
+}
+
+// ─── POS Integration ────────────────────────────────────────────────
+
+/// Intégration avec un système POS externe.
+model PosIntegration {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Fournisseur POS : "toast" | "square" | "lightspeed" | "clover" | "custom"
+  provider     String
+  /// Clé API chiffrée.
+  apiKey       String?
+  /// Secret API chiffré.
+  apiSecret    String?
+  /// ID du site/lieu externe.
+  locationId   String?
+  /// Synchroniser le menu depuis le POS.
+  syncMenu     Boolean  @default(true)
+  /// Synchroniser les commandes depuis le POS.
+  syncOrders   Boolean  @default(false)
+  /// Synchroniser les paiements depuis le POS.
+  syncPayments Boolean  @default(false)
+  /// Dernière synchronisation.
+  lastSyncAt   DateTime?
+  /// Statut : idle | syncing | error
+  syncStatus   String   @default("idle")
+  /// Message d'erreur si échec.
+  syncError    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  logs PosSyncLog[]
+
+  @@unique([restaurantId, provider])
+  @@index([restaurantId])
+}
+
+/// Journal des synchronisations POS.
+model PosSyncLog {
+  id            String   @id @default(cuid())
+  integrationId String
+  integration   PosIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  /// Direction : "import" | "export"
+  direction     String
+  /// Type d'entité : "menu" | "order" | "payment"
+  entityType    String
+  /// ID de l'entité synchro.
+  entityId      String?
+  /// Statut : "success" | "error" | "skipped"
+  status        String
+  /// Détails supplémentaires.
+  details       Json?
+  createdAt     DateTime @default(now())
+
+  @@index([integrationId, createdAt])
 }
