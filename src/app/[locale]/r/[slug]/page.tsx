@@ -1,15 +1,53 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BookingWidget } from "@/components/booking-widget";
+import { MenuDisplay } from "@/components/menu-display";
+import { ReviewList } from "@/components/review-list";
 import { Studs } from "@/components/studs";
 import { site } from "@/content/site";
 import { getDictionary } from "@/i18n";
-import { isLocale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
 import { db } from "@/lib/db";
 import { formatPhone } from "@/lib/phone";
+import { getReviewStats, getApprovedReviews } from "@/lib/reviews";
 
 export const dynamic = "force-dynamic";
+
+const DAY_NAMES = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"] as const;
+
+function isOpenNow(tz: string): boolean {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  const minutes = hour * 60 + minute;
+  const weekday = now.getUTCDay();
+
+  const hours = site.hours.find((h) => h.day === weekday);
+  if (!hours) return false;
+
+  const openMin = parseInt(hours.open, 10) * 60;
+  const closeStr = hours.close.replace("26:00", "26");
+  const closeMin = parseInt(closeStr, 10) * 60;
+
+  return minutes >= openMin && minutes < closeMin;
+}
+
+function getTodayISO(tz: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
 export async function generateMetadata({
   params,
@@ -64,7 +102,8 @@ export default async function RestaurantPage({
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
 
-  const dictionary = await getDictionary(locale);
+  const typedLocale: Locale = locale;
+  const dictionary = await getDictionary(typedLocale);
 
   const restaurant = await db.restaurant.findUnique({
     where: { slug, active: true },
@@ -73,62 +112,33 @@ export default async function RestaurantPage({
         where: { available: true },
         orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
       },
-      reservations: {
-        where: { status: "COMPLETED" },
-        include: {
-          reviews: {
-            where: { approved: true },
-            select: { rating: true },
-          },
-        },
+      tables: {
+        where: { active: true },
+        select: { zone: true },
       },
     },
   });
 
   if (!restaurant) notFound();
 
-  const reviews = restaurant.reservations.flatMap((res) => res.reviews);
-  const reviewCount = reviews.length;
-  const averageRating =
-    reviewCount > 0
-      ? Math.round(
-          (reviews.reduce((s, rv) => s + rv.rating, 0) / reviewCount) * 10,
-        ) / 10
-      : 0;
-
-  const now = new Date();
-  const tz = restaurant.timezone ?? site.timezone;
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false,
-  }).formatToParts(now);
-
-  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
-  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
-  const minutes = hour * 60 + minute;
-  const weekday = now.getUTCDay();
-
-  const hours = site.hours.find((h) => h.day === weekday);
-  const isOpen =
-    !!hours &&
-    minutes >= parseInt(hours.open, 10) * 60 &&
-    minutes <
-      parseInt(hours.close.replace("26:00", "26"), 10) * 60;
-
-  const groupedMenu = restaurant.menuItems.reduce<
-    Record<string, typeof restaurant.menuItems>
-  >((acc, item) => {
-    const cat = item.category ?? "general";
-    (acc[cat] ??= []).push(item);
-    return acc;
-  }, {});
-
+  const reviews = await getApprovedReviews(50);
+  const stats = await getReviewStats();
+  const isOpen = isOpenNow(restaurant.timezone ?? site.timezone);
+  const todayISO = getTodayISO(restaurant.timezone ?? site.timezone);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  const menuItems = restaurant.menuItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: item.price / 1000,
+    category: item.category ?? "general",
+    imageUrl: item.imageUrl,
+  }));
 
   return (
     <>
+      {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -154,65 +164,99 @@ export default async function RestaurantPage({
             servesCuisine: ["Tunisian", "Mediterranean", "Cafe"],
             acceptsReservations: "True",
             aggregateRating:
-              reviewCount > 0
+              stats.count > 0
                 ? {
                     "@type": "AggregateRating",
-                    ratingValue: averageRating,
-                    reviewCount,
+                    ratingValue: stats.average,
+                    reviewCount: stats.count,
                     bestRating: 5,
                     worstRating: 1,
                   }
                 : undefined,
+            openingHoursSpecification: site.hours.map((h) => ({
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ][h.day],
+              opens: h.open,
+              closes: h.close,
+            })),
+            menu: menuItems.length > 0 ? `${baseUrl}/${locale}/r/${slug}` : undefined,
           }),
         }}
       />
 
-      <header className="mx-auto max-w-4xl px-5 pt-16 sm:px-8">
-        <div className="reveal flex flex-wrap items-start justify-between gap-4">
-          <h1 className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none text-shell">
-            {restaurant.name}
-          </h1>
-          <span
-            className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs uppercase tracking-[0.14em] ${
-              isOpen
-                ? "bg-lagoon/15 text-lagoon"
-                : "bg-coral/15 text-coral"
-            }`}
-          >
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-deep/60">
+        <div className="mx-auto max-w-4xl px-5 pt-16 pb-12 sm:px-8">
+          <div className="reveal flex flex-wrap items-start justify-between gap-4">
+            <h1 className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none text-shell">
+              {restaurant.name}
+            </h1>
             <span
-              aria-hidden="true"
-              className={`inline-block size-2 rounded-full ${
-                isOpen ? "bg-lagoon" : "bg-coral"
+              className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs uppercase tracking-[0.14em] ${
+                isOpen
+                  ? "bg-lagoon/15 text-lagoon"
+                  : "bg-coral/15 text-coral"
               }`}
-            />
-            {isOpen ? "Ouvert" : "Fermé"}
-          </span>
-        </div>
-
-        {reviewCount > 0 && (
-          <p className="reveal reveal-1 mt-4 flex items-center gap-2 text-brass">
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-5"
             >
-              <path
-                fillRule="evenodd"
-                d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102 1.106 4.637c.194.813 1.134.561 1.531-.38l3.898-3.46 4.753.381c.833.067 1.171-1.107.536-1.651l-3.62-3.102-1.106-4.637c-.194-.813-1.134-.561-1.531-.38L10.868 2.884Z"
-                clipRule="evenodd"
+              <span
+                aria-hidden="true"
+                className={`inline-block size-2 rounded-full ${
+                  isOpen ? "bg-lagoon" : "bg-coral"
+                }`}
               />
-            </svg>
-            <span className="font-semibold">{averageRating.toFixed(1)}</span>
-            <span className="text-shell-dim">({reviewCount} avis)</span>
-          </p>
-        )}
-      </header>
+              {isOpen ? "Ouvert" : "Ferme"}
+            </span>
+          </div>
+
+          {/* Infos rapides */}
+          <div className="reveal reveal-1 mt-5 flex flex-wrap items-center gap-5 text-sm text-shell-dim">
+            {stats.count > 0 && (
+              <span className="flex items-center gap-1.5 text-brass" dir="ltr">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="size-4"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102 1.106 4.637c.194.813 1.134.561 1.531-.38l3.898-3.46 4.753.381c.833.067 1.171-1.107.536-1.651l-3.62-3.102-1.106-4.637c-.194-.813-1.134-.561-1.531-.38L10.868 2.884Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="font-semibold">{stats.average.toFixed(1)}</span>
+                <span>({stats.count} avis)</span>
+              </span>
+            )}
+            {restaurant.address && (
+              <address className="not-italic">{restaurant.address}</address>
+            )}
+            {restaurant.phone && (
+              <a
+                href={`tel:${restaurant.phone.replace(/\s/g, "")}`}
+                className="hover:text-brass"
+                dir="ltr"
+              >
+                {formatPhone(restaurant.phone.replace(/\s/g, ""))}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
 
       <Studs className="reveal reveal-2" />
 
-      <div className="mx-auto max-w-4xl px-5 py-14 sm:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
+        {/* Informations pratiques */}
+        <section className="grid gap-8 sm:grid-cols-3">
           {restaurant.address && (
             <div>
               <h2 className="font-mono text-xs uppercase tracking-[0.16em] text-brass">
@@ -221,6 +265,14 @@ export default async function RestaurantPage({
               <address className="mt-3 text-sm text-shell not-italic">
                 {restaurant.address}
               </address>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${site.address.lat},${site.address.lng}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-2 inline-block text-sm text-lagoon underline underline-offset-4 hover:text-brass"
+              >
+                Ouvrir dans Maps
+              </a>
             </div>
           )}
 
@@ -233,13 +285,11 @@ export default async function RestaurantPage({
                 const dayHours = site.hours.find((h) => h.day === day);
                 return (
                   <li key={day} className="flex justify-between gap-6">
-                    <span className="text-shell-dim">
-                      {dictionary.days.short[day]}
-                    </span>
+                    <span className="text-shell-dim">{DAY_NAMES[day]}</span>
                     <span className="tabular-nums text-shell" dir="ltr">
                       {dayHours
                         ? `${dayHours.open} – ${dayHours.close.replace("26:00", "02:00")}`
-                        : dictionary.info.closed}
+                        : "Ferme"}
                     </span>
                   </li>
                 );
@@ -247,12 +297,12 @@ export default async function RestaurantPage({
             </ul>
           </div>
 
-          {restaurant.phone && (
-            <div>
-              <h2 className="font-mono text-xs uppercase tracking-[0.16em] text-brass">
-                Contact
-              </h2>
-              <ul className="mt-3 space-y-2 text-sm">
+          <div>
+            <h2 className="font-mono text-xs uppercase tracking-[0.16em] text-brass">
+              Contact
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {restaurant.phone && (
                 <li>
                   <a
                     href={`tel:${restaurant.phone.replace(/\s/g, "")}`}
@@ -262,69 +312,99 @@ export default async function RestaurantPage({
                     {formatPhone(restaurant.phone.replace(/\s/g, ""))}
                   </a>
                 </li>
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
+              )}
+              {site.social.instagram && (
+                <li>
+                  <a
+                    href={site.social.instagram}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-shell-dim hover:text-brass"
+                  >
+                    Instagram
+                  </a>
+                </li>
+              )}
+              {site.social.facebook && (
+                <li>
+                  <a
+                    href={site.social.facebook}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-shell-dim hover:text-brass"
+                  >
+                    Facebook
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </section>
 
-      {Object.keys(groupedMenu).length > 0 && (
-        <>
-          <Studs />
-          <section className="mx-auto max-w-4xl px-5 py-14 sm:px-8">
-            <h2 className="font-display text-3xl text-shell sm:text-4xl">
-              La carte
-            </h2>
-            <p className="mt-2 text-sm text-shell-dim">
-              Prix en dinars, service compris.
-            </p>
+        <Studs className="mt-10" />
 
-            <div className="mt-8 space-y-10">
-              {Object.entries(groupedMenu).map(([category, items]) => (
-                <div key={category}>
-                  <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-brass">
-                    {category}
-                  </h3>
-                  <ul className="mt-4 space-y-3">
-                    {items.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-baseline justify-between gap-4 border-b border-shell/5 pb-3"
-                      >
-                        <div className="min-w-0">
-                          <span className="text-shell">{item.name}</span>
-                          {item.description && (
-                            <span className="ml-2 text-sm text-shell-dim">
-                              {item.description}
-                            </span>
-                          )}
-                        </div>
-                        <span
-                          className="shrink-0 font-mono text-sm tabular-nums text-brass"
-                          dir="ltr"
-                        >
-                          {(item.price / 1000).toFixed(3)} DT
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+        {/* Menu */}
+        {menuItems.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-display text-3xl text-shell sm:text-4xl">La carte</h2>
+            <p className="mt-2 text-sm text-shell-dim">Prix en dinars, service compris.</p>
+            <div className="mt-6">
+              <MenuDisplay
+                items={menuItems}
+                dictionary={{
+                  priceOfDay: dictionary.menu.priceOfDay,
+                }}
+              />
             </div>
           </section>
-        </>
-      )}
+        )}
 
-      <Studs />
+        <Studs className="mt-10" />
 
-      <section className="mx-auto max-w-4xl px-5 py-14 sm:px-8">
-        <Link
-          href={`/${locale}/reserver?restaurant=${slug}`}
-          className="inline-flex min-h-12 items-center justify-center rounded-full bg-brass px-8 text-lg font-medium text-deep transition-transform hover:scale-[1.03] active:scale-100"
-        >
-          Réserver une table
-        </Link>
-      </section>
+        {/* Avis */}
+        <section className="mt-10">
+          <h2 className="font-display text-3xl text-shell sm:text-4xl">
+            Avis de nos clients
+          </h2>
+          <div className="mt-6">
+            <ReviewList
+              reviews={reviews}
+              average={stats.average}
+              count={stats.count}
+              distribution={stats.distribution}
+            />
+          </div>
+        </section>
+
+        <Studs className="mt-10" />
+
+        {/* Widget de reservation */}
+        <section className="mt-10">
+          <BookingWidget
+            todayISO={todayISO}
+            dictionary={{
+              title: dictionary.booking.title,
+              name: dictionary.booking.fields.name,
+              phone: dictionary.booking.fields.phone,
+              date: dictionary.booking.fields.date,
+              time: dictionary.booking.fields.time,
+              partySize: dictionary.booking.fields.partySize,
+              submit: dictionary.booking.submit,
+              submitting: dictionary.booking.submitting,
+              success: {
+                title: dictionary.booking.success.title,
+                body: dictionary.booking.success.body,
+              },
+              errors: {
+                name: dictionary.booking.errors.name,
+                phone: dictionary.booking.errors.phone,
+                time: dictionary.booking.errors.time,
+                generic: dictionary.booking.errors.generic,
+              },
+            }}
+          />
+        </section>
+      </div>
     </>
   );
 }

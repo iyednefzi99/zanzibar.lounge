@@ -15,6 +15,7 @@ import {
 } from "@/lib/channels";
 import { buildSystemPrompt } from "@/lib/agent/prompt";
 import { runTool, tools, type ToolContext } from "@/lib/agent/tools";
+import { getSmartSuggestions } from "@/lib/agent/suggestions";
 
 /**
  * L'agent conversationnel : reçoit un message, décide, agit, répond.
@@ -111,9 +112,10 @@ export async function handleInbound(
   };
 
   try {
+    const suggestions = await getSmartSuggestions(guest.id, locale);
     const { text, handOff } = await converse(
       conversation.id,
-      buildSystemPrompt({ locale, guestName: guest.name, now }),
+      buildSystemPrompt({ locale, guestName: guest.name, now, suggestions }),
       context,
     );
 

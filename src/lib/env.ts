@@ -63,6 +63,12 @@ const schema = z.object({
   ADMIN_PASSWORD: z.string().min(16).optional(),
 
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
+
+  // --- Intégrations tierces (facultatives) ---
+  GOOGLE_CALENDAR_API_KEY: z.string().min(1).optional(),
+  GOOGLE_CALENDAR_ID: z.string().min(1).optional(),
+  GOOGLE_BUSINESS_API_KEY: z.string().min(1).optional(),
+  TRIPADVISOR_API_KEY: z.string().min(1).optional(),
 });
 
 const parsed = schema.safeParse(process.env);

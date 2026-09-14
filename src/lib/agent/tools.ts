@@ -2,6 +2,8 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { Channel, ReservationStatus } from "@/generated/prisma/client";
 
 import { site, type ZoneId } from "@/content/site";
+import { menu, menuAsText } from "@/content/menu";
+import type { Locale } from "@/i18n/config";
 import { db } from "@/lib/db";
 import { hmToMinutes, toISODate } from "@/lib/time";
 import { serviceWindow } from "@/lib/hours";
@@ -153,6 +155,68 @@ export const tools: Anthropic.Tool[] = [
       required: ["reason", "summary"],
     },
   },
+  {
+    name: "get_menu_info",
+    description:
+      "Affiche la carte du restaurant, avec ou sans filtre par catégorie. À appeler quand le client demande le menu, les prix, un plat spécifique, ou les chichas.",
+    input_schema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description:
+            "Filtrer par catégorie (cafes, jus, cuisine, chicha, douceurs). Facultatif.",
+          enum: ["cafes", "jus", "cuisine", "chicha", "douceurs"],
+        },
+      },
+    },
+  },
+  {
+    name: "get_reviews",
+    description:
+      "Affiche les avis approuvés récents du restaurant. À appeler quand le client demande des avis, la note, ou si le restaurant est bien.",
+    input_schema: {
+      type: "object",
+      properties: {
+        min_rating: {
+          type: "integer",
+          description:
+            "Note minimale sur 5. Facultatif : par défaut tous les avis approuvés.",
+          minimum: 1,
+          maximum: 5,
+        },
+      },
+    },
+  },
+  {
+    name: "get_restaurant_info",
+    description:
+      "Affiche les informations du restaurant : horaires, adresse, téléphone, zones. À appeler quand le client demande où on est, les horaires, ou comment appeler.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "suggest_alternatives",
+    description:
+      "Quand un créneau est complet, propose les créneaux les plus proches encore disponibles. À appeler après check_availability si aucun créneau n'est libre, ou directement quand le client demande des alternatives.",
+    input_schema: {
+      type: "object",
+      properties: {
+        date: {
+          type: "string",
+          description: "Date du service au format AAAA-MM-JJ.",
+        },
+        party_size: {
+          type: "integer",
+          description: "Nombre de personnes.",
+        },
+        preferred_time: {
+          type: "string",
+          description: "Heure souhaitée, HH:MM.",
+        },
+      },
+      required: ["date", "party_size", "preferred_time"],
+    },
+  },
 ];
 
 export async function runTool(
@@ -175,6 +239,14 @@ export async function runTool(
       return confirm(input, context);
     case "hand_off_to_staff":
       return handOff(input);
+    case "get_menu_info":
+      return getMenuInfo(input, context);
+    case "get_reviews":
+      return getReviews(input);
+    case "get_restaurant_info":
+      return getRestaurantInfo();
+    case "suggest_alternatives":
+      return suggestAlternatives(input, context);
     default:
       return { content: `Outil inconnu : ${name}` };
   }
@@ -347,6 +419,131 @@ function handOff(input: Record<string, unknown>): ToolOutcome {
       ".",
     handOff: { reason, summary },
   };
+}
+
+async function getMenuInfo(
+  input: Record<string, unknown>,
+  context: ToolContext,
+): Promise<ToolOutcome> {
+  const locale = context.locale as Locale;
+  const category = typeof input.category === "string" ? input.category : null;
+
+  if (category) {
+    const cat = menu.find((c) => c.id === category);
+    if (!cat) return { content: "Catégorie inconnue." };
+    const items = cat.items
+      .map((item) => {
+        const price =
+          item.price === null ? "prix du jour" : `${item.price} TND`;
+        return `- ${item.name[locale]} : ${price}`;
+      })
+      .join("\n");
+    return { content: `${cat.name[locale]}\n${items}` };
+  }
+
+  return { content: menuAsText(locale) };
+}
+
+async function getReviews(
+  input: Record<string, unknown>,
+): Promise<ToolOutcome> {
+  const minRating = typeof input.min_rating === "number" ? input.min_rating : undefined;
+
+  const where: Record<string, unknown> = { approved: true };
+  if (minRating) where.rating = { gte: minRating };
+
+  const reviews = await db.review.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: {
+      rating: true,
+      title: true,
+      body: true,
+      createdAt: true,
+      guest: { select: { name: true } },
+    },
+  });
+
+  if (reviews.length === 0) {
+    return { content: "Aucun avis disponible pour le moment." };
+  }
+
+  const lines = reviews.map((review) => {
+    const name = review.guest.name ?? "Client";
+    const title = review.title ? ` — ${review.title}` : "";
+    const body = review.body ? `\n   "${review.body}"` : "";
+    return `${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)} ${name}${title}${body}`;
+  });
+
+  return { content: `Avis récents :\n${lines.join("\n")}` };
+}
+
+async function getRestaurantInfo(): Promise<ToolOutcome> {
+  const hours = site.hours
+    .map((entry) => `  ${dayName(entry.day)} : ${entry.open} – ${entry.close}`)
+    .join("\n");
+
+  const zones = site.zones
+    .map((z) => `- ${z.id} (${z.capacity} places)`)
+    .join("\n");
+
+  return {
+    content: `${site.name}
+Adresse : ${site.address.street}, ${site.address.city} ${site.address.postalCode}
+Téléphone : ${site.contact.phone}
+Horaires :
+${hours}
+Zones :
+${zones}`,
+  };
+}
+
+async function suggestAlternatives(
+  input: Record<string, unknown>,
+  context: ToolContext,
+): Promise<ToolOutcome> {
+  const date = asDate(input.date);
+  const partySize = asInt(input.party_size);
+  const preferredTime = typeof input.preferred_time === "string" ? input.preferred_time.trim() : null;
+
+  if (!date) return { content: "Date invalide. Format attendu : AAAA-MM-JJ." };
+  if (!partySize) return { content: "Nombre de personnes invalide." };
+  if (!preferredTime) return { content: "Heure préférée requise, format HH:MM." };
+
+  const match = /^(\d{1,2}):(\d{2})$/.exec(preferredTime);
+  if (!match) return { content: "Format d'heure invalide. Attendu : HH:MM." };
+  const preferredMinutes = Number(match[1]) * 60 + Number(match[2]);
+
+  const slots = await availability(date, partySize, context.now);
+  const free = slots.filter((slot) => slot.available);
+
+  if (free.length === 0) {
+    return {
+      content: `Aucun créneau libre le ${date} pour ${partySize} personnes. Proposer une autre date.`,
+    };
+  }
+
+  const closest = [...free]
+    .sort((a, b) => Math.abs(a.minutes - preferredMinutes) - Math.abs(b.minutes - preferredMinutes))
+    .slice(0, 3)
+    .map((slot) => slot.label);
+
+  return {
+    content: `Créneaux les plus proches de ${preferredTime} le ${date} pour ${partySize} personnes : ${closest.join(", ")}.`,
+  };
+}
+
+function dayName(day: number): string {
+  return [
+    "dimanche",
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi",
+  ][day];
 }
 
 // --------------------------------------------------------------------------
