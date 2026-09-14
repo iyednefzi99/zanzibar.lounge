@@ -25,6 +25,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
   }
 
-  const events = await getActiveSocialProof(restaurantId, type ?? undefined);
+  const events = await getActiveSocialProof(restaurantId, { type: type ?? undefined });
   return NextResponse.json(events);
 }

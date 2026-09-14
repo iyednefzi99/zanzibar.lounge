@@ -1,101 +1,32 @@
 import { db } from "@/lib/db";
 
-export type LoyaltyTier = "standard" | "silver" | "gold" | "platinum";
+export async function getLoyaltyStats(restaurantId: string) {
+  const profiles = await db.guestAiProfile.findMany();
 
-const TIER_THRESHOLDS: Record<LoyaltyTier, { visits: number; spend: number }> = {
-  standard: { visits: 0, spend: 0 },
-  silver: { visits: 5, spend: 500_00 },
-  gold: { visits: 15, spend: 1500_00 },
-  platinum: { visits: 30, spend: 5000_00 },
-};
+  const tiers = profiles.reduce((acc, p) => {
+    acc[p.loyaltyTier] = (acc[p.loyaltyTier] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-export function calculateTier(totalVisits: number, lifetimeSpend: number): LoyaltyTier {
-  const tiers: LoyaltyTier[] = ["platinum", "gold", "silver", "standard"];
-  for (const tier of tiers) {
-    const t = TIER_THRESHOLDS[tier];
-    if (totalVisits >= t.visits || lifetimeSpend >= t.spend) return tier;
-  }
-  return "standard";
+  const totalLifetimeValue = profiles.reduce((sum, p) => sum + p.lifetimeValue, 0);
+  const avgLifetimeValue = profiles.length > 0 ? totalLifetimeValue / profiles.length : 0;
+
+  return { tiers, totalProfiles: profiles.length, totalLifetimeValue, avgLifetimeValue };
 }
 
-export async function getLoyaltyAccount(guestId: string, restaurantId: string) {
-  return db.loyaltyAccount.findFirst({
-    where: { guestId, restaurantId },
-  });
-}
-
-export async function earnPoints(
-  guestId: string,
-  restaurantId: string,
-  points: number,
-  reason: string,
-) {
-  const account = await db.loyaltyAccount.upsert({
-    where: {
-      guestId_restaurantId: { guestId, restaurantId },
-    },
-    create: { guestId, restaurantId, points, tier: "standard" },
-    update: { points: { increment: points } },
-  });
-
-  await db.loyaltyTransaction.create({
-    data: { accountId: account.id, points, reason },
-  });
-
+export async function updateTier(guestId: string) {
   const profile = await db.guestAiProfile.findUnique({ where: { guestId } });
-  const lifetimeValue = (profile?.lifetimeValue ?? 0) + points;
-  const tier = calculateTier(
-    (profile?.visitPatterns as Record<string, unknown>)?.totalVisits as number ?? 0,
-    lifetimeValue,
-  );
+  if (!profile) return;
 
-  await db.guestAiProfile.upsert({
-    where: { guestId },
-    create: { guestId, loyaltyTier: tier, lifetimeValue },
-    update: { loyaltyTier: tier, lifetimeValue },
-  });
+  let tier = "standard";
+  if (profile.lifetimeValue >= 100000) tier = "vip";
+  else if (profile.lifetimeValue >= 50000) tier = "gold";
+  else if (profile.lifetimeValue >= 20000) tier = "silver";
 
-  return db.loyaltyAccount.update({
-    where: { id: account.id },
-    data: { tier },
-  });
-}
-
-export async function redeemPoints(
-  guestId: string,
-  restaurantId: string,
-  points: number,
-  reason: string,
-) {
-  const account = await db.loyaltyAccount.findFirst({
-    where: { guestId, restaurantId },
-  });
-
-  if (!account || account.points < points) {
-    throw new Error("Points insuffisants");
+  if (tier !== profile.loyaltyTier) {
+    await db.guestAiProfile.update({
+      where: { guestId },
+      data: { loyaltyTier: tier },
+    });
   }
-
-  const updated = await db.loyaltyAccount.update({
-    where: { id: account.id },
-    data: { points: { decrement: points } },
-  });
-
-  await db.loyaltyTransaction.create({
-    data: { accountId: account.id, points: -points, reason },
-  });
-
-  return updated;
-}
-
-export async function getPointsHistory(guestId: string, restaurantId: string, limit = 50) {
-  const account = await db.loyaltyAccount.findFirst({
-    where: { guestId, restaurantId },
-  });
-  if (!account) return [];
-
-  return db.loyaltyTransaction.findMany({
-    where: { accountId: account.id },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
 }

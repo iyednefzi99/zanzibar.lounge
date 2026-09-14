@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { isLocale } from "@/i18n/config";
+import StaffInterface from "./staff-interface";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,14 @@ export default async function StaffPage({
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
 
+  const staffForClient = staffMembers.map((s) => ({
+    id: s.id,
+    name: s.name,
+    email: s.email,
+    role: s.role as "OWNER" | "MANAGER" | "STAFF",
+    active: s.active,
+  }));
+
   const activeCount = staffMembers.filter((s) => s.active).length;
 
   return (
@@ -101,68 +110,7 @@ export default async function StaffPage({
       </div>
 
       <div className="mt-10">
-        <h2 className="font-display text-2xl text-shell">Membres</h2>
-
-        {staffMembers.length === 0 ? (
-          <p className="mt-8 py-8 text-center text-shell-dim">
-            Aucun membre dans l&apos;équipe.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {staffMembers.map((staff) => (
-              <div
-                key={staff.id}
-                className="relative overflow-hidden rounded-xl border border-shell/12 bg-deep/40 px-5 py-4"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`absolute inset-y-0 start-0 w-[3px] ${staff.active ? "bg-lagoon/70" : "bg-coral/50"}`}
-                />
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 ps-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-shell">{staff.name}</span>
-                    <span className="font-mono text-xs text-shell-dim">
-                      {staff.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 font-mono text-[0.65rem] uppercase ${ROLE_STYLES[staff.role]}`}
-                    >
-                      {ROLE_LABELS[staff.role]}
-                    </span>
-                    {staff.twoFactorEnabled && (
-                      <span className="rounded-full border border-lagoon/50 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-lagoon">
-                        2FA
-                      </span>
-                    )}
-                    {staff.active ? (
-                      <span className="rounded-full border border-lagoon/50 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-lagoon">
-                        Actif
-                      </span>
-                    ) : (
-                      <span className="rounded-full border border-coral/50 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-coral">
-                        Inactif
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-2 ps-3 font-mono text-xs text-shell-dim">
-                  Dernière connexion :{" "}
-                  {staff.lastLoginAt
-                    ? new Intl.DateTimeFormat("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }).format(staff.lastLoginAt)
-                    : "jamais"}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <StaffInterface staff={staffForClient} />
       </div>
     </div>
   );

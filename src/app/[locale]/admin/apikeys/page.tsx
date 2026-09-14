@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { isLocale } from "@/i18n/config";
+import ApiKeysInterface from "./apikeys-interface";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,16 @@ export default async function ApiKeysPage({
     orderBy: { createdAt: "desc" },
   });
 
+  const apiKeysForClient = apiKeys.map((k) => ({
+    id: k.id,
+    name: k.name,
+    keyPrefix: k.keyPrefix,
+    active: k.active,
+    lastUsedAt: k.lastUsedAt,
+    createdAt: k.createdAt,
+    revokedAt: k.revokedAt,
+  }));
+
   const activeCount = apiKeys.filter((k) => k.active).length;
 
   return (
@@ -80,76 +91,7 @@ export default async function ApiKeysPage({
       </div>
 
       <div className="mt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-2xl text-shell">Clés</h2>
-        </div>
-
-        {apiKeys.length === 0 ? (
-          <p className="mt-8 py-8 text-center text-shell-dim">
-            Aucune clé API configurée.
-          </p>
-        ) : (
-          <div className="mt-4 overflow-hidden rounded-xl border border-shell/12">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-shell/12 bg-deep/60">
-                  <th className="px-5 py-3 font-mono text-xs uppercase tracking-wider text-shell-dim">
-                    Nom
-                  </th>
-                  <th className="px-5 py-3 font-mono text-xs uppercase tracking-wider text-shell-dim">
-                    Préfixe
-                  </th>
-                  <th className="px-5 py-3 font-mono text-xs uppercase tracking-wider text-shell-dim">
-                    Dernière utilisation
-                  </th>
-                  <th className="px-5 py-3 font-mono text-xs uppercase tracking-wider text-shell-dim">
-                    Créée le
-                  </th>
-                  <th className="px-5 py-3 font-mono text-xs uppercase tracking-wider text-shell-dim">
-                    Statut
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-shell/8">
-                {apiKeys.map((key) => (
-                  <tr key={key.id} className="hover:bg-deep/30">
-                    <td className="px-5 py-3 text-shell">{key.name}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-shell-dim">
-                      {key.keyPrefix}…
-                    </td>
-                    <td className="px-5 py-3 font-mono text-xs text-shell-dim">
-                      {key.lastUsedAt
-                        ? new Intl.DateTimeFormat("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }).format(key.lastUsedAt)
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-3 font-mono text-xs text-shell-dim">
-                      {new Intl.DateTimeFormat("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }).format(key.createdAt)}
-                    </td>
-                    <td className="px-5 py-3">
-                      {key.active ? (
-                        <span className="rounded-full border border-lagoon/50 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-lagoon">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-coral/50 px-2.5 py-0.5 font-mono text-[0.65rem] uppercase text-coral">
-                          Révoquée
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ApiKeysInterface keys={apiKeysForClient} />
       </div>
 
       <div className="mt-10 border-t border-brass/35 pt-6">

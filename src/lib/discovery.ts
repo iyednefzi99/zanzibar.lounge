@@ -263,14 +263,33 @@ export async function trackRestaurantView(
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    await db.$executeRaw`
-      INSERT INTO "RestaurantAnalytics" ("id", "restaurantId", "date", "views", "createdAt")
-      VALUES (gen_random_uuid(), ${restaurantId}, ${today}, 1, NOW())
-      ON CONFLICT ("restaurantId", "date")
-      DO UPDATE SET "views" = "RestaurantAnalytics"."views" + 1
-    `;
+    const metricType = "restaurant_views";
+
+    const existing = await db.liveMetric.findFirst({
+      where: {
+        restaurantId,
+        metricType,
+        recordedAt: { gte: today },
+      },
+    });
+
+    if (existing) {
+      await db.liveMetric.update({
+        where: { id: existing.id },
+        data: { value: existing.value + 1 },
+      });
+    } else {
+      await db.liveMetric.create({
+        data: {
+          restaurantId,
+          metricType,
+          value: 1,
+          unit: "views",
+        },
+      });
+    }
   } catch {
-    // Analytics table may not exist yet — fail silently
+    // Analytics may fail — fail silently
   }
 }
 

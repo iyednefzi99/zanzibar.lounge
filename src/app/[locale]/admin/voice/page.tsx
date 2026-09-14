@@ -54,6 +54,29 @@ export default async function AdminVoicePage({
   const restaurantId = await getRestaurantId();
   const analytics = restaurantId ? await getCallAnalytics(restaurantId) : null;
 
+  const voiceOrders = restaurantId
+    ? await db.voiceOrder.findMany({
+        where: { restaurantId },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      })
+    : [];
+
+  const recentUpsells = restaurantId
+    ? await db.upsellSuggestion.findMany({
+        where: { restaurantId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      })
+    : [];
+
+  const upsellStats = { ordering: 0, seated: 0, post_meal: 0 };
+  for (const u of recentUpsells) {
+    if (u.context in upsellStats) {
+      upsellStats[u.context as keyof typeof upsellStats]++;
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
       <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -422,12 +445,82 @@ export default async function AdminVoicePage({
           Commandes passées par appel vocal.
         </p>
 
-        <div className="mt-6 rounded-xl border border-shell/12 bg-deep/40 p-8 text-center">
-          <p className="text-sm text-shell-dim">
-            Les commandes vocales apparaîtront ici une fois que des appels
-            avec commandes seront traités.
-          </p>
-        </div>
+        {!restaurantId ? (
+          <div className="mt-6 rounded-xl border border-shell/12 bg-deep/40 p-8 text-center">
+            <p className="text-sm text-shell-dim">
+              Configurer le restaurant pour voir les commandes vocales.
+            </p>
+          </div>
+        ) : voiceOrders.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-shell/12 bg-deep/40 p-8 text-center">
+            <p className="text-sm text-shell-dim">
+              Les commandes vocales apparaîtront ici une fois que des appels
+              avec commandes seront traités.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 overflow-x-auto rounded-xl border border-shell/12 bg-deep/40">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-shell/12 text-xs text-shell-dim">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Table</th>
+                  <th className="px-4 py-3">Articles</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Langue</th>
+                  <th className="px-4 py-3">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-shell/8">
+                {voiceOrders.map((order) => {
+                  const items = order.items as Array<{
+                    name: string;
+                    quantity: number;
+                  }>;
+                  return (
+                    <tr key={order.id} className="text-shell hover:bg-deep/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-xs">
+                        {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs">
+                        {order.tableNumber ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs">
+                        {(order.totalCents / 100).toFixed(2)} TND
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs text-shell-dim uppercase">
+                          {order.language}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-medium ${
+                            order.status === "completed"
+                              ? "bg-lagoon/15 text-lagoon"
+                              : order.status === "pending"
+                                ? "bg-brass/15 text-brass"
+                                : "bg-shell/15 text-shell"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Upsell Stats */}
@@ -439,18 +532,68 @@ export default async function AdminVoicePage({
 
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
-            <p className="font-display text-2xl text-brass">ordering</p>
+            <p className="font-display text-2xl text-brass">
+              {upsellStats.ordering}
+            </p>
             <p className="mt-1 text-xs text-shell-dim">En commande</p>
           </div>
           <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
-            <p className="font-display text-2xl text-brass">seated</p>
+            <p className="font-display text-2xl text-brass">
+              {upsellStats.seated}
+            </p>
             <p className="mt-1 text-xs text-shell-dim">À table</p>
           </div>
           <div className="rounded-xl border border-shell/12 bg-deep/40 p-4 text-center">
-            <p className="font-display text-2xl text-brass">post_meal</p>
+            <p className="font-display text-2xl text-brass">
+              {upsellStats.post_meal}
+            </p>
             <p className="mt-1 text-xs text-shell-dim">Après le repas</p>
           </div>
         </div>
+
+        {recentUpsells.length > 0 && (
+          <div className="mt-6 overflow-x-auto rounded-xl border border-shell/12 bg-deep/40">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-shell/12 text-xs text-shell-dim">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Contexte</th>
+                  <th className="px-4 py-3">Suggestion</th>
+                  <th className="px-4 py-3">Raison</th>
+                  <th className="px-4 py-3">Accepté</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-shell/8">
+                {recentUpsells.map((u) => (
+                  <tr key={u.id} className="text-shell hover:bg-deep/60">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs">
+                      {new Date(u.createdAt).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                      })}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs uppercase">
+                      {u.context}
+                    </td>
+                    <td className="px-4 py-3 text-xs">{u.suggestion}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-shell-dim">
+                      {u.reason}
+                    </td>
+                    <td className="px-4 py-3">
+                      {u.accepted === null ? (
+                        <span className="text-xs text-shell-dim">—</span>
+                      ) : u.accepted ? (
+                        <span className="text-xs text-lagoon">Oui</span>
+                      ) : (
+                        <span className="text-xs text-coral">Non</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );
