@@ -1272,3 +1272,70 @@ model AiCostEntry {
   @@unique([restaurantId, provider, model, date])
   @@index([restaurantId, date])
 }
+
+/// Prévisions de demande par jour/heure.
+model DemandForecast {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  date          DateTime @db.Date
+  hour          Int      // 0-23
+  dayOfWeek     Int      // 0=dimanche
+  predictedCovers Int    @default(0)
+  confidence    Float    @default(0.5) // 0-1
+  factors       Json     @default("[]") // weather, events, holidays
+  actualCovers  Int?     // filled after service
+  createdAt     DateTime @default(now())
+
+  @@unique([restaurantId, date, hour])
+  @@index([restaurantId, date])
+}
+
+/// Suggestions d'optimisation du planning.
+model ScheduleSuggestion {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  weekStart     DateTime @db.Date
+  suggestions   Json     // [{staffId, shift, reason, confidence}]
+  applied       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([restaurantId, weekStart])
+  @@index([restaurantId, weekStart])
+}
+
+/// Traces de gaspillage / pertes.
+model WasteLog {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  menuItemId    String?
+  category      String   // food | drink | other
+  quantity      Float    // en unités (kg, L, pièce)
+  unit          String   @default("piece")
+  reason        String   // spoiled | overprep | dropped | other
+  costCents     Int      @default(0)
+  loggedBy      String?  // staffId
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, category])
+}
+
+/// Scores d'ingénierie menu (popularité × marge).
+model MenuEngineering {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  menuItemId    String
+  period        DateTime @db.Date // first day of period (week/month)
+  periodType    String   @default("month") // week | month
+  timesOrdered  Int      @default(0)
+  revenueCents  Int      @default(0)
+  costCents     Int      @default(0)
+  marginPercent Float    @default(0)
+  popularityRank Int     @default(0) // 1=most popular
+  category      String   @default("star") // star | plow_horse | puzzle | dog
+  createdAt     DateTime @default(now())
+
+  @@unique([restaurantId, menuItemId, period, periodType])
+  @@index([restaurantId, period])
+}
