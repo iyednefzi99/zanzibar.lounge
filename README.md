@@ -160,6 +160,62 @@ SaaS multi-établissement, analytics avancés, application mobile staff, et bien
 - **Apple Wallet** (pass HTML pour réservations)
 - **Géolocalisation** (nearby restaurants)
 
+### Phase 24 — AI Brain
+- **AI routing** (provider selection, fallback logic)
+- **Audit logging** (every AI request tracked)
+- **Cost tracking** (per-provider, per-model, daily/monthly budgets)
+- **Config hub** (provider, model, temperature, max tokens)
+- **Admin AI page** (config panel, audit table, cost summary)
+
+### Phase 25 — Predictive Operations
+- **Demand forecasting** (hourly predictions, weather/events factors)
+- **Smart scheduling** (AI-generated staffing suggestions)
+- **Waste tracking** (log, categorize, cost analysis)
+- **Menu engineering** (popularity × margin: star/plow_horse/puzzle/dog)
+- **No-show prediction** (probability scoring with factor analysis)
+
+### Phase 26 — Voice Commerce
+- **Phone agent** (inbound/outbound call handling)
+- **Voice ordering** (in-restaurant voice-to-order)
+- **Voice upsell** (context-based suggestions)
+- **Voice-to-KDS** (send orders to kitchen display)
+- **Call analytics** (duration, sentiment, AI vs staff handling)
+
+### Phase 27 — Hyper-Personalization
+- **Guest AI profile** (preferences, visit patterns, loyalty tier)
+- **Personalized menu** (AI-generated per guest)
+- **Recommendations** (dish, drink, upsell, return visit)
+- **Loyalty AI** (automatic tier calculation, earn/redeem)
+- **Anniversary engine** (milestone detection, auto-rewards)
+
+### Phase 28 — Multi-Property Enterprise
+- **Enterprise dashboard** (cross-property metrics)
+- **Cross-property CRM** (unified guest view)
+- **Central menu** (sync across properties)
+- **Franchise toolkit** (bulk operations)
+- **Group analytics** (comparative performance)
+
+### Phase 29 — Sustainability & Compliance
+- **Carbon tracker** (energy, transport, waste, water)
+- **Waste analytics** (trends, cost impact)
+- **Allergen AI** (menu item allergen detection)
+- **Food safety** (compliance checks, expiry tracking)
+- **Sustainability score** (overall rating)
+
+### Phase 30 — Real-Time Intelligence
+- **Floor heatmap** (live table occupancy)
+- **Live revenue** (real-time revenue tracking)
+- **Kitchen metrics** (KDS load, avg prep time)
+- **Dynamic pricing** (demand-based pricing rules)
+- **Wait time predictor** (estimated wait by time/party)
+
+### Phase 31 — Innovation Lab
+- **Gamification badges** (first visit, power user, reviewer)
+- **Social proof** (live activity feed, trending dishes)
+- **Sentiment analysis** (real-time review sentiment)
+- **AI sommelier** (wine pairing recommendations)
+- **Maintenance alerts** (equipment monitoring)
+
 ---
 
 ## Pile technique

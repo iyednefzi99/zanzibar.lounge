@@ -22,7 +22,7 @@ npm run build
 ## Prisma 7 specifics
 
 - Schema is at `prisma/schema.prisma`. Client is generated to `src/generated/prisma` (gitignored).
-- 35+ models: Restaurant, Guest, Reservation, Order, MenuItem, Staff, Subscription, Payment, Review, Conversation, Message, PushSubscription, LoyaltyAccount, LoyaltyTransaction, PhoneVerification, ProcessedEvent, StaffSession, SetupToken, WebhookEndpoint, Notification, MenuCategory, Inventory, InventoryLog, Referral, Waitlist, Event, EventBooking, Gallery, GuestProfile, AuditLog, ApiKey, WebhookDelivery, GuestTag, GuestTagAssignment, GuestNote, Campaign, CampaignDelivery, Shift, StaffAvailability, TimeEntry, PreAuthorization, BillSplit, BillSplitItem, PosIntegration, PosSyncLog
+- 55+ models: Restaurant, Guest, Reservation, Order, MenuItem, Staff, Subscription, Payment, Review, Conversation, Message, PushSubscription, LoyaltyAccount, LoyaltyTransaction, PhoneVerification, ProcessedEvent, StaffSession, SetupToken, WebhookEndpoint, Notification, MenuCategory, Inventory, InventoryLog, Referral, Waitlist, Event, EventBooking, Gallery, GuestProfile, AuditLog, ApiKey, WebhookDelivery, GuestTag, GuestTagAssignment, GuestNote, Campaign, CampaignDelivery, Shift, StaffAvailability, TimeEntry, PreAuthorization, BillSplit, BillSplitItem, PosIntegration, PosSyncLog, AiConfig, AiAuditLog, AiCostEntry, DemandForecast, ScheduleSuggestion, WasteLog, MenuEngineering, CallLog, VoiceOrder, UpsellSuggestion, GuestAiProfile, PersonalizedMenu, Recommendation, PropertyGroup, GroupAnalytics, CarbonLog, ComplianceCheck, LiveMetric, DynamicPricingRule, GamificationBadge, SocialProofEvent, MaintenanceAlert
 - `npm install` triggers `prisma generate` via `postinstall`.
 - Database URL is in `prisma.config.ts` (reads `DATABASE_URL` from `.env.local`).
 - `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod.
@@ -87,6 +87,13 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 | Jobs | `lib/jobs.ts` | Background job queue |
 | Push | `lib/notifications/push.ts` | Push subscriptions |
 | Wallet | `lib/wallet/` | Apple Wallet passes |
+| AI Brain | `lib/ai/` | AI routing, audit, cost tracking, fallback |
+| Predict | `lib/predict/` | Demand forecasting, scheduling, waste, menu engineering, no-show |
+| Personalization | `lib/personalization/` | Guest AI profiles, recommendations, personalized menus, loyalty |
+| Enterprise | `lib/enterprise/` | Multi-property dashboard, cross-property CRM, central menu |
+| Sustainability | `lib/sustainability/` | Carbon tracking, allergen AI, food safety, compliance |
+| Real-Time | `lib/realtime/` | Floor heatmap, live revenue, kitchen metrics, dynamic pricing, wait time |
+| Innovation | `lib/innovation/` | Gamification, social proof, sentiment, AI sommelier, maintenance |
 
 ## Routes overview
 
@@ -107,13 +114,21 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 - Push: `/api/notifications/push`
 - Wallet: `/api/wallet/pass`
 - Admin: `/api/admin/{export,orders,2fa,apikeys,jobs}`
+- AI: `/api/admin/ai/{config,audit}`
+- Predict: `/api/admin/predict/{waste,forecast}`
+- Voice Commerce: `/api/admin/voice/{calls,orders}`
+- Personalization: `/api/admin/personalization/{profile,recommendations}`
+- Enterprise: `/api/admin/enterprise/groups`
+- Sustainability: `/api/admin/sustainability/{carbon,compliance}`
+- Real-Time: `/api/admin/realtime/metrics`
+- Innovation: `/api/admin/innovation/social-proof`
 - Analytics: `/api/analytics/realtime`
 - Health: `/api/health`
 - Webhooks: `/api/webhooks/{whatsapp,twilio}`
 - Notifications: `/api/notifications/*`
 
 **Key pages:**
-- `/{locale}/admin` — 35+ admin pages (analytics, menu, inventory, floor, orders, chat, reviews, voice, security, integrations, POS, notifications, widget, translations, CRM, payments)
+- `/{locale}/admin` — 45+ admin pages (analytics, menu, inventory, floor, orders, chat, reviews, voice, security, integrations, POS, notifications, widget, translations, CRM, payments, AI, predict, personalization, enterprise, sustainability, realtime, innovation)
 - `/{locale}/staff` — Mobile staff app (reservations, orders, QR scanner)
 - `/{locale}/kitchen` — Kitchen Display System
 - `/{locale}/owner` — Owner dashboard (settings, team, billing, schedule, onboarding)
