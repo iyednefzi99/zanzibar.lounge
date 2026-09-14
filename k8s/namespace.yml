@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zanzibar-lounge
+  labels:
+    app.kubernetes.io/name: zanzibar-lounge
+    app.kubernetes.io/part-of: zanzibar-lounge
