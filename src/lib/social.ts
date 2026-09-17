@@ -243,6 +243,7 @@ export async function joinWaitlist(
       guestId,
       restaurantId,
       date,
+      minutes: 0,
       partySize,
       position,
     },

@@ -139,9 +139,29 @@ model Restaurant {
   callLogs         CallLog[]
   voiceOrders      VoiceOrder[]
   upsellSuggestions UpsellSuggestion[]
+  upsellRules      UpsellRule[]
+  conciergeInteractions ConciergeInteraction[]
+  socialTables     SocialTable[]
+  socialTableReservations SocialTableReservation[]
+  waitlistRewards  WaitlistReward[]
+  settings         RestaurantSettings?
 
   @@index([slug])
   @@index([stripeCustomerId])
+}
+
+model RestaurantSettings {
+  id           String  @id @default(cuid())
+  restaurantId String  @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Configuration du widget (JSON : theme, zones, etc.)
+  widgetConfig Json?
+  /// Configuration du dynamic pricing (JSON)
+  pricingConfig Json?
+  /// Configuration des notifications (JSON)
+  notificationConfig Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Guest {
@@ -173,6 +193,8 @@ model Guest {
   notes             GuestNote[]
   campaignDeliveries CampaignDelivery[]
   preAuthorizations PreAuthorization[]
+  conciergeInteractions ConciergeInteraction[]
+  socialTableReservations SocialTableReservation[]
 
   @@index([createdAt])
 }
@@ -244,6 +266,11 @@ model Reservation {
   channel Channel
   notes   String?
 
+  /// Score de risque no-show (0.0 - 1.0), calculé à la création.
+  noShowRiskScore Float?
+  /// Pré-autorisation Stripe requise (si risque élevé).
+  preAuthRequired Boolean @default(false)
+
   reminderSentAt     DateTime?
   confirmedByGuestAt DateTime?
   seatedAt           DateTime?
@@ -259,6 +286,8 @@ model Reservation {
   payments    Payment[]
   preAuthorizations PreAuthorization[]
   billSplits  BillSplit[]
+  waitlistEntries Waitlist[]
+  socialTableReservation SocialTableReservation?
 
   @@index([serviceDate, status])
   @@index([startsAt, status])
@@ -294,10 +323,23 @@ model Conversation {
   /// Une conversation close ne repart pas dans le contexte de l'agent.
   closed  Boolean @default(false)
 
+  // ─── WhatsApp Concierge fields ─────────────────────────────────────
+  /// ID du dernier message WhatsApp.
+  whatsappMessageId String?
+  /// Dernier message client (inbound).
+  lastInboundAt     DateTime?
+  /// Dernier message IA (outbound).
+  lastOutboundAt    DateTime?
+  /// Transféré à un humain.
+  aiHandoff         Boolean @default(false)
+  handoffAt         DateTime?
+  handoffReason     String?
+
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
 
-  messages Message[]
+  messages                Message[]
+  conciergeInteractions   ConciergeInteraction[]
 
   @@index([lastMessageAt])
 }
@@ -338,6 +380,41 @@ model ProcessedEvent {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// Suivi des interactions du Concierge IA WhatsApp.
+model ConciergeInteraction {
+  id              String           @id @default(cuid())
+  conversationId  String
+  conversation    Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  restaurantId    String
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guestId         String
+  guest           Guest            @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  channel         Channel          @default(WHATSAPP)
+  /// Type de message : "text" | "image" | "audio" | "location".
+  messageType     String           @default("text")
+  /// Direction du message.
+  direction       String           // "inbound" | "outbound"
+
+  // Contenu
+  body            String
+  mediaUrl        String?
+
+  // IA
+  aiProcessed     Boolean          @default(false)
+  aiModel         String?
+  aiTokensUsed    Int?
+  aiLatencyMs     Int?
+  intentDetected  ConciergeIntent? @default(GENERAL)
+  confidence      Float?
+
+  createdAt       DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([restaurantId, createdAt])
+  @@index([intentDetected])
 }
 
 /// Abonnements aux notifications push (Web Push API).
@@ -828,7 +905,34 @@ enum ReferralStatus {
 enum WaitlistStatus {
   WAITING
   NOTIFIED
+  BOOKED
   EXPIRED
+  CANCELLED
+  SEATED
+}
+
+enum SocialTableStatus {
+  DRAFT
+  ACTIVE
+  FULL
+  CANCELLED
+}
+
+enum SocialTableReservationStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum ConciergeIntent {
+  RESERVATION
+  MODIFICATION
+  CANCELLATION
+  INFO_MENU
+  INFO_RESTAURANT
+  GENERAL
+  HANDOFF
 }
 
 enum EventStatus {
@@ -864,7 +968,7 @@ model Referral {
   @@index([restaurantId])
 }
 
-/// File d'attente : un client s'inscrit pour une date donnée.
+/// File d'attente : un client s'inscrit pour un créneau donné.
 model Waitlist {
   id           String         @id @default(cuid())
   guestId      String
@@ -873,14 +977,67 @@ model Waitlist {
   restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   /// Date de service souhaitée (AAAA-MM-JJ).
   date         String
+  /// Minutes depuis minuit du créneau souhaité.
+  minutes      Int
   partySize    Int
   status       WaitlistStatus @default(WAITING)
   /// Position dans la file (1 = premier).
   position     Int
-  createdAt    DateTime       @default(now())
+  /// Quand le créneau s'est libéré et la notification envoyée.
+  notifiedAt   DateTime?
+  /// Délai de réponse avant expiration (15 min par défaut).
+  expiresAt    DateTime?
+  /// Réservation créée suite à la notification (si BOOKED).
+  reservationId String?
+  reservation  Reservation?   @relation(fields: [reservationId], references: [id])
 
+  // ─── Gamification fields ───────────────────────────────────────────
+  /// Temps d'attente estimé en minutes.
+  estimatedWaitMinutes Int?
+  /// Temps d'attente réel en minutes.
+  actualWaitMinutes    Int?
+  /// Check-in client (QR code ou lien).
+  checkedInAt          DateTime?
+  /// Assis en salle.
+  seatedAt             DateTime?
+  /// Récompense gagnée (ex: "free_dessert", "10_percent_off").
+  rewardEarned         String?
+  /// Points de récompense attribués.
+  rewardPoints         Int          @default(0)
+  /// Récompense réclamée.
+  rewardRedeemedAt     DateTime?
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([guestId, restaurantId, date, minutes])
   @@index([restaurantId, date, status])
   @@index([guestId])
+}
+
+/// Récompenses d'attente configurables par restaurant.
+model WaitlistReward {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Nom de la récompense (ex: "Dessert offert").
+  name            String
+  description     String?
+  /// Type : "free_item" | "discount" | "loyalty_points".
+  type            String
+  /// Valeur en millimes ou points.
+  value           Int
+  /// Temps d'attente minimum en minutes pour déclencher.
+  minWaitMinutes  Int      @default(10)
+  /// Limite totale de rédemptions (null = illimité).
+  maxRedemptions  Int?
+  currentRedemptions Int @default(0)
+  active          Boolean  @default(true)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([restaurantId, active])
 }
 
 /// Événement organisé par le restaurant.
@@ -903,6 +1060,7 @@ model Event {
   updatedAt    DateTime    @updatedAt
 
   bookings EventBooking[]
+  socialTables SocialTable[]
 
   @@index([restaurantId, date, status])
 }
@@ -1560,11 +1718,92 @@ model UpsellSuggestion {
   restaurantId  String
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
   reservationId String?
-  context       String   // ordering | seated | post_meal
+  guestId       String?
+  context       String   // reservation | pre_arrival | in_dining
   suggestion    String   // "Try our dessert of the day"
-  reason        String   // complementary | seasonal | popular | high_margin
+  reason        String   // complementary | seasonal | popular | high_margin | historical_preference
+  /// Score de pertinence de l'IA (0-1).
+  score         Float    @default(0.5)
   accepted      Boolean?
+  acceptedAt    DateTime?
   createdAt     DateTime @default(now())
 
   @@index([restaurantId, createdAt])
+  @@index([guestId, accepted])
+}
+
+/// Règles d'upsell configurables par restaurant.
+model UpsellRule {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  /// Déclencheur : "reservation_created" | "24h_before" | "1h_before" | "seated".
+  triggerEvent    String
+  /// Conditions JSON : { partySize: { min: 4 }, zone: "SALLE", time: { after: "20:00" } }.
+  conditions      Json     @default("{}")
+  /// Type de suggestion : "menu_item" | "addon" | "event".
+  suggestionType  String
+  menuItemId      String?
+  customTitle     String?
+  customMessage   String?
+  /// Limite d'envois par jour.
+  maxSendsPerDay  Int      @default(100)
+  sendsToday      Int      @default(0)
+  active          Boolean  @default(true)
+  priority        Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([restaurantId, triggerEvent, active])
+}
+
+/// Table sociale pour le Social Dining.
+model SocialTable {
+  id              String  @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  /// Nom affiché (ex: "Chef's Table", "Table Commune 1").
+  name            String
+  /// Capacité totale (ex: 8).
+  totalSeats      Int
+  /// Taille min par réservation (1 = solo OK).
+  minGroupSize    Int     @default(1)
+  /// Taille max par réservation.
+  maxGroupSize    Int     @default(4)
+  /// Prix par place en millimes (0 = prix normal).
+  pricePerSeat    Int     @default(0)
+  /// Lien avec un événement (optionnel).
+  eventId         String?
+  event           Event?  @relation(fields: [eventId], references: [id])
+  status          SocialTableStatus @default(ACTIVE)
+  active          Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reservations    SocialTableReservation[]
+
+  @@index([restaurantId, active])
+}
+
+/// Réservation sur table sociale.
+model SocialTableReservation {
+  id              String  @id @default(cuid())
+  socialTableId   String
+  socialTable     SocialTable @relation(fields: [socialTableId], references: [id], onDelete: Cascade)
+  guestId         String
+  guest           Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  serviceDate     String  // AAAA-MM-JJ
+  partySize       Int
+  reservationId   String?  @unique
+  reservation     Reservation? @relation(fields: [reservationId], references: [id])
+  status          SocialTableReservationStatus @default(CONFIRMED)
+  createdAt       DateTime @default(now())
+
+  @@index([socialTableId, serviceDate, status])
+  @@index([guestId])
+  @@index([restaurantId, serviceDate])
 }
