@@ -26,6 +26,7 @@ const NOTIFICATION_WINDOW_MS = 15 * 60_000; // 15 minutes
 
 export type WaitlistEntry = {
   id: string;
+  restaurantId: string;
   guestId: string;
   name: string | null;
   phone: string;
@@ -367,6 +368,7 @@ export async function cancelWaitlistEntry(
 
 function toEntry(row: {
   id: string;
+  restaurantId: string;
   guestId: string;
   guest: { name: string | null; phone: string };
   date: string;
@@ -387,6 +389,7 @@ function toEntry(row: {
 }): WaitlistEntry {
   return {
     id: row.id,
+    restaurantId: row.restaurantId,
     guestId: row.guestId,
     name: row.guest.name,
     phone: row.guest.phone,
@@ -575,31 +578,32 @@ async function checkRewardEligibility(
   restaurantId: string,
   waitMinutes: number,
 ): Promise<WaitlistReward | null> {
-  const reward = await db.waitlistReward.findFirst({
+  const rewards = await db.waitlistReward.findMany({
     where: {
       restaurantId,
       active: true,
       minWaitMinutes: { lte: waitMinutes },
-      OR: [
-        { maxRedemptions: null },
-        { currentRedemptions: { lt: db.waitlistReward.fields.maxRedemptions } },
-      ],
     },
     orderBy: { minWaitMinutes: "desc" },
   });
 
-  if (!reward) return null;
+  // Filter rewards where currentRedemptions < maxRedemptions (or unlimited)
+  const eligible = rewards.find(
+    (r) => r.maxRedemptions === null || r.currentRedemptions < r.maxRedemptions,
+  );
+
+  if (!eligible) return null;
 
   return {
-    id: reward.id,
-    name: reward.name,
-    description: reward.description,
-    type: reward.type,
-    value: reward.value,
-    minWaitMinutes: reward.minWaitMinutes,
-    maxRedemptions: reward.maxRedemptions,
-    currentRedemptions: reward.currentRedemptions,
-    active: reward.active,
+    id: eligible.id,
+    name: eligible.name,
+    description: eligible.description,
+    type: eligible.type,
+    value: eligible.value,
+    minWaitMinutes: eligible.minWaitMinutes,
+    maxRedemptions: eligible.maxRedemptions,
+    currentRedemptions: eligible.currentRedemptions,
+    active: eligible.active,
   };
 }
 
