@@ -47,9 +47,10 @@ export function WaitlistStaffManager({
   }, [restaurantId, date]);
 
   useEffect(() => {
-    fetchEntries();
-    const interval = setInterval(fetchEntries, 10000); // Refresh every 10s
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      fetchEntries();
+    }, 10000);
+    return () => clearInterval(id);
   }, [fetchEntries]);
 
   async function handleSeat(entryId: string) {

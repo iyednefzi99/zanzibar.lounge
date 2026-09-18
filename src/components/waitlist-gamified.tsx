@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { fill, type Dictionary } from "@/i18n";
+import type { Dictionary } from "@/i18n";
 
 type WaitlistReward = {
   id: string;
@@ -65,9 +65,10 @@ export function WaitlistGamified({
   }, [entryId]);
 
   useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      fetchStatus();
+    }, 30000);
+    return () => clearInterval(id);
   }, [fetchStatus]);
 
   async function handleCheckIn() {
