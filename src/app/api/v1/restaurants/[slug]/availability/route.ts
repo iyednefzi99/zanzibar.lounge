@@ -1,17 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { site } from "@/content/site";
 import { availability } from "@/lib/reservations";
 import { getRestaurantBySlug } from "@/lib/restaurant";
 import { serviceWindow } from "@/lib/hours";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const ip = clientIp(request);
+  const limit = await rateLimit(`v1:availability:ip:${ip}`, 60, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(limit.retryAfter) } },
+    );
+  }
+
   const { slug } = await params;
   const url = new URL(request.url);
 

@@ -6,6 +6,7 @@ import { site } from "@/content/site";
 import { getRestaurantBySlug } from "@/lib/restaurant";
 import { createReservation } from "@/lib/reservations";
 import { normalizePhone } from "@/lib/phone";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -26,6 +27,15 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
+  const ip = clientIp(request);
+
+  const ipLimit = await rateLimit(`v1:booking:ip:${ip}`, 8, 10 * 60_000);
+  if (!ipLimit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(ipLimit.retryAfter) } },
+    );
+  }
 
   if (!slug) {
     return NextResponse.json(
@@ -82,6 +92,14 @@ export async function POST(
       return NextResponse.json(
         { ok: false, error: "Invalid phone number" },
         { status: 400 },
+      );
+    }
+
+    const phoneLimit = await rateLimit(`v1:booking:phone:${phone}`, 4, 60 * 60_000);
+    if (!phoneLimit.allowed) {
+      return NextResponse.json(
+        { ok: false, error: "rate_limited" },
+        { status: 429, headers: { "retry-after": String(phoneLimit.retryAfter) } },
       );
     }
 

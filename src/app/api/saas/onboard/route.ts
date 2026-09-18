@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createSetupToken } from "@/lib/saas";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -13,6 +14,15 @@ const body = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = clientIp(request);
+  const limit = await rateLimit(`onboard:ip:${ip}`, 5, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(limit.retryAfter) } },
+    );
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

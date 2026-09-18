@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-auth";
 import { createOrder } from "@/lib/orders";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,23 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const ip = clientIp(request);
+
+  const ipLimit = await rateLimit(`order:ip:${ip}`, 10, 10 * 60_000);
+  if (!ipLimit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(ipLimit.retryAfter) } },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+
   const parsed = createSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -44,12 +61,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const { phone, cart, pickupMinutes, notes, locale } = parsed.data;
-  const result = await createOrder(phone, cart, pickupMinutes, notes, locale);
+  try {
+    const { phone, cart, pickupMinutes, notes, locale } = parsed.data;
+    const result = await createOrder(phone, cart, pickupMinutes, notes, locale);
 
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error.code }, { status: 400 });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error.code }, { status: 400 });
+    }
+
+    return NextResponse.json(result.value, { status: 201 });
+  } catch (error) {
+    console.error("[orders] creation failed", error);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
-
-  return NextResponse.json(result.value, { status: 201 });
 }

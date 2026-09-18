@@ -21,18 +21,17 @@ npm run build
 
 ## Prisma 7 specifics
 
-- Schema is at `prisma/schema.prisma`. Client is generated to `src/generated/prisma` (gitignored).
-- 55+ models: Restaurant, Guest, Reservation, Order, MenuItem, Staff, Subscription, Payment, Review, Conversation, Message, PushSubscription, LoyaltyAccount, LoyaltyTransaction, PhoneVerification, ProcessedEvent, StaffSession, SetupToken, WebhookEndpoint, Notification, MenuCategory, Inventory, InventoryLog, Referral, Waitlist, Event, EventBooking, Gallery, GuestProfile, AuditLog, ApiKey, WebhookDelivery, GuestTag, GuestTagAssignment, GuestNote, Campaign, CampaignDelivery, Shift, StaffAvailability, TimeEntry, PreAuthorization, BillSplit, BillSplitItem, PosIntegration, PosSyncLog, AiConfig, AiAuditLog, AiCostEntry, DemandForecast, ScheduleSuggestion, WasteLog, MenuEngineering, CallLog, VoiceOrder, UpsellSuggestion, GuestAiProfile, PersonalizedMenu, Recommendation, PropertyGroup, GroupAnalytics, CarbonLog, ComplianceCheck, LiveMetric, DynamicPricingRule, GamificationBadge, SocialProofEvent, MaintenanceAlert
-- `npm install` triggers `prisma generate` via `postinstall`.
-- Database URL is in `prisma.config.ts` (reads `DATABASE_URL` from `.env.local`).
-- `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod.
+- Schema: `prisma/schema.prisma`. Client generated to `src/generated/prisma` (gitignored, regenerated on `postinstall`).
+- 69 models. See schema for full list.
+- Connection uses `@prisma/adapter-pg` (PrismaPg adapter). Client in `src/lib/db.ts` is lazy — proxy defers connection until first query, so `next build` works without a database.
+- Database URL is in `prisma.config.ts` (reads `DATABASE_URL` from `.env.local`). Env schema marks it optional, but `db.ts` throws if missing at runtime.
+- `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod. `npm run db:seed` populates test data.
 
 ## Env validation
 
-Environment variables are validated at startup via Zod in `src/lib/env.ts`. Missing or invalid values throw immediately.
+Environment variables are validated at startup via Zod in `src/lib/env.ts`. Invalid values throw immediately.
 
-Required: `DATABASE_URL`
-Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google Business, TripAdvisor, VAPID keys, Resend, Google Maps
+All keys are marked `.optional()` in the schema, but `DATABASE_URL` is required at runtime (`src/lib/db.ts:22` throws if missing). The site runs without Anthropic/WhatsApp/Twilio keys — only the AI agent and messaging channels are disabled.
 
 ## Architecture shortcuts
 
@@ -144,7 +143,7 @@ Optional: Anthropic, WhatsApp, Twilio, Stripe, Sentry, Google Calendar, Google B
 
 - 29 tests in 3 files: `time.test.ts`, `hours.test.ts`, `phone.test.ts`
 - 29 E2E scenarios: `e2e/*.spec.ts`
-- Run: `npm test` (unit), `npm run test:e2e` (E2E), `npm run test:all` (both)
+- Run: `npm test` (unit), `npm run test:watch` (unit watch), `npm run test:e2e` (E2E), `npm run test:all` (both)
 
 ## Docker / Kubernetes
 

@@ -4,8 +4,19 @@ import {
   createCheckoutSession,
   createDepositSession,
 } from "@/lib/payments";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = clientIp(request);
+
+  const ipLimit = await rateLimit(`checkout:ip:${ip}`, 6, 10 * 60_000);
+  if (!ipLimit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(ipLimit.retryAfter) } },
+    );
+  }
+
   try {
     const body = await request.json();
     const {

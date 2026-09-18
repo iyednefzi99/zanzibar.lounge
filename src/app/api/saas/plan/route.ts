@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { requireAdmin } from "@/lib/admin-auth";
 import { createCheckoutSessionForPlan, getRestaurantUsage } from "@/lib/saas";
 import { logger } from "@/lib/logger";
 
@@ -10,6 +11,12 @@ export const dynamic = "force-dynamic";
 // --- GET: current plan & usage ---
 
 export async function GET(request: Request) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const restaurantId = searchParams.get("restaurantId");
 
@@ -50,6 +57,12 @@ const postBody = z.object({
 });
 
 export async function POST(request: Request) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

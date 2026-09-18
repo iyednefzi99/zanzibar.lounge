@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchRestaurants } from "@/lib/discovery";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
+  const ip = clientIp(request);
+  const limitCheck = await rateLimit(`discovery:ip:${ip}`, 30, 60_000);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" },
+      { status: 429, headers: { "retry-after": String(limitCheck.retryAfter) } },
+    );
+  }
+
   const sp = request.nextUrl.searchParams;
 
   const result = await searchRestaurants({

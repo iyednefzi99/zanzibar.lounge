@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 
 import { findByReference } from "@/lib/reservations";
+import { requireStaffSession } from "@/lib/staff-session";
 
 export async function GET(request: Request) {
+  try {
+    await requireStaffSession();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const reference = searchParams.get("reference");
 

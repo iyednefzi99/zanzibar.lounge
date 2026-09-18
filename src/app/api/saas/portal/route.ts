@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { requireAdmin } from "@/lib/admin-auth";
 import { createStripePortalSession } from "@/lib/saas";
 import { logger } from "@/lib/logger";
 
@@ -13,6 +14,12 @@ const body = z.object({
 });
 
 export async function POST(request: Request) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();
