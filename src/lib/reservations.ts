@@ -21,6 +21,8 @@ import {
 import { normalizePhone } from "@/lib/phone";
 import { getDefaultRestaurantId } from "@/lib/restaurant";
 import { addDays, toISODate } from "@/lib/time";
+import { evaluateReservationRisk } from "@/lib/no-show-predict";
+import { selectBestTable } from "@/lib/table-optimizer";
 
 const TZ = site.timezone;
 
@@ -170,6 +172,16 @@ export async function createReservation(
           input.partySize,
           input.zone ?? null,
           restaurantId,
+          undefined,
+          guest.id,
+        );
+
+        // Évaluer le risque de no-show
+        const risk = await evaluateReservationRisk(
+          guest.id,
+          input.partySize,
+          startsAt,
+          restaurantId,
         );
 
         return tx.reservation.create({
@@ -186,6 +198,8 @@ export async function createReservation(
             status: ReservationStatus.CONFIRMED,
             channel: input.channel,
             notes: input.notes?.trim() || null,
+            noShowRiskScore: risk.score,
+            preAuthRequired: risk.preAuthRequired,
           },
           include: { guest: true, table: true },
         });
@@ -325,6 +339,7 @@ export async function rescheduleReservation(
           fromPrismaZone(existing.zone),
           rid,
           existing.id,
+          existing.guestId,
         );
 
         return tx.reservation.update({
@@ -384,6 +399,14 @@ export async function cancelReservation(
     },
     include: { guest: true, table: true },
   });
+
+  // Notifier la file d'attente si un créneau se libère
+  const { onReservationCancelled } = await import("@/lib/waitlist");
+  await onReservationCancelled(
+    existing.restaurantId,
+    existing.serviceDate,
+    minutesOf(existing.serviceDate, existing.startsAt),
+  ).catch(() => {});
 
   return { ok: true, value: summarize(updated) };
 }
@@ -547,9 +570,9 @@ async function coversBetween(
 }
 
 /**
- * Attribue la plus petite table libre qui accueille le groupe. Renvoie `null`
- * si aucune table n'est enregistrée — la capacité globale fait alors seule loi,
- * et le placement se règle en salle.
+ * Attribue la meilleure table libre avec scoring intelligent.
+ * Renvoie `null` si aucune table n'est enregistrée — la capacité globale
+ * fait alors seule loi.
  */
 async function pickTable(
   tx: TxClient,
@@ -559,13 +582,13 @@ async function pickTable(
   zone: ZoneId | null,
   restaurantId: string,
   excludeReservationId?: string,
+  guestId?: string,
 ): Promise<string | null> {
   const candidates = await tx.restaurantTable.findMany({
     where: {
       restaurantId,
       active: true,
       capacity: { gte: partySize },
-      ...(zone ? { zone: toPrismaZone(zone)! } : {}),
     },
     orderBy: [{ capacity: "asc" }, { name: "asc" }],
   });
@@ -584,7 +607,58 @@ async function pickTable(
   });
 
   const busyIds = new Set(busy.map((row) => row.tableId));
-  return candidates.find((table) => !busyIds.has(table.id))?.id ?? null;
+  const available = candidates.filter((table) => !busyIds.has(table.id));
+
+  if (available.length === 0) return null;
+
+  // Si pas de guest ID, fallback sur la plus petite table
+  if (!guestId) {
+    return available[0]?.id ?? null;
+  }
+
+  // Récupérer l'historique du guest pour le scoring
+  const guestReservations = await tx.reservation.findMany({
+    where: {
+      guestId,
+      restaurantId,
+      status: { in: ["COMPLETED", "SEATED"] },
+    },
+    select: { tableId: true, zone: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+
+  const guestZoneHistory = guestReservations
+    .map((r) => r.zone)
+    .filter((z): z is Zone => z !== null);
+
+  const recentTableIds = guestReservations
+    .slice(0, 3)
+    .map((r) => r.tableId)
+    .filter((id): id is string => id !== null);
+
+  // Déterminer si c'est une heure de pointe
+  const hour = startsAt.getUTCHours();
+  const isPeakHour = hour >= 19 && hour <= 22;
+
+  const best = selectBestTable(
+    available.map((t) => ({
+      id: t.id,
+      name: t.name,
+      capacity: t.capacity,
+      zone: t.zone,
+    })),
+    {
+      partySize,
+      preferredZone: zone,
+      guestZoneHistory,
+      recentTableIds,
+      adjacencyTableIds: [],
+      isPeakHour,
+    },
+  );
+
+  return best?.id ?? null;
 }
 
 /** Couverts par créneau sur une date, pour l'affichage des disponibilités. */

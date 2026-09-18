@@ -172,6 +172,24 @@ const ru: Dictionary = {
     pagination: { previous: "Назад", next: "Далее" },
   },
 
+  waitlist: {
+    title: "Встать в лист ожидания",
+    body: "Это время занято для {count} человек(а) на {date} в {time}. Вы получите уведомление, когда столик освободится.",
+    join: "Встать в очередь",
+    joining: "Добавление…",
+    cancel: "Отмена",
+    close: "Закрыть",
+    alreadyJoined: "Вы уже в очереди на это время.",
+    error: "Не удалось встать в очередь. Попробуйте снова.",
+    successTitle: "Вы в очереди!",
+    successBody: "Вы получите уведомление через WhatsApp/SMS, когда столик освободится.",
+    position: "Позиция в очереди: {position}",
+    notificationHint: "У вас будет 15 минут для подтверждения после уведомления.",
+    badgeWaiting: "Позиция {position}",
+    badgeNotified: "Столик доступен",
+    badgeBooked: "Забронировано через лист ожидания",
+  },
+
   footer: {
     tagline: "E-Coffee — ваше счастливое место",
     follow: "Подписаться",

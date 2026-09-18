@@ -16,6 +16,7 @@ import {
 import { buildSystemPrompt } from "@/lib/agent/prompt";
 import { runTool, tools, type ToolContext } from "@/lib/agent/tools";
 import { getSmartSuggestions } from "@/lib/agent/suggestions";
+import { getAgentContext } from "@/lib/omnichannel";
 
 /**
  * L'agent conversationnel : reçoit un message, décide, agit, répond.
@@ -127,9 +128,16 @@ export async function handleInbound(
 
   try {
     const suggestions = await getSmartSuggestions(guest.id, locale);
+    const crossChannelContext = await getAgentContext(guest.id, 10);
     const { text, handOff } = await converse(
       conversation.id,
-      buildSystemPrompt({ locale, guestName: guest.name, now, suggestions }),
+      buildSystemPrompt({
+        locale,
+        guestName: guest.name,
+        now,
+        suggestions,
+        crossChannelContext,
+      }),
       context,
     );
 
@@ -159,6 +167,7 @@ async function converse(
   system: string,
   context: ToolContext,
 ): Promise<{ text: string; handOff?: { reason: string; summary: string } }> {
+  // Historique du canal courant
   const history = await conversationHistory(conversationId, HISTORY_LENGTH);
 
   const messages: Anthropic.MessageParam[] = history.map((message) => ({

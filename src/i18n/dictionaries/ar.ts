@@ -194,6 +194,24 @@ const ar: Dictionary = {
     },
   },
 
+  waitlist: {
+    title: "الانضمام لقائمة الانتظار",
+    body: "هذا الموعد مكتمل لـ {count} شخص في {date} على {time}. سيتم إشعارك إذا تحررت طاولة.",
+    join: "انضم",
+    joining: "جاري الانضمام…",
+    cancel: "إلغاء",
+    close: "إغلاق",
+    alreadyJoined: "أنت مسجل بالفعل لهذا الموعد.",
+    error: "تعذر الانضمام. حاول مرة أخرى.",
+    successTitle: "تم التسجيل!",
+    successBody: "سيتم إشعارك عبر واتساب/SMS عندما تتحرر طاولة.",
+    position: "المركز في القائمة: {position}",
+    notificationHint: "ست having 15 دقيقة للتأكيد بعد الإشعار.",
+    badgeWaiting: "المركز {position}",
+    badgeNotified: "طاولة متاحة",
+    badgeBooked: "محجوز عبر القائمة",
+  },
+
   footer: {
     tagline: "E-Coffee مكانك السعيد",
     follow: "تابعنا",

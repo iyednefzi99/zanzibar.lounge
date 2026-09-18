@@ -194,6 +194,24 @@ const fr = {
     },
   },
 
+  waitlist: {
+    title: "Rejoindre la liste d'attente",
+    body: "Ce créneau est complet pour {count} personne(s) le {date} à {time}. Vous serez notifié si une table se libère.",
+    join: "Rejoindre",
+    joining: "Inscription…",
+    cancel: "Annuler",
+    close: "Fermer",
+    alreadyJoined: "Vous êtes déjà inscrit pour ce créneau.",
+    error: "Impossible de s'inscrire. Réessayez.",
+    successTitle: "Inscrit !",
+    successBody: "Vous serez notifié par WhatsApp/SMS quand une table se libérera.",
+    position: "Position dans la file : {position}",
+    notificationHint: "Vous aurez 15 minutes pour confirmer après la notification.",
+    badgeWaiting: "Position {position}",
+    badgeNotified: "Table disponible",
+    badgeBooked: "Réservé via waitlist",
+  },
+
   footer: {
     tagline: "E-Coffee is your happy place",
     follow: "Suivre",

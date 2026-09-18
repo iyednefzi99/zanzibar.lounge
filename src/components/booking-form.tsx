@@ -5,6 +5,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { site } from "@/content/site";
 import { fill, type Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
+import { WaitlistModal } from "@/components/waitlist-modal";
 
 type Slot = { minutes: number; label: string; available: boolean };
 
@@ -50,6 +51,7 @@ export function BookingForm({
   const [otp, setOtp] = useState<"idle" | "sending" | "sent" | "failed">("idle");
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [showWaitlist, setShowWaitlist] = useState(false);
 
   // Les créneaux dépendent de la date ET de la taille du groupe : une table de
   // huit ne se place pas aux mêmes heures qu'une table de deux. On les garde
@@ -181,6 +183,12 @@ export function BookingForm({
           time: data.time,
           partySize: data.partySize,
         });
+        return;
+      }
+
+      // Créneau complet : proposer la liste d'attente
+      if (response.status === 409 && data.code === "FULL") {
+        setShowWaitlist(true);
         return;
       }
 
@@ -444,6 +452,17 @@ export function BookingForm({
       >
         {sending ? t.submitting : t.submit}
       </button>
+
+      {showWaitlist && selected !== null && (
+        <WaitlistModal
+          dictionary={dictionary}
+          date={date}
+          time={slots?.find((s) => s.minutes === selected)?.label ?? ""}
+          minutes={selected}
+          partySize={partySize}
+          onClose={() => setShowWaitlist(false)}
+        />
+      )}
     </form>
   );
 }

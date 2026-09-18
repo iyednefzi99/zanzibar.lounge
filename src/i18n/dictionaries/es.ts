@@ -172,6 +172,24 @@ const es: Dictionary = {
     pagination: { previous: "Anterior", next: "Siguiente" },
   },
 
+  waitlist: {
+    title: "Unirse a la lista de espera",
+    body: "Este horario está completo para {count} persona(s) el {date} a las {time}. Se le notificará si se libera una mesa.",
+    join: "Unirse",
+    joining: "Uniéndose…",
+    cancel: "Cancelar",
+    close: "Cerrar",
+    alreadyJoined: "Ya estás en la lista para este horario.",
+    error: "No se pudo unir. Inténtalo de nuevo.",
+    successTitle: "¡Inscrito!",
+    successBody: "Recibirás una notificación por WhatsApp/SMS cuando se libere una mesa.",
+    position: "Posición en la cola: {position}",
+    notificationHint: "Tendrás 15 minutos para confirmar después de la notificación.",
+    badgeWaiting: "Posición {position}",
+    badgeNotified: "Mesa disponible",
+    badgeBooked: "Reservado vía lista de espera",
+  },
+
   footer: {
     tagline: "E-Coffee es tu lugar feliz",
     follow: "Seguir",

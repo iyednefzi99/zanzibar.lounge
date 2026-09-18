@@ -172,6 +172,24 @@ const ja: Dictionary = {
     pagination: { previous: "前へ", next: "次へ" },
   },
 
+  waitlist: {
+    title: "ウェイトリストに参加",
+    body: "この時間帯は{date} {time}の{count}名で満席です。テーブルが空いたら通知されます。",
+    join: "参加",
+    joining: "参加中…",
+    cancel: "キャンセル",
+    close: "閉じる",
+    alreadyJoined: "この時間帯にはすでに参加しています。",
+    error: "参加できませんでした。もう一度お試しください。",
+    successTitle: "参加しました！",
+    successBody: "テーブルが空き次第、WhatsApp/SMSで通知されます。",
+    position: "待ち順番: {position}",
+    notificationHint: "通知から確認まで15分の猶予があります。",
+    badgeWaiting: "順番 {position}",
+    badgeNotified: "テーブル空きあり",
+    badgeBooked: "ウェイトリスト経由で予約済み",
+  },
+
   footer: {
     tagline: "E-Coffeeはあなたの幸せな場所",
     follow: "フォロー",

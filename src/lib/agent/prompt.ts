@@ -22,6 +22,12 @@ export function buildSystemPrompt(options: {
     popularTimes: string | null;
     newItems: string | null;
   };
+  crossChannelContext?: Array<{
+    role: string;
+    body: string;
+    channel: string;
+    at: Date;
+  }>;
 }): string {
   const now = options.now ?? new Date();
   const today = toISODate(now, site.timezone);
@@ -109,7 +115,18 @@ ${options.suggestions.newItems ? `- ${options.suggestions.newItems}` : ""}`
   }
 
 # Multi-établissement
-Si le client mentionne un autre restaurant du groupe ou un slug (ex: « e-coffee-sfax »), utilise get_restaurant_info pour le retrouver. Chaque établissement a son propre menu et ses propres horaires — ne mélange pas les informations entre restaurants.`;
+Si le client mentionne un autre restaurant du groupe ou un slug (ex: « e-coffee-sfax »), utilise get_restaurant_info pour le retrouver. Chaque établissement a son propre menu et ses propres horaires — ne mélange pas les informations entre restaurants.${
+    options.crossChannelContext && options.crossChannelContext.length > 0
+      ? `\n\n# Contexte cross-canal
+Le client a échangé avec nous sur d'autres canaux récemment. Voici les derniers échanges pour Garder le contexte :
+${options.crossChannelContext
+  .map(
+    (msg) =>
+      `[${msg.channel}] ${msg.role === "guest" ? "Client" : "Agent"} : ${msg.body.slice(0, 200)}`,
+  )
+  .join("\n")}`
+      : ""
+  }`;
 }
 
 function dayName(day: number): string {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 
-import { ReservationStatus } from "@/generated/prisma/client";
+import { ReservationStatus } from "@/generated/prisma/enums";
 
 type Reservation = {
   id: string;

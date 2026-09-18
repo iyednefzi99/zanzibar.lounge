@@ -2,13 +2,15 @@ import { db } from "@/lib/db";
 import { getDefaultRestaurantId } from "@/lib/restaurant";
 
 /**
- * Programme de fidélité.
+ * Programme de fidélité gamifié.
  *
  * Règles :
  * - 1 point par couvert pour une réservation COMPLETED
  * - 5 points pour un avis laissé
  * - 10 points pour un parrainage (réferral)
  * - Paliers : bronze (0-49), silver (50-149), gold (150+)
+ * - Badges : récompenses pour des achievements spécifiques
+ * - Streaks : bonus pour les visites consécutives
  *
  * Les points sont cumulés automatiquement après chaque action.
  */
@@ -17,6 +19,7 @@ export const POINTS = {
   RESERVATION: 1, // par couvert
   REVIEW: 5,
   REFERRAL: 10,
+  STREAK_BONUS: 5, // bonus par semaine consécutive
 } as const;
 
 export const TIERS = {
@@ -33,6 +36,8 @@ export type LoyaltyAccountInfo = {
   discount: number;
   nextTier: TierName | null;
   pointsToNext: number | null;
+  badges: Badge[];
+  streak: StreakInfo;
 };
 
 export type LoyaltyTransactionInfo = {
@@ -41,6 +46,121 @@ export type LoyaltyTransactionInfo = {
   reason: string;
   metadata: string | null;
   createdAt: Date;
+};
+
+// --- Badges ---
+
+export type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt: Date | null;
+  progress?: number; // 0-100 pour les badges en cours
+  target?: number;
+};
+
+export const BADGES = {
+  FIRST_VISIT: {
+    id: "first_visit",
+    name: "Premier pas",
+    description: "Votre première réservation",
+    icon: "🎉",
+    condition: (stats: GuestStats) => stats.totalReservations >= 1,
+  },
+  REGULAR: {
+    id: "regular",
+    name: "Habitué",
+    description: "5 réservations complétées",
+    icon: "⭐",
+    condition: (stats: GuestStats) => stats.completedReservations >= 5,
+    target: 5,
+  },
+  VIP: {
+    id: "vip",
+    name: "VIP",
+    description: "20 réservations complétées",
+    icon: "👑",
+    condition: (stats: GuestStats) => stats.completedReservations >= 20,
+    target: 20,
+  },
+  REVIEWER: {
+    id: "reviewer",
+    name: "Critique",
+    description: "3 avis laissés",
+    icon: "📝",
+    condition: (stats: GuestStats) => stats.reviews >= 3,
+    target: 3,
+  },
+  SOCIAL: {
+    id: "social",
+    name: "Bouche-à-oreille",
+    description: "2 parrainages réussis",
+    icon: "🤝",
+    condition: (stats: GuestStats) => stats.referrals >= 2,
+    target: 2,
+  },
+  STREAK_4: {
+    id: "streak_4",
+    name: "Série en feu",
+    description: "4 semaines consécutives",
+    icon: "🔥",
+    condition: (stats: GuestStats) => stats.currentStreak >= 4,
+    target: 4,
+  },
+  STREAK_12: {
+    id: "streak_12",
+    name: "Légende",
+    description: "12 semaines consécutives",
+    icon: "💎",
+    condition: (stats: GuestStats) => stats.currentStreak >= 12,
+    target: 12,
+  },
+  BIG_GROUP: {
+    id: "big_group",
+    name: "Animateur",
+    description: "Réservation pour 8+ personnes",
+    icon: "🎊",
+    condition: (stats: GuestStats) => stats.largestGroup >= 8,
+  },
+  EARLY_BIRD: {
+    id: "early_bird",
+    name: "Lève-tôt",
+    description: "Réservation avant 10h",
+    icon: "🌅",
+    condition: (stats: GuestStats) => stats.earlyBirdBookings >= 1,
+  },
+  NIGHT_OWL: {
+    id: "night_owl",
+    name: "Oiseau de nuit",
+    description: "Réservation après 22h",
+    icon: "🌙",
+    condition: (stats: GuestStats) => stats.lateNightBookings >= 1,
+  },
+} as const;
+
+export type BadgeId = keyof typeof BADGES;
+
+// --- Streak ---
+
+export type StreakInfo = {
+  current: number; // semaines consécutives
+  longest: number;
+  lastVisitAt: Date | null;
+};
+
+// --- Stats guest ---
+
+export type GuestStats = {
+  totalReservations: number;
+  completedReservations: number;
+  reviews: number;
+  referrals: number;
+  currentStreak: number;
+  longestStreak: number;
+  largestGroup: number;
+  earlyBirdBookings: number;
+  lateNightBookings: number;
 };
 
 // --- Compte ---
@@ -56,7 +176,15 @@ export async function getOrCreateAccount(
     update: {},
   });
 
-  return toAccountInfo(account);
+  const stats = await getGuestStats(guestId, rid);
+  const badges = await getEarnedBadges(stats);
+  const streak = await getStreakInfo(guestId, rid);
+
+  return {
+    ...toAccountInfo(account),
+    badges,
+    streak,
+  };
 }
 
 export async function getBalance(guestId: string, restaurantId?: string): Promise<number> {
@@ -243,6 +371,8 @@ function toAccountInfo(account: {
     discount: config.discount,
     nextTier: config.next as TierName | null,
     pointsToNext: config.pointsToNext,
+    badges: [],
+    streak: { current: 0, longest: 0, lastVisitAt: null },
   };
 }
 
@@ -260,4 +390,185 @@ function toTransactionInfo(tx: {
     metadata: tx.metadata,
     createdAt: tx.createdAt,
   };
+}
+
+// --- Stats guest ---
+
+async function getGuestStats(
+  guestId: string,
+  restaurantId: string,
+): Promise<GuestStats> {
+  const reservations = await db.reservation.findMany({
+    where: { guestId, restaurantId },
+    select: {
+      status: true,
+      partySize: true,
+      startsAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const reviews = await db.review.count({
+    where: {
+      guestId,
+      reservation: { restaurantId },
+    },
+  });
+
+  const referrals = await db.referral.count({
+    where: { referrerGuestId: guestId, restaurantId },
+  });
+
+  const completed = reservations.filter((r) => r.status === "COMPLETED");
+  const largestGroup = Math.max(0, ...reservations.map((r) => r.partySize));
+
+  // Early bird (< 10h) et night owl (> 22h)
+  const earlyBirdBookings = reservations.filter((r) => {
+    const hour = r.startsAt.getUTCHours();
+    return hour < 10;
+  }).length;
+
+  const lateNightBookings = reservations.filter((r) => {
+    const hour = r.startsAt.getUTCHours();
+    return hour >= 22;
+  }).length;
+
+  // Calculer le streak
+  const streak = await calculateStreak(completed);
+
+  return {
+    totalReservations: reservations.length,
+    completedReservations: completed.length,
+    reviews,
+    referrals,
+    currentStreak: streak.current,
+    longestStreak: streak.longest,
+    largestGroup,
+    earlyBirdBookings,
+    lateNightBookings,
+  };
+}
+
+// --- Streak ---
+
+async function calculateStreak(
+  completedReservations: Array<{ startsAt: Date }>,
+): Promise<{ current: number; longest: number }> {
+  if (completedReservations.length === 0) {
+    return { current: 0, longest: 0 };
+  }
+
+  // Grouper par semaine
+  const weeks = new Set<string>();
+  for (const r of completedReservations) {
+    const date = new Date(r.startsAt);
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay());
+    weeks.add(weekStart.toISOString().split("T")[0]);
+  }
+
+  const sortedWeeks = [...weeks].sort().reverse();
+
+  let current = 0;
+  let longest = 0;
+  let streak = 0;
+  let prevWeek: string | null = null;
+
+  for (const week of sortedWeeks.reverse()) {
+    if (prevWeek) {
+      const prevDate = new Date(prevWeek);
+      const currDate = new Date(week);
+      const diffDays = (currDate.getTime() - prevDate.getTime()) / (24 * 60 * 60 * 1000);
+
+      if (diffDays <= 7) {
+        streak++;
+      } else {
+        streak = 1;
+      }
+    } else {
+      streak = 1;
+    }
+
+    longest = Math.max(longest, streak);
+    prevWeek = week;
+  }
+
+  // Vérifier si la semaine en cours est active
+  const now = new Date();
+  const thisWeekStart = new Date(now);
+  thisWeekStart.setDate(now.getDate() - now.getDay());
+  const thisWeekStr = thisWeekStart.toISOString().split("T")[0];
+
+  if (sortedWeeks.includes(thisWeekStr)) {
+    current = streak;
+  }
+
+  return { current, longest };
+}
+
+async function getStreakInfo(
+  guestId: string,
+  restaurantId: string,
+): Promise<StreakInfo> {
+  const completed = await db.reservation.findMany({
+    where: {
+      guestId,
+      restaurantId,
+      status: "COMPLETED",
+    },
+    select: { startsAt: true },
+    orderBy: { startsAt: "desc" },
+  });
+
+  const streak = await calculateStreak(completed);
+  const lastVisitAt = completed[0]?.startsAt ?? null;
+
+  return {
+    current: streak.current,
+    longest: streak.longest,
+    lastVisitAt,
+  };
+}
+
+// --- Badges ---
+
+async function getEarnedBadges(stats: GuestStats): Promise<Badge[]> {
+  const badges: Badge[] = [];
+
+  for (const [, badgeDef] of Object.entries(BADGES)) {
+    const earned = badgeDef.condition(stats);
+
+    if (earned) {
+      badges.push({
+        id: badgeDef.id,
+        name: badgeDef.name,
+        description: badgeDef.description,
+        icon: badgeDef.icon,
+        earnedAt: new Date(), // Approximation
+      });
+    } else if ("target" in badgeDef && badgeDef.target) {
+      // Badge en cours de progression
+      let progress = 0;
+      if ("completedReservations" in stats) {
+        progress = Math.min(
+          100,
+          Math.round(
+            (stats.completedReservations / (badgeDef.target as number)) * 100,
+          ),
+        );
+      }
+      badges.push({
+        id: badgeDef.id,
+        name: badgeDef.name,
+        description: badgeDef.description,
+        icon: badgeDef.icon,
+        earnedAt: null,
+        progress,
+        target: badgeDef.target,
+      });
+    }
+  }
+
+  return badges;
 }

@@ -172,6 +172,24 @@ const zh: Dictionary = {
     pagination: { previous: "上一页", next: "下一页" },
   },
 
+  waitlist: {
+    title: "加入等候名单",
+    body: "{date} {time}的{count}人时段已满。如有桌位空出，我们将通知您。",
+    join: "加入",
+    joining: "加入中…",
+    cancel: "取消",
+    close: "关闭",
+    alreadyJoined: "您已加入此时段的等候名单。",
+    error: "无法加入。请重试。",
+    successTitle: "已加入！",
+    successBody: "桌位空出时，我们将通过WhatsApp/短信通知您。",
+    position: "当前排队位置: {position}",
+    notificationHint: "通知后您有15分钟时间确认。",
+    badgeWaiting: "位置 {position}",
+    badgeNotified: "桌位可用",
+    badgeBooked: "通过等候名单预订",
+  },
+
   footer: {
     tagline: "E-Coffee是您的快乐之地",
     follow: "关注",

@@ -195,6 +195,24 @@ const en: Dictionary = {
     },
   },
 
+  waitlist: {
+    title: "Join the waiting list",
+    body: "This slot is fully booked for {count} on {date} at {time}. You'll be notified if a table opens up.",
+    join: "Join",
+    joining: "Joining…",
+    cancel: "Cancel",
+    close: "Close",
+    alreadyJoined: "You're already on the list for this slot.",
+    error: "Could not join. Please try again.",
+    successTitle: "You're on the list!",
+    successBody: "We'll notify you by WhatsApp/SMS when a table opens up.",
+    position: "Position in queue: {position}",
+    notificationHint: "You'll have 15 minutes to confirm after notification.",
+    badgeWaiting: "Position {position}",
+    badgeNotified: "Table available",
+    badgeBooked: "Booked via waitlist",
+  },
+
   footer: {
     tagline: "E-Coffee is your happy place",
     follow: "Follow",

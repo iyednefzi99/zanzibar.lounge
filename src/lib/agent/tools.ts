@@ -6,7 +6,7 @@ import { menu, menuAsText } from "@/content/menu";
 import type { Locale } from "@/i18n/config";
 import { db } from "@/lib/db";
 import { hmToMinutes, toISODate } from "@/lib/time";
-import { serviceWindow } from "@/lib/hours";
+import { serviceWindow, formatSlot } from "@/lib/hours";
 import {
   availability,
   cancelReservation,
@@ -16,6 +16,7 @@ import {
   upcomingForPhone,
   type BookingError,
 } from "@/lib/reservations";
+import { joinWaitlist, getWaitlistForGuest } from "@/lib/waitlist";
 
 /**
  * Les outils de l'agent.
@@ -217,6 +218,35 @@ export const tools: Anthropic.Tool[] = [
       required: ["date", "party_size", "preferred_time"],
     },
   },
+  {
+    name: "join_waitlist",
+    description:
+      "Inscrit le client en liste d'attente quand le créneau souhaité est complet. Le client sera notifié si un créneau se libère.",
+    input_schema: {
+      type: "object",
+      properties: {
+        date: {
+          type: "string",
+          description: "Date du service au format AAAA-MM-JJ.",
+        },
+        party_size: {
+          type: "integer",
+          description: "Nombre de personnes.",
+        },
+        preferred_time: {
+          type: "string",
+          description: "Heure souhaitée, HH:MM.",
+        },
+      },
+      required: ["date", "party_size", "preferred_time"],
+    },
+  },
+  {
+    name: "check_waitlist_status",
+    description:
+      "Affiche la position et le statut de la liste d'attente du client. À appeler quand le client demande où en est sa demande d'inscription en liste d'attente.",
+    input_schema: { type: "object", properties: {} },
+  },
 ];
 
 export async function runTool(
@@ -247,6 +277,10 @@ export async function runTool(
       return getRestaurantInfo();
     case "suggest_alternatives":
       return suggestAlternatives(input, context);
+    case "join_waitlist":
+      return joinWaitlistTool(input, context);
+    case "check_waitlist_status":
+      return checkWaitlistStatus(context);
     default:
       return { content: `Outil inconnu : ${name}` };
   }
@@ -532,6 +566,62 @@ async function suggestAlternatives(
   return {
     content: `Créneaux les plus proches de ${preferredTime} le ${date} pour ${partySize} personnes : ${closest.join(", ")}.`,
   };
+}
+
+async function joinWaitlistTool(
+  input: Record<string, unknown>,
+  context: ToolContext,
+): Promise<ToolOutcome> {
+  const date = asDate(input.date);
+  const partySize = asInt(input.party_size);
+  const preferredTime = typeof input.preferred_time === "string" ? input.preferred_time.trim() : null;
+
+  if (!date) return { content: "Date invalide. Format attendu : AAAA-MM-JJ." };
+  if (!partySize) return { content: "Nombre de personnes invalide." };
+  if (!preferredTime) return { content: "Heure préférée requise, format HH:MM." };
+
+  const match = /^(\d{1,2}):(\d{2})$/.exec(preferredTime);
+  if (!match) return { content: "Format d'heure invalide. Attendu : HH:MM." };
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
+
+  const result = await joinWaitlist({
+    guestId: context.guestId,
+    date,
+    minutes,
+    partySize,
+  });
+
+  if (!result.ok) {
+    if (result.error === "ALREADY_JOINED") {
+      return { content: "Vous êtes déjà inscrit en liste d'attente pour ce créneau. Vous serez notifié quand une table se libère." };
+    }
+    return { content: "Impossible de s'inscrire en liste d'attente. Réessayer ou contacter l'établissement." };
+  }
+
+  return {
+    content: `Inscrit en liste d'attente. Position : ${result.position}. Vous recevrez une notification WhatsApp/SMS quand une table se libérera. Répondez OUI pour confirmer quand vous serez notifié.`,
+  };
+}
+
+async function checkWaitlistStatus(context: ToolContext): Promise<ToolOutcome> {
+  const entries = await getWaitlistForGuest(context.guestId);
+
+  if (entries.length === 0) {
+    return { content: "Vous n'avez aucune inscription en liste d'attente." };
+  }
+
+  const lines = entries.map((entry) => {
+    const timeLabel = formatSlot(entry.minutes);
+    const statusLabel =
+      entry.status === "NOTIFIED"
+        ? "✓ Table disponible — réservez !"
+        : entry.status === "WAITING"
+          ? `Position ${entry.position} en attente`
+          : entry.status;
+    return `${entry.date} à ${timeLabel} pour ${entry.partySize} personnes : ${statusLabel}`;
+  });
+
+  return { content: `Liste d'attente :\n${lines.join("\n")}` };
 }
 
 function dayName(day: number): string {
