@@ -25,7 +25,7 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@sentry/nextjs": "^10.74.0",
-    "@types/argon2": "^0.14.1",
+    "@types/argon2": "^0.15.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "argon2": "^0.45.1",
