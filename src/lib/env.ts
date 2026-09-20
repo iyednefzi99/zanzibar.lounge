@@ -69,6 +69,29 @@ const schema = z.object({
   GOOGLE_CALENDAR_ID: z.string().min(1).optional(),
   GOOGLE_BUSINESS_API_KEY: z.string().min(1).optional(),
   TRIPADVISOR_API_KEY: z.string().min(1).optional(),
+
+  // --- Paiements ---
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  FLOUCI_APP_ID: z.string().min(1).optional(),
+  FLOUCI_APP_SECRET: z.string().min(1).optional(),
+  D17_MERCHANT_ID: z.string().min(1).optional(),
+  D17_SECRET_KEY: z.string().min(1).optional(),
+
+  // --- Notifications Push ---
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_EMAIL: z.string().email().optional(),
+
+  // --- Monitoring ---
+  SENTRY_ORG: z.string().min(1).optional(),
+  SENTRY_PROJECT: z.string().min(1).optional(),
+  SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+
+  // --- Redis (cache, rate limiting) ---
+  REDIS_URL: z.string().url().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -99,6 +122,22 @@ export const hasSms = Boolean(
 );
 
 export const hasDatabase = Boolean(env.DATABASE_URL);
+
+export const hasStripe = Boolean(
+  env.STRIPE_SECRET_KEY && env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+);
+
+export const hasFlouci = Boolean(
+  env.FLOUCI_APP_ID && env.FLOUCI_APP_SECRET,
+);
+
+export const hasD17 = Boolean(
+  env.D17_MERCHANT_ID && env.D17_SECRET_KEY,
+);
+
+export const hasPush = Boolean(
+  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY,
+);
 
 /**
  * Manques qui empêchent une mise en production. Affiché au démarrage et repris
