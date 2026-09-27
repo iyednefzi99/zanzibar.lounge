@@ -12,7 +12,6 @@ export type BackgroundJob = {
 
 // Simple in-memory job queue (can be replaced with BullMQ)
 const jobQueue: BackgroundJob[] = [];
-const activeWorkers: Map<string, Promise<void>> = new Map();
 
 type JobHandler = (data: Record<string, unknown>) => Promise<unknown>;
 

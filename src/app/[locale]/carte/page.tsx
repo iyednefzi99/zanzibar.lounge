@@ -1,12 +1,22 @@
 import { notFound } from "next/navigation";
 
-import { MenuList } from "@/components/menu-list";
-import { Studs } from "@/components/studs";
-import { menu } from "@/content/menu";
+import { SectionHeader } from "@/components/ui/section-header";
 import { getDictionary } from "@/i18n";
-import { isLocale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
+import { currency, menu } from "@/content/menu";
 
-export default async function MenuPage({
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const dictionary = await getDictionary(locale);
+  return { title: dictionary.menu.title };
+}
+
+export default async function CartePage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -14,45 +24,96 @@ export default async function MenuPage({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const dictionary = await getDictionary(locale);
+  const typedLocale = locale as Locale;
+  const dictionary = await getDictionary(typedLocale);
 
   return (
-    <>
-      <header className="mx-auto max-w-4xl px-5 pt-16 pb-10 sm:px-8">
-        <h1 className="reveal font-display text-[clamp(2.5rem,6vw,4rem)] leading-none text-shell">
-          {dictionary.menu.title}
-        </h1>
-        <p className="reveal reveal-1 mt-4 text-shell-dim">
-          {dictionary.menu.lead}
-        </p>
+    <div className="mx-auto max-w-4xl px-5 py-section sm:px-8">
+      <SectionHeader
+        as="h1"
+        eyebrow={dictionary.menu.lead}
+        title={dictionary.menu.title}
+        subtitle={`Prices in Tunisian Dinars, service included`}
+      />
 
-        {/* L'index des catégories. La carte est longue : on donne l'entrée
-            directe plutôt que de faire défiler à l'aveugle. Ce n'est pas un
-            ornement, c'est la table des matières. */}
-        <nav
-          aria-label={dictionary.menu.jumpTo}
-          className="reveal reveal-2 mt-8 flex flex-wrap items-baseline gap-x-6 gap-y-2"
-        >
-          <span className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-shell-dim/80">
-            {dictionary.menu.jumpTo}
-          </span>
-          {menu.map((category) => (
-            <a
-              key={category.id}
-              href={`#${category.id}`}
-              className="font-mono text-xs uppercase tracking-[0.14em] text-shell-dim underline-offset-4 transition-colors hover:text-brass hover:underline"
-            >
-              {category.name[locale]}
-            </a>
-          ))}
-        </nav>
-      </header>
+      {/* Category jump links */}
+      <nav className="mt-8 flex flex-wrap justify-center gap-2">
+        {menu.map((cat) => (
+          <a
+            key={cat.id}
+            href={`#${cat.id}`}
+            className="rounded-full border border-shell/20 px-4 py-2 text-sm text-shell-dim transition-all hover:border-brass hover:text-brass"
+          >
+            {cat.name[typedLocale]}
+          </a>
+        ))}
+      </nav>
 
-      <Studs className="reveal reveal-2" />
+      <div className="mt-14 space-y-20">
+        {menu.map((category) => (
+          <section
+            key={category.id}
+            id={category.id}
+            className="scroll-mt-28"
+          >
+            <header>
+              <h2 className="font-display text-3xl text-shell sm:text-4xl">
+                {category.name[typedLocale]}
+              </h2>
+              {category.note && (
+                <p className="mt-1.5 text-sm italic text-shell-dim">
+                  {category.note[typedLocale]}
+                </p>
+              )}
+              <div className="brass-rule mt-4 max-w-12" />
+            </header>
 
-      <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
-        <MenuList locale={locale} dictionary={dictionary} />
+            <ul className="mt-6 space-y-1">
+              {category.items.map((item) => (
+                <li
+                  key={item.id}
+                  className="group flex items-baseline gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-shell/5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-shell">{item.name[typedLocale]}</p>
+                      <span className="hidden flex-1 border-b border-dotted border-shell/15 sm:block" />
+                    </div>
+                    {item.description && (
+                      <p className="mt-0.5 text-sm text-shell-dim">
+                        {item.description[typedLocale]}
+                      </p>
+                    )}
+                    {item.tags && item.tags.length > 0 && (
+                      <p className="mt-1.5 flex flex-wrap gap-1.5">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-brass/30 bg-brass/5 px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-widest text-brass"
+                          >
+                            {dictionary.menu.tags[tag]}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                  </div>
+
+                  <span
+                    className="shrink-0 font-mono text-sm tabular-nums text-brass"
+                    dir="ltr"
+                  >
+                    {item.price === null
+                      ? dictionary.menu.priceOfDay
+                      : `${item.price.toFixed(item.price % 1 ? 1 : 0)} ${currency}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
-    </>
+
+      <div className="brass-rule mt-20" />
+    </div>
   );
 }

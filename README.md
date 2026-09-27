@@ -1,220 +1,34 @@
 # E-Coffee Node
 
-Plateforme complète de réservation de restaurant — vitrine trilingue, agent IA conversationnel,
-SaaS multi-établissement, analytics avancés, application mobile staff, et bien plus.
+Plateforme SaaS de gestion de restaurant — réservations en ligne, commande, agent IA, multi-établissement.
 
-> **Plateforme de classe mondiale** — 10 langues, 150+ routes, agent vocal IA,
-> système de caisse cuisine, widget embeddable, analytics prédictifs,
-> déploiement Docker/Kubernetes, et 29 tests unitaires.
+[![CI](https://github.com/iyednefzi99/zanzibar.lounge/actions/workflows/ci.yml/badge.svg)](https://github.com/iyednefzi99/zanzibar.lounge/actions/workflows/ci.yml)
+[![Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
 ---
 
 ## Fonctionnalités
 
-### Phase 1 — Foundations
-- **Sentry** error tracking (client + server + edge)
-- **Error boundaries** (global, page, not-found, loading)
-- **SEO** (sitemap, robots, JSON-LD, OG images, Twitter cards)
-- **PWA** (manifest, icons, offline, service worker)
-- **Playwright E2E** (29 scénarios)
-- **Vercel Analytics** + Speed Insights
+- **Réservations & commandes** — formulaire multi-étapes, disponibilités en temps réel, file d'attente, anti no-show (OTP, pré-autorisation Stripe, frais d'annulation)
+- **Agent IA conversationnel** — 11 outils (disponibilité, création/modification/cancellation de réservation, menu, avis…), sur WhatsApp, SMS et web ; agent vocal Twilio (STT/TTS)
+- **SaaS multi-établissement** — onboarding, 3 plans (Starter 29 € / Pro 79 € / Enterprise 199 €), Stripe Billing, dashboard propriétaire, white-label
+- **Back-office** — 25 pages admin : menu (drag-and-drop), inventaire, plan de salle SVG, commandes, CRM (Guest360, tags, campagnes email), analytics (revenus, heatmap 7×24, A/B testing, prévisions), sécurité (2FA TOTP, audit logs, API keys)
+- **Kitchen Display System** — plein écran, auto-refresh, beep audio
+- **Staff** — planning, timeclock, performances ; app mobile (scanner QR, hors-ligne PWA)
+- **Intégrations** — Stripe, Flouci, D17, Toast POS, Square, Twilio, WhatsApp Cloud API, Resend, Google Maps/Calendar/Business, TripAdvisor, Sentry, Upstash Redis
+- **Multilingue** — 10 langues (fr, ar, en, de, es, it, pt, ru, zh, ja), RTL pour l'arabe
+- **Widget embeddable** — iframe + API publique pour les sites tiers
+- **Sécurité & ops** — 2FA TOTP, audit logs, rate limiting, API keys, Sentry, CI GitHub Actions, Docker/Kubernetes
 
-### Phase 2 — Market Differentiation
-- **Stripe payments** (checkout, webhooks, refunds, dépôts)
-- **Notifications avancées** (rappels J-1, offres flash, anniversaire, météo)
-- **Analytics prédictifs** (occupation, recommandations, tendances, segments)
-- **Pages publiques** (découverte, profil restaurant avec SEO local)
-- **Plan de salle interactif** (SVG, 3 zones, statut temps réel)
+---
 
-### Phase 3 — SaaS Platform
-- **Onboarding** (tokens d'inscription, création restaurant)
-- **Stripe Billing** (4 plans, abonnements, portail client)
-- **Dashboard propriétaire** (settings, équipe, facturation, usage)
-- **API publique** (6 endpoints REST documentés)
-- **API SaaS** (onboard, plan, portal, staff, webhooks)
+## Prérequis
 
-### Phase 4 — Ecosystem
-- **OpenAPI 3.1** (13 endpoints, 15 schémas)
-- **MIT License**
-- **CONTRIBUTING.md** (guide en français)
-- **CI/CD** (Vercel deploy, Prisma migrate)
+- **Node.js** ≥ 20 (développé et testé sous 24)
+- **npm** ≥ 10
+- **PostgreSQL** ≥ 14 (ou Docker)
 
-### Phase 5 — Intelligence
-- **Agent V2** (11 outils, suggestions intelligentes, multi-établissement)
-- **Intégrations** (Google Calendar, Google Business, TripAdvisor)
-- **White-Label** (branding dynamique, CSS custom properties)
-- **Marketplace** (filtres, profils, réservation inline)
-
-### Phase 6 — Advanced
-- **Analytics avancés** (temps réel, revenus, guests, heatmap 7×24)
-- **App mobile staff** (login, réservations, commandes, scanner QR)
-- **Sécurité** (2FA TOTP, audit logs, rate limiting, API keys)
-- **Enterprise** (webhooks HMAC, delivery tracking, feature flags)
-
-### Phase 7 — Operations
-- **Kitchen Display System** (KDS plein écran, auto-refresh, audio beep)
-- **Widget embeddable** (iframe, composant React, API publique)
-- **Notification center** (in-app, 6 types, bell badge)
-
-### Phase 8 — Voice AI
-- **Twilio Voice** (appels entrants/sortants, TwiML)
-- **Speech-to-text** (Whisper API, détection langue/intent)
-- **Agent vocal** (conversation par appel, outils existants)
-
-### Phase 9 — Menu & Inventory
-- **Gestion menu** (catégories, items, specials journaliers, allergènes)
-- **Inventaire** (stock, alertes basse库存, déduction auto)
-- **Éditeur menu** (drag-and-drop, inline editing)
-
-### Phase 10 — Guest App
-- **Dashboard client** (réservations à venir, fidélité, commandes)
-- **Réservations** (historique, annulation, notation)
-- **Fidélité** (points, paliers, récompenses)
-- **Profil** (préférences, avatar, notifications)
-
-### Phase 11 — Multi-language
-- **10 langues** (fr, ar, en, de, es, it, pt, ru, zh, ja)
-- **i18n manager** (monnaie, dates, nombres par locale)
-- **RTL** (arabe, japonais, chinois, russe)
-- **Admin traductions** (complétude par locale)
-
-### Phase 12 — Social & Community
-- **Parrainage** (codes, double récompense)
-- **File d'attente** (position, notifications)
-- **Événements** (création, réservation, capacité)
-- **Galerie** (photos restaurant)
-
-### Phase 13 — Performance & SEO
-- **ISR** (revalidation horaire)
-- **Cache** (in-mémoire avec TTL)
-- **SEO avancé** (schemas.org, hreflang, preconnect)
-- **Core Web Vitals** (LCP, FID, CLS tracking)
-
-### Phase 14 — AI Analytics
-- **Prédiction revenus** (moving average saisonnière, CI 95%)
-- **Risque no-show** (scoring par réservation)
-- **Pricing dynamique** (happy hour, peak surcharge)
-- **Sentiment analysis** (mots-clés + étoiles)
-- **A/B testing** (z-test, intervalles de confiance)
-- **Segmentation marketing** (VIP, high-value, at-risk)
-
-### Phase 15 — DevOps
-- **Dockerfile** (3 stages, non-root)
-- **Docker Compose** (Postgres 17, Redis 7)
-- **Kubernetes** (deployment, service, ingress, HPA, PDB)
-- **CI Docker** (GitHub Container Registry)
-- **Backup/Restore** (pg_dump, S3, rétention 30j)
-- **Health check** (/api/health)
-- **Monitoring** (métriques, santé, mémoire)
-
-### Phase 16 — Marketplace & Discovery
-- **Discovery engine** (recherche avancée, filtres, tri)
-- **Restaurant profiles** (galerie, avis, menus, horaires)
-- **SEO optimisé** (schema.org, breadcrumbs, OG)
-- **Réservation directe** depuis la découverte
-- **10 composants** discovery (cards, filtres, grille, hero)
-
-### Phase 17 — POS & Integrations
-- **Toast POS** (sync commandes, webhook)
-- **Square POS** (sync commandes, webhook)
-- **Email transactionnels** (Resend, templates HTML)
-- **Google Maps** (géocodage, nearby, statiques)
-- **Admin POS** (configuration, historique sync)
-
-### Phase 18 — CRM & Marketing
-- **Guest360** (vue complète, timeline, notes)
-- **Segmentation** (VIP, réguliers, occasionnels, nouveaux)
-- **Tags** (assignation, filtrage)
-- **Campagnes email** (création, envoi, stats)
-- **3 pages admin** (CRM, guests, campaigns)
-
-### Phase 19 — Paiements & Anti No-Show
-- **Config paiements** (acompte, pré-autorisation)
-- **Bill splitting** (également, par items, tips)
-- **Frais d'annulation** configurables
-- **Stripe pre-auth** (autorisation, capture, annulation)
-
-### Phase 20 — Staff Management & Scheduling
-- **Shift management** (CRUD, bulk, copy week)
-- **Disponibilités** (horaires hebdo, vérification)
-- **Timeclock** (clock in/out, pauses, heures)
-- **Performance** (couvertures, heures, notes)
-
-### Phase 21 — Onboarding & Growth
-- **Wizard 3 étapes** (infos, cuisine, modèle menu)
-- **5 modèles** (Tunisienne, Italienne, Japonaise, Française, Mexicaine)
-- **Page pricing** (3 plans : Starter 29€, Pro 79€, Enterprise 199€)
-- **Page comparaison** (vs OpenTable, Resy, TheFork)
-- **Changelog** (timeline des versions)
-
-### Phase 22 — Excellence Technique
-- **Redis caching** (Upstash REST, TTL, invalidation)
-- **Background jobs** (queue mémoire, handlers)
-- **Health checks** (DB, mémoire, uptime, metrics)
-- **API health** (/api/health, /api/admin/jobs)
-
-### Phase 23 — Mobile App & Offline
-- **PWA premium** (manifest, service worker, install)
-- **Offline orders** (queue locale, sync automatique)
-- **Push notifications** (VAPID, subscriptions)
-- **Apple Wallet** (pass HTML pour réservations)
-- **Géolocalisation** (nearby restaurants)
-
-### Phase 24 — AI Brain
-- **AI routing** (provider selection, fallback logic)
-- **Audit logging** (every AI request tracked)
-- **Cost tracking** (per-provider, per-model, daily/monthly budgets)
-- **Config hub** (provider, model, temperature, max tokens)
-- **Admin AI page** (config panel, audit table, cost summary)
-
-### Phase 25 — Predictive Operations
-- **Demand forecasting** (hourly predictions, weather/events factors)
-- **Smart scheduling** (AI-generated staffing suggestions)
-- **Waste tracking** (log, categorize, cost analysis)
-- **Menu engineering** (popularity × margin: star/plow_horse/puzzle/dog)
-- **No-show prediction** (probability scoring with factor analysis)
-
-### Phase 26 — Voice Commerce
-- **Phone agent** (inbound/outbound call handling)
-- **Voice ordering** (in-restaurant voice-to-order)
-- **Voice upsell** (context-based suggestions)
-- **Voice-to-KDS** (send orders to kitchen display)
-- **Call analytics** (duration, sentiment, AI vs staff handling)
-
-### Phase 27 — Hyper-Personalization
-- **Guest AI profile** (preferences, visit patterns, loyalty tier)
-- **Personalized menu** (AI-generated per guest)
-- **Recommendations** (dish, drink, upsell, return visit)
-- **Loyalty AI** (automatic tier calculation, earn/redeem)
-- **Anniversary engine** (milestone detection, auto-rewards)
-
-### Phase 28 — Multi-Property Enterprise
-- **Enterprise dashboard** (cross-property metrics)
-- **Cross-property CRM** (unified guest view)
-- **Central menu** (sync across properties)
-- **Franchise toolkit** (bulk operations)
-- **Group analytics** (comparative performance)
-
-### Phase 29 — Sustainability & Compliance
-- **Carbon tracker** (energy, transport, waste, water)
-- **Waste analytics** (trends, cost impact)
-- **Allergen AI** (menu item allergen detection)
-- **Food safety** (compliance checks, expiry tracking)
-- **Sustainability score** (overall rating)
-
-### Phase 30 — Real-Time Intelligence
-- **Floor heatmap** (live table occupancy)
-- **Live revenue** (real-time revenue tracking)
-- **Kitchen metrics** (KDS load, avg prep time)
-- **Dynamic pricing** (demand-based pricing rules)
-- **Wait time predictor** (estimated wait by time/party)
-
-### Phase 31 — Innovation Lab
-- **Gamification badges** (first visit, power user, reviewer)
-- **Social proof** (live activity feed, trending dishes)
-- **Sentiment analysis** (real-time review sentiment)
-- **AI sommelier** (wine pairing recommendations)
-- **Maintenance alerts** (equipment monitoring)
+Seule `DATABASE_URL` est obligatoire pour démarrer : sans clés Anthropic/WhatsApp/Twilio, l'agent IA et les canaux de messagerie sont simplement désactivés (`src/lib/env.ts`).
 
 ---
 
@@ -222,48 +36,37 @@ SaaS multi-établissement, analytics avancés, application mobile staff, et bien
 
 | Technologie | Rôle |
 |---|---|
-| **Next.js 16** (App Router, Turbopack) | Rendu, routes API, proxy |
-| **React 19** | Interface utilisateur |
-| **TypeScript 5** | Typage de bout en bout |
-| **Tailwind CSS 4** | Styles avec palette night/shell/brass/coral/lagoon |
-| **Prisma 7** + **PostgreSQL** | Base de données (adaptateur) |
-| **SDK Anthropic** (`claude-opus-5`) | Agent conversationnel IA |
+| **Next.js 16** (App Router, Turbopack) | Rendu, routes API, proxy Edge |
+| **React 19** | Interface |
+| **TypeScript 5** (strict) | Typage de bout en bout |
+| **Tailwind CSS 4** | Styles (palette night/shell/brass/coral/lagoon) |
+| **Prisma 7** + **PostgreSQL** | Données (adaptateur `@prisma/adapter-pg`, client dans `src/generated/`) |
+| **Anthropic SDK** (`claude-opus-5`) | Agent conversationnel + vocal |
 | **Twilio** | Voice + SMS |
 | **WhatsApp Cloud API** | Canal WhatsApp |
 | **Stripe** | Paiements + Billing |
-| **Resend** | Email transactionnels |
-| **Google Maps** | Géocodage, nearby |
-| **Sentry** | Error tracking |
-| **Vercel** | Hosting + Analytics |
-| **Docker/Kubernetes** | Déploiement |
-| **Vitest** | Tests unitaires |
-| **Playwright** | Tests E2E |
+| **Vitest** + **Playwright** | Tests unitaires (38) + E2E (29) |
 
 ---
 
 ## Installation
 
-**Prérequis** — Node.js 20+ (développé sous 24), npm 10+, PostgreSQL 14+.
-
 ```bash
-git clone https://github.com/iyednefzi99/e-coffee-node.git
-cd e-coffee-node
-npm install
-cp .env.example .env.local
-```
-
-Renseignez `.env.local` (voir `.env.example` pour la liste complète).
-
-```bash
+git clone https://github.com/iyednefzi99/zanzibar.lounge.git
+cd zanzibar.lounge
+npm install                 # génère aussi le client Prisma (postinstall)
+cp .env.example .env.local  # renseigner DATABASE_URL
 npm run db:migrate
-npm run db:seed
+npm run db:seed             # données d'exemple (optionnel)
 npm run dev
 ```
+
+Ouvrir [http://localhost:3000](http://localhost:3000) (redirige vers `/fr`).
 
 ### Docker (alternative)
 
 ```bash
-docker compose up -d    # PostgreSQL + Redis + App
+docker compose up -d    # PostgreSQL 17 + Redis 7 + App
 npm run db:migrate
 npm run dev
 ```
@@ -276,135 +79,187 @@ kubectl apply -f k8s/
 
 ---
 
+## Configuration
+
+Copier `.env.example` en `.env.local` (jamais versionné). Variables principales — la liste complète et commentaires sont dans `.env.example` :
+
+| Variable | Rôle | Requis |
+|---|---|---|
+| `DATABASE_URL` | Connexion PostgreSQL (pooler) | **Oui** |
+| `DIRECT_DATABASE_URL` | Connexion directe pour les migrations Prisma | Recommandé |
+| `NEXT_PUBLIC_SITE_URL` | URL publique (signature webhooks Twilio) | Prod |
+| `ADMIN_USER` / `ADMIN_PASSWORD` | Auth HTTP Basic du back-office `/{locale}/admin` | Prod |
+| `CRON_SECRET` | Protège `/api/cron/*` | Prod |
+| `ANTHROPIC_API_KEY` | Agent IA conversationnel + vocal | Optionnel |
+| `WHATSAPP_*` | Canal WhatsApp Cloud API | Optionnel |
+| `TWILIO_*` | SMS et Voice | Optionnel |
+| `STRIPE_*` | Paiements et abonnements | Optionnel |
+| `UPSTASH_REDIS_REST_*` | Rate limiting partagé, cache | Optionnel |
+| `SENTRY_*` / `NEXT_PUBLIC_SENTRY_DSN` | Error tracking | Optionnel |
+| `VAPID_*` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Push notifications | Optionnel |
+
+Validation Zod au démarrage : une valeur invalide lève une erreur immédiate
+(`src/lib/env.ts`). `productionGaps()` liste les manques bloquants en prod.
+
+---
+
 ## Scripts
 
 | Commande | Effet |
 |---|---|
-| `npm run dev` | Serveur de développement |
+| `npm run dev` | Serveur de développement (Turbopack) |
 | `npm run build` | Compilation de production |
 | `npm start` | Sert la compilation |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Tests Vitest |
-| `npm run test:e2e` | Tests Playwright |
-| `npm run db:migrate` | Migration dev |
-| `npm run db:deploy` | Migration prod |
+| `npm test` | Tests unitaires (Vitest) |
+| `npm run test:watch` | Tests en mode watch |
+| `npm run test:e2e` | Tests E2E (Playwright) |
+| `npm run test:all` | Unitaires + E2E |
+| `npm run db:migrate` | Migration (dev) |
+| `npm run db:deploy` | Migration (prod) |
 | `npm run db:seed` | Données d'exemple |
+| `npm run db:studio` | Prisma Studio |
+| `npm run forget -- +216…` | Effacement RGPD d'un client (`scripts/forget-guest.mjs`) |
 
 ---
 
 ## Architecture
 
 ```
-150+ routes API
-├── Public:      /api/v1/restaurants/*
-├── Booking:     /api/reservations, /api/availability
-├── Orders:      /api/orders, /api/menu
-├── SaaS:        /api/saas/{onboard,setup,plan,portal,staff,webhooks}
-├── Voice:       /api/voice/{incoming,gather,outbound}
-├── Kitchen:     /api/kitchen/orders/*
-├── Widget:      /api/widget/{config,availability,reserve}
-├── Guest:       /api/guest/{profile,reservations,reviews}
-├── Admin:       /api/admin/{export,orders,2fa,apikeys,jobs}
-├── Analytics:   /api/analytics/realtime
-├── Discovery:   /api/discovery/{search,featured,restaurants}
-├── CRM:         /api/crm/{guests,tags,campaigns}
-├── Payments:    /api/payments/{config,preauth,split}
-├── Staff:       /api/staff/{schedule,timeclock,performance}
-├── Onboarding:  /api/onboarding/complete
-├── Push:        /api/notifications/push
-├── Wallet:      /api/wallet/pass
-├── Health:      /api/health
-└── Webhooks:    /api/webhooks/{whatsapp,twilio}
+src/
+├── app/
+│   ├── api/                 # 107 routes (route.ts)
+│   │   ├── v1/              # API publique REST
+│   │   ├── reservations/    # Réservations, availability
+│   │   ├── orders/          # Commandes en ligne
+│   │   ├── saas/            # Onboarding, plans, portail
+│   │   ├── voice/           # Voice AI (Twilio)
+│   │   ├── kitchen/         # Kitchen Display
+│   │   ├── widget/          # Widget embeddable
+│   │   ├── guest/           # Espace client
+│   │   ├── crm/             # Guests, tags, campagnes
+│   │   ├── payments/        # Config, preauth, split
+│   │   ├── staff/           # Planning, timeclock
+│   │   ├── admin/           # Export, 2FA, API keys, jobs
+│   │   ├── webhooks/        # WhatsApp, Twilio
+│   │   └── health/          # /api/health
+│   ├── [locale]/            # 55 pages (10 langues)
+│   │   ├── admin/           # Back-office (25 pages)
+│   │   ├── staff/           # App mobile staff
+│   │   ├── kitchen/         # KDS
+│   │   ├── owner/           # Dashboard propriétaire
+│   │   ├── guest/           # Espace client
+│   │   ├── discover/        # Marketplace
+│   │   └── r/[slug]/        # Profil restaurant
+│   └── widget/              # Widget iframe
+├── components/              # UI (booking, menu, hero, layout…)
+├── hooks/
+├── lib/
+│   ├── agent/               # Agent IA (11 outils, boucle maison)
+│   ├── voice/               # Voice AI (Twilio, STT, TTS)
+│   ├── ai/                  # Routing provider, audit, coûts
+│   ├── predict/             # Prévisions demande, no-show, waste
+│   ├── crm/                 # Guest360, tags, campagnes
+│   ├── payments/            # Stripe preauth, bill splitting
+│   ├── pos/                 # Toast, Square
+│   ├── staff/               # Planning, timeclock
+│   ├── reservations.ts      # LOGIQUE UNIQUE de réservation
+│   ├── orders.ts            # Commandes
+│   ├── saas.ts              # Multi-tenancy, billing
+│   ├── env.ts               # Validation Zod des variables
+│   └── time.ts              # Fuseaux via Intl (pas de date lib)
+├── i18n/                    # config + dictionnaires (10 langues)
+└── proxy.ts                 # Edge : routing locale, admin auth, CSP nonce
+
+prisma/
+├── schema.prisma            # 75 modèles
+├── migrations/
+└── seed.mjs
+
+e2e/                         # Specs Playwright
+k8s/                         # Manifests Kubernetes
+docs/                        # OpenAPI, docs produit
 ```
 
----
+Points clés :
 
-## Routes principales
-
-| Page | Rôle |
-|---|---|
-| `/{locale}` | Accueil (horaires, CTA réservation) |
-| `/{locale}/reserver` | Formulaire réservation |
-| `/{locale}/commander` | Commande en ligne |
-| `/{locale}/carte` | Menu du restaurant |
-| `/{locale}/discover` | Marketplace découverte |
-| `/{locale}/r/[slug]` | Profil restaurant |
-| `/{locale}/events` | Événements |
-| `/{locale}/waitlist` | File d'attente |
-| `/{locale}/pricing` | Tarifs (3 plans) |
-| `/{locale}/compare` | Comparaison concurrents |
-| `/{locale}/changelog` | Changelog |
-| `/{locale}/guest` | Dashboard client |
-| `/{locale}/staff` | App mobile staff |
-| `/{locale}/kitchen` | Kitchen Display System |
-| `/{locale}/admin` | Back-office service |
-| `/{locale}/admin/analytics` | Analytics dashboard |
-| `/{locale}/admin/analytics/realtime` | Dashboard temps réel |
-| `/{locale}/admin/analytics/revenue` | Revenus |
-| `/{locale}/admin/analytics/guests` | Clients |
-| `/{locale}/admin/analytics/heatmap` | Heatmap 7×24 |
-| `/{locale}/admin/analytics/insights` | Insights IA |
-| `/{locale}/admin/analytics/experiments` | A/B testing |
-| `/{locale}/admin/menu` | Gestion menu |
-| `/{locale}/admin/inventory` | Inventaire |
-| `/{locale}/admin/floor` | Plan de salle |
-| `/{locale}/admin/orders` | Commandes |
-| `/{locale}/admin/chat` | Chat clients |
-| `/{locale}/admin/reviews` | Avis clients |
-| `/{locale}/admin/voice` | Paramètres vocaux |
-| `/{locale}/admin/security` | Sécurité (2FA, audit) |
-| `/{locale}/admin/integrations` | Intégrations tierces |
-| `/{locale}/admin/integrations/pos` | Configuration POS |
-| `/{locale}/admin/notifications` | Centre de notifications |
-| `/{locale}/admin/widget` | Widget embeddable |
-| `/{locale}/admin/translations` | Gestion traductions |
-| `/{locale}/admin/crm` | CRM & Marketing |
-| `/{locale}/admin/crm/guests` | Liste clients |
-| `/{locale}/admin/crm/campaigns` | Campagnes email |
-| `/{locale}/admin/payments` | Configuration paiements |
-| `/{locale}/owner` | Dashboard propriétaire |
-| `/{locale}/owner/settings` | Paramètres restaurant |
-| `/{locale}/owner/team` | Gestion équipe |
-| `/{locale}/owner/billing` | Facturation |
-| `/{locale}/owner/schedule` | Planning staff |
-| `/{locale}/owner/onboarding` | Configuration initiale |
-| `/widget/{slug}` | Widget réservation (iframe) |
-| `/offline` | Page hors ligne |
+- **Réservation unique** : `src/lib/reservations.ts` est le seul codepath (formulaire web **et** agent IA).
+- **Auth à trois niveaux** : admin (Basic, proxy + double vérification), staff (cookies HMAC), guest (téléphone HMAC).
+- **Proxy Next 16** : `src/proxy.ts` remplace `middleware.ts` (Edge) — locale, admin, CSP nonce.
+- **Pas de date library** : `Intl` dans `src/lib/time.ts`, convention « minutes depuis minuit ».
 
 ---
 
 ## Tests
 
 ```bash
-npm test            # 29 tests unitaires
-npm run test:e2e    # 29 scénarios Playwright
+npm test            # 38 tests unitaires (Vitest)
+npm run test:e2e    # 29 scénarios E2E (Playwright)
 ```
 
 | Fichier | Couverture |
 |---|---|
-| `src/lib/time.test.ts` | Conversions fuseau, minutes, dates |
-| `src/lib/hours.test.ts` | Horaires, créneaux, préavis |
-| `src/lib/phone.test.ts` | Normalisation E.164 |
-| `e2e/*.spec.ts` | Homepage, booking, menu, admin, user flows |
+| `src/lib/time.test.ts` | Fuseaux, minutes, dates, calendrier |
+| `src/lib/hours.test.ts` | Horaires, créneaux, préavis, après-minuit |
+| `src/lib/phone.test.ts` | Normalisation E.164, affichage |
+| `src/lib/waitlist.test.ts` | File d'attente (join, notify, cleanup) |
+| `e2e/homepage.spec.ts` | Redirect, meta, OG, JSON-LD |
+| `e2e/booking.spec.ts` | Formulaire, titre, créneaux API |
+| `e2e/menu.spec.ts` | Carte, i18n (ar/en), API menu |
+| `e2e/admin.spec.ts` | Auth back-office (6 routes) |
+| `e2e/user-flows.spec.ts` | Navigation, i18n, RTL, avis |
+
+Vérification avant de valider (ordre de la CI) :
+
+```bash
+npx prisma generate
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+---
+
+## API
+
+- **OpenAPI 3.1** : [`docs/openapi.yaml`](docs/openapi.yaml)
+- **API publique** : `/api/v1/restaurants/*`
+- **Widget** : `/{locale}/admin/widget` → iframe `/widget/{slug}`
+
+Groupes principaux (107 routes `route.ts` au total) :
+
+| Domaine | Routes |
+|---|---|
+| Réservations | `/api/reservations`, `/api/availability` |
+| Commandes | `/api/orders`, `/api/menu` |
+| SaaS | `/api/saas/{onboard,setup,plan,portal,staff,webhooks}` |
+| Voice | `/api/voice/{incoming,gather,outbound}` |
+| Kitchen | `/api/kitchen/orders/*` |
+| Widget | `/api/widget/{config,availability,reserve}` |
+| Guest | `/api/guest/{profile,reservations,reviews}` |
+| CRM | `/api/crm/{guests,tags,campaigns}` |
+| Payments | `/api/payments/{config,preauth,split}` |
+| Staff | `/api/staff/{schedule,timeclock,performance}` |
+| Admin | `/api/admin/{export,orders,2fa,apikeys,jobs}` |
+| Health | `GET /api/health` — DB, mémoire, uptime |
+| Webhooks | `/api/webhooks/{whatsapp,twilio}` |
+
+---
+
+## Déploiement
+
+- **Vercel** — build `npm run build`, migrations via `npm run db:deploy`
+- **Docker** — `Dockerfile` multi-stage (non-root), `docker compose up -d`
+- **Kubernetes** — manifests dans [`k8s/`](k8s/) (deployment, service, ingress, HPA, PDB)
+- **Santé** — `GET /api/health` (DB, mémoire, uptime)
 
 ---
 
 ## Contribuer
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide complet.
-
-```bash
-git clone https://github.com/iyednefzi99/e-coffee-node.git
-cd e-coffee-node
-npm install
-npm run dev
-```
-
-Avant de valider :
-```bash
-npm run lint && npm run typecheck && npm test && npm run build
-```
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le workflow, les conventions de commit et la structure détaillée.
 
 ---
 

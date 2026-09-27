@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { env, hasSms } from "@/lib/env";
 import { verifyTwilioSignature } from "@/lib/channels/sms";
 import { handleVoiceConversation } from "@/lib/voice/voice-agent";
-import { goodbye, sayAndGather } from "@/lib/voice/twilio-voice";
+import { sayAndGather } from "@/lib/voice/twilio-voice";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

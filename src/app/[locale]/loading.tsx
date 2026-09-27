@@ -1,9 +1,9 @@
-export default function Loading() {
+export default function LocaleLoading() {
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-3xl items-center justify-center px-5">
-      <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-brass border-t-transparent" />
-        <p className="mt-4 text-shell-dim">Chargement…</p>
+    <div className="mx-auto flex min-h-[70vh] items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brass border-t-transparent" />
+        <p className="font-mono text-sm text-shell-dim">Chargement...</p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { PosSyncResult } from "./index";
-import { updateSyncStatus, logSync, getPosIntegration } from "./index";
+import { logSync, getPosIntegration } from "./index";
 import { ToastClient } from "./toast";
 import { SquareClient } from "./square";
 import type { PosProvider } from "./index";

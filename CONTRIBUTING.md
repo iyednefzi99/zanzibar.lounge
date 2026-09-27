@@ -9,19 +9,18 @@ soumettre vos contributions.
 - **Node.js** ≥ 20 (vérifier avec `node --version`)
 - **PostgreSQL** ≥ 14 (ou un conteneur Docker)
 - **npm** ≥ 10 (inclus avec Node 20+)
-- (Optionnel) Compte **Stripe** (clés test) pour les fonctionnalités SaaS
-- (Optionnel) Compte **Twilio** pour les SMS et Voice
-- (Optionnel) Clé **Anthropic** pour l'agent IA
-- (Optionnel) Clé **Google Calendar** pour l'intégration agenda
-- (Optionnel) Clé **Resend** pour les emails transactionnels
-- (Optionnel) Clé **Google Maps** pour la géocodage
+- **Seule `DATABASE_URL` est obligatoire** — sans clés Anthropic/WhatsApp/Twilio,
+  l'agent IA et les canaux de messagerie sont désactivés, le reste tourne
+  (`src/lib/env.ts`)
+- (Optionnel) Comptes/clés pour les intégrations : Stripe, Twilio, Anthropic,
+  Google Calendar/Maps, Resend, Upstash Redis, Sentry — voir `.env.example`
 
 ## Mise en place du projet
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/iyednefzi99/e-coffee-node.git
-cd e-coffee-node
+git clone https://github.com/iyednefzi99/zanzibar.lounge.git
+cd zanzibar.lounge
 
 # 2. Installer les dépendances
 npm install
@@ -49,7 +48,8 @@ npm run dev
 
 ### Variables minimales
 
-Seule `DATABASE_URL` est obligatoire pour le développement local :
+Seule `DATABASE_URL` est obligatoire pour le développement local (liste
+complète commentée dans `.env.example`) :
 
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/e_coffee
@@ -78,10 +78,11 @@ DATABASE_URL=postgresql://user:password@localhost:5432/e_coffee
 ## Style de code
 
 ### TypeScript
-- **Mode strict** — aucun `any`
-- Types explicites aux assertions
+- **Mode strict** — éviter `any` (les intégrations POS exigent parfois un cast
+  JSON : `as unknown as Record<string, string>`)
 - Enums Prisma pour les statuts
 - Imports avec préfixe `@/` (alias `src/`)
+- Pas de date library : utiliser `src/lib/time.ts` (Intl, « minutes depuis minuit »)
 
 ### ESLint
 Règles strictes : `react-hooks/immutability`, `react-hooks/set-state-in-effect`.
@@ -89,24 +90,33 @@ Règles strictes : `react-hooks/immutability`, `react-hooks/set-state-in-effect`
 ### Formatage
 Formatter par défaut de l'éditeur. La CI vérifie ESLint.
 
+### Next.js 16
+Ce projet n'utilise pas la doc Next.js classique : `middleware.ts` a été remplacé
+par `src/proxy.ts` (Edge). Consulter `node_modules/next/dist/docs/` avant
+d'ajouter du code concernant le routing ou les conventions App Router.
+
 ## Tests
 
 ```bash
-npm test            # 29 tests unitaires (Vitest)
+npm test            # 38 tests unitaires (Vitest)
 npm run test:e2e    # 29 scénarios E2E (Playwright)
 npm run test:all    # Les deux
 ```
 
 ## Vérification avant PR
 
-Exécuter dans cet ordre (identique à la CI) :
+Exécuter dans cet ordre (identique à la CI — voir
+`.github/workflows/ci.yml`) :
 
 ```bash
+npx prisma generate
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
+
+La CI ajoute ensuite `npm audit --omit=dev --audit-level=high` après le build.
 
 ## Structure du projet
 
@@ -128,51 +138,37 @@ src/
 │   │   ├── wallet/          # Apple Wallet
 │   │   ├── discovery/       # Marketplace
 │   │   ├── admin/           # Admin (2FA, API keys, jobs)
-│   │   └── health/          # Health check
-│   ├── [locale]/
-│   │   ├── admin/           # Back-office (35+ pages)
+│   │   └── health/          # Health check (+ 34 autres groupes, 107 route.ts)
+│   ├── [locale]/            # 55 pages total
+│   │   ├── admin/           # Back-office (25 pages)
 │   │   ├── staff/           # App mobile staff
 │   │   ├── kitchen/         # Kitchen Display
 │   │   ├── owner/           # Dashboard propriétaire
-│   │   ├── guest/           # App client
+│   │   ├── guest/           # Espace client
 │   │   ├── discover/        # Marketplace
-│   │   ├── events/          # Événements
-│   │   ├── pricing/         # Tarifs
-│   │   ├── compare/         # Comparaison
-│   │   ├── changelog/       # Changelog
 │   │   └── r/[slug]/        # Profil restaurant
 │   └── widget/              # Widget iframe
-├── components/              # 50+ composants
-│   ├── discovery/           # Marketplace
-│   ├── pos/                 # POS integration
-│   ├── payments/            # Paiements
-│   ├── onboarding/          # Onboarding wizard
-│   ├── mobile/              # PWA banner
-│   └── ...
-├── hooks/                   # Custom hooks
-│   ├── use-install-prompt.ts
-│   ├── use-geolocation.ts
-│   └── use-offline-orders.ts
+├── components/              # UI (booking, menu, hero, layout…)
+├── hooks/                   # 3 hooks (install prompt, géoloc, offline orders)
 ├── lib/
-│   ├── agent/               # Agent IA (11 outils)
-│   ├── voice/               # Voice AI
-│   ├── pos/                 # POS integration
-│   ├── crm/                 # CRM & Marketing
-│   ├── payments/            # Paiements
-│   ├── staff/               # Staff management
-│   ├── onboarding/          # Onboarding
-│   ├── notifications/       # Push notifications
-│   ├── wallet/              # Apple Wallet
-│   ├── integrations/        # Google, TripAdvisor, Resend
-│   ├── cache.ts             # Redis caching
-│   ├── health.ts            # Health checks
-│   ├── jobs.ts              # Background jobs
-│   └── *.ts                 # 30+ modules métier
-├── i18n/                    # 10 langues
-└── proxy.ts                 # Edge proxy
+│   ├── agent/               # Agent IA (11 outils, boucle maison)
+│   ├── ai/                  # Routing provider, audit, coûts
+│   ├── predict/             # Prévisions demande, no-show, waste
+│   ├── voice/               # Voice AI (Twilio, STT, TTS)
+│   ├── crm/                 # Guest360, tags, campagnes
+│   ├── payments/            # Stripe preauth, bill splitting
+│   ├── pos/                 # Toast, Square
+│   ├── staff/               # Planning, timeclock
+│   ├── reservations.ts      # Logique unique de réservation (web + agent)
+│   ├── orders.ts            # Commandes
+│   ├── saas.ts              # Multi-tenancy, billing
+│   ├── env.ts               # Validation Zod des variables
+│   └── time.ts              # Fuseaux via Intl
+├── i18n/                    # config + dictionnaires (10 langues)
+└── proxy.ts                 # Edge proxy (locale, admin auth, CSP nonce)
 
 prisma/
-├── schema.prisma            # 35+ modèles
+├── schema.prisma            # 75 modèles
 ├── migrations/
 └── seed.mjs
 
@@ -184,47 +180,31 @@ public/
 
 ## Modules clés
 
-| Module | Path | Purpose |
+Le détail complet est dans [AGENTS.md](AGENTS.md#key-modules). Les plus
+importants :
+
+| Module | Path | Rôle |
 |---|---|---|
-| Reservations | `lib/reservations.ts` | Core booking logic |
-| Orders | `lib/orders.ts` | Online orders |
-| Agent | `lib/agent/` | AI conversation (11 tools) |
+| Reservations | `lib/reservations.ts` | Logique unique de réservation (web + agent) |
+| Orders | `lib/orders.ts` | Commandes en ligne |
+| Agent | `lib/agent/` | Conversation IA (11 outils, ownership checks) |
 | Voice | `lib/voice/` | Voice AI (Twilio, STT, TTS) |
 | SaaS | `lib/saas.ts` | Multi-tenancy, billing |
-| Staff auth | `lib/staff-session.ts` | Staff session management |
-| Guest app | `lib/guest-app.ts` | Guest dashboard logic |
-| Menu | `lib/menu-manager.ts` | Menu CRUD |
-| Inventory | `lib/inventory.ts` | Stock management |
-| Social | `lib/social.ts` | Referrals, waitlist, events |
-| AI Analytics | `lib/ai-analytics.ts` | Predictions, insights |
-| A/B Testing | `lib/ab-testing.ts` | Experiments framework |
-| Notifications | `lib/notifications.ts` | In-app notifications |
-| Security | `lib/security.ts` | 2FA, audit logs, API keys |
-| Webhooks | `lib/webhooks.ts` | Webhook delivery + signing |
-| White-label | `lib/white-label.ts` | Branding, integrations |
-| Performance | `lib/performance.ts` | Cache, throttle, debounce |
-| SEO | `lib/seo.ts` | Meta, schemas, keywords |
-| i18n | `lib/i18n-manager.ts` | Locale utilities |
-| Monitoring | `lib/monitoring.ts` | Health checks, metrics |
-| Discovery | `lib/discovery.ts` | Marketplace search |
-| POS | `lib/pos/` | Toast, Square integration |
-| CRM | `lib/crm/` | Guest360, tags, campaigns |
-| Payments | `lib/payments/` | Config, preauth, split |
-| Staff | `lib/staff/` | Scheduling, timeclock |
-| Onboarding | `lib/onboarding/` | Wizard, templates |
-| Cache | `lib/cache.ts` | Redis (Upstash) caching |
-| Health | `lib/health.ts` | Health checks |
-| Jobs | `lib/jobs.ts` | Background jobs |
-| Push | `lib/notifications/push.ts` | Push notifications |
-| Wallet | `lib/wallet/` | Apple Wallet passes |
+| Staff auth | `lib/staff-session.ts` | Sessions staff (cookies HMAC) |
+| Guest auth | `lib/guest-session.ts` | Sessions client (téléphone HMAC) |
+| Menu | `lib/menu-manager.ts` | CRUD menu |
+| Env | `lib/env.ts` | Validation Zod des variables |
 
 ## Contribution guide
 
 1. Créer une branche depuis `master`
 2. Développer et tester
-3. Valider `lint → typecheck → test → build`
+3. Valider `prisma generate → lint → typecheck → test → build`
 4. Soumettre une PR avec titre clair
 
 ## Licence
 
 MIT — En contribuant, vous acceptez la licence MIT.
+
+Voir aussi : [AGENTS.md](AGENTS.md) (règles pour les assistants IA),
+[INNOVATION-ROADMAP.md](INNOVATION-ROADMAP.md), [docs/](docs/).

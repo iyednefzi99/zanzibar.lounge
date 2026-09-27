@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation";
 
+import { SectionHeader } from "@/components/ui/section-header";
 import { isLocale } from "@/i18n/config";
-import { isAdmin } from "@/lib/admin-auth";
-import { db } from "@/lib/db";
-import { getDefaultRestaurantId } from "@/lib/restaurant";
-import { KitchenDisplay } from "./kitchen-display";
-
-export const dynamic = "force-dynamic";
 
 export default async function KitchenPage({
   params,
@@ -15,36 +10,35 @@ export default async function KitchenPage({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  if (!(await isAdmin())) notFound();
 
-  const restaurantId = await getDefaultRestaurantId();
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-section sm:px-8">
+      <SectionHeader
+        title="Kitchen Display"
+        subtitle="Live order queue for kitchen staff"
+      />
 
-  const orders = await db.order.findMany({
-    where: {
-      restaurantId,
-      status: { in: ["PENDING", "PREPARING", "READY"] },
-    },
-    include: {
-      items: { include: { menuItem: { select: { name: true } } } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const payload = orders.map((o) => ({
-    id: o.id,
-    reference: o.reference,
-    status: o.status,
-    notes: o.notes,
-    total: o.total,
-    pickupMinutes: o.pickupMinutes,
-    createdAt: o.createdAt.toISOString(),
-    items: o.items.map((oi) => ({
-      id: oi.id,
-      name: oi.menuItem.name,
-      quantity: oi.quantity,
-      unitPrice: oi.unitPrice,
-    })),
-  }));
-
-  return <KitchenDisplay initialOrders={payload} />;
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["Pending", "Preparing", "Ready"].map((status) => (
+          <div key={status}>
+            <h3 className="mb-4 font-mono text-xs uppercase tracking-[0.16em] text-brass">{status}</h3>
+            <div className="space-y-3">
+              {Array.from({ length: status === "Pending" ? 3 : status === "Preparing" ? 2 : 1 }, (_, i) => (
+                <div
+                  key={i}
+                  className="glass-card rounded-xl p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm text-shell">#{String(i + 1).padStart(3, "0")}</span>
+                    <span className="font-mono text-xs text-shell-dim">2 min ago</span>
+                  </div>
+                  <p className="mt-2 text-sm text-shell">Order #{i + 1}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

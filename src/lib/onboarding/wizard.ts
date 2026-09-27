@@ -66,7 +66,6 @@ export async function completeRestaurantSetup(
 }
 
 export async function createDefaultTables(restaurantId: string) {
-  const zones = ["TERRASSE", "SALLE", "SALON"] as const;
   const tablesPerZone = [
     { zone: "TERRASSE", count: 5, capacity: 4 },
     { zone: "SALLE", count: 8, capacity: 4 },

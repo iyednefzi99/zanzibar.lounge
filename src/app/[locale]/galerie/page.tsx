@@ -1,14 +1,11 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Studs } from "@/components/studs";
-import { gallery } from "@/content/gallery";
-import { site } from "@/content/site";
+import { SectionHeader } from "@/components/ui/section-header";
 import { getDictionary } from "@/i18n";
-import { isLocale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
+import { site } from "@/content/site";
 
-export default async function GalleryPage({
+export default async function GaleriePage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -16,74 +13,49 @@ export default async function GalleryPage({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const dictionary = await getDictionary(locale);
+  const typedLocale = locale as Locale;
+  const dictionary = await getDictionary(typedLocale);
 
   return (
-    <>
-      <header className="mx-auto max-w-6xl px-5 pt-16 pb-10 sm:px-8">
-        <h1 className="reveal font-display text-[clamp(2.5rem,6vw,4rem)] leading-none text-shell">
-          {dictionary.gallery.title}
-        </h1>
-        <p className="reveal reveal-1 mt-4 max-w-xl text-shell-dim">
-          {dictionary.gallery.lead}
-        </p>
-      </header>
+    <div className="mx-auto max-w-6xl px-5 py-section sm:px-8">
+      <SectionHeader
+        eyebrow={dictionary.gallery.lead}
+        title={dictionary.gallery.title}
+      />
 
-      <Studs className="reveal reveal-2" />
-
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
-        {gallery.length === 0 ? (
-          /* Pas de photos dans le dépôt : elles appartiennent à la maison. On
-             renvoie vers la source plutôt que de meubler avec des images qui ne
-             sont pas les siennes — et on laisse une porte de sortie utile, la
-             réservation, plutôt qu'un cul-de-sac.
-
-             L'en-tête a déjà dit d'où viennent les photos ; le panneau ne le
-             redit pas, il agit. */
-          <div className="reveal reveal-3 mx-auto max-w-lg border-t border-brass/35 py-12 text-center">
-            <p className="font-display text-3xl text-shell">{site.name}</p>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href={site.social.instagram}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="rounded-full border border-shell/30 px-6 py-3 text-shell transition-colors hover:border-brass hover:text-brass"
-              >
-                {dictionary.gallery.instagram}
-              </a>
-              <Link
-                href={`/${locale}/reserver`}
-                className="px-2 py-3 text-shell-dim underline underline-offset-4 transition-colors hover:text-shell"
-              >
-                {dictionary.nav.book}
-              </Link>
+      {/* Placeholder gallery grid */}
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={i}
+            className="glass-card group relative aspect-[4/3] overflow-hidden rounded-2xl"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-brass/10 via-deep to-lagoon/10 transition-opacity group-hover:opacity-80" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="h-12 w-12 text-shell/20" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+              </svg>
             </div>
           </div>
-        ) : (
-          /* Mosaïque à rangées fixes : une photo « haute » occupe deux rangées,
-             ce que la colonne CSS ne savait pas faire. Le recadrage est assumé —
-             la page doit tenir sa grille, pas suivre chaque proportion. */
-          <div className="grid auto-rows-[11rem] grid-cols-2 gap-3 sm:auto-rows-[13rem] lg:grid-cols-3">
-            {gallery.map((photo) => (
-              <figure
-                key={photo.src}
-                className={`on-scroll group relative overflow-hidden rounded-xl border border-shell/10 ${
-                  photo.tall ? "row-span-2" : ""
-                }`}
-              >
-                <Image
-                  src={photo.src}
-                  alt={photo.alt[locale]}
-                  width={photo.width}
-                  height={photo.height}
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-                  className="h-full w-full object-cover transition-transform duration-700 ease-door group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                />
-              </figure>
-            ))}
-          </div>
-        )}
+        ))}
       </div>
-    </>
+
+      {/* Instagram link */}
+      <div className="mt-10 text-center">
+        <a
+          href={site.social.instagram}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="inline-flex min-h-12 items-center gap-2 rounded-full border border-shell/25 px-8 text-sm text-shell transition-all hover:border-brass hover:text-brass"
+        >
+          {dictionary.gallery.instagram}
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+        </a>
+      </div>
+
+      <div className="brass-rule mt-16" />
+    </div>
   );
 }

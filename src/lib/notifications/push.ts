@@ -44,13 +44,10 @@ export async function sendPushNotification(
 
   for (const sub of subscriptions) {
     try {
-      const payload = JSON.stringify({
-        title,
-        body,
-        url: url ?? "/",
-      });
-
-      console.log(`Push notification to ${sub.endpoint.slice(0, 50)}...: ${title}`);
+      const target = url ? ` (${url})` : "";
+      console.log(
+        `Push notification to ${sub.endpoint.slice(0, 50)}...: ${title} — ${body}${target}`,
+      );
       sent++;
     } catch (error) {
       console.error("Failed to send push notification:", error);

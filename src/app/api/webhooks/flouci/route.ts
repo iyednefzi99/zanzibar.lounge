@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const { order_id, status, payment_id } = payload;
+  const { order_id, status } = payload;
 
   if (status === "completed") {
     await db.reservation.updateMany({

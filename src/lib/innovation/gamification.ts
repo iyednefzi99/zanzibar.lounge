@@ -18,7 +18,7 @@ export async function getGuestBadges(guestId: string) {
   });
 }
 
-export async function getBadgeStats(restaurantId: string) {
+export async function getBadgeStats(_restaurantId: string) {
   return db.gamificationBadge.groupBy({
     by: ["badgeType"],
     _count: true,

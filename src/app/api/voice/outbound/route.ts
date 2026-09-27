@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/admin-auth";
-import { env, hasSms } from "@/lib/env";
+import { hasSms } from "@/lib/env";
 import { makeOutboundCall } from "@/lib/voice/twilio-voice";
 
 export const runtime = "nodejs";

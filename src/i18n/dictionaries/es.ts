@@ -129,6 +129,7 @@ const es: Dictionary = {
     },
     slotsLoading: "Buscando horarios…",
     submit: "Reservar",
+    progress: "Paso {current} de {total}",
     submitting: "Enviando…",
     success: {
       title: "Reservado",
@@ -136,6 +137,7 @@ const es: Dictionary = {
       again: "Hacer otra reserva",
     },
     errors: {
+      summary: "El formulario contiene errores.",
       generic: "La reserva no se ha completado. Inténtalo de nuevo o llámanos.",
       name: "Indica el nombre que figurará en la reserva.",
       phone: "Número no válido. Usa el formato internacional, ej. +21620123456.",

@@ -14,15 +14,10 @@ import {
 import { runTool, tools, type ToolContext } from "@/lib/agent/tools";
 import {
   detectIntent,
-  detectTranscriptionLanguage,
   normalizeSpeech,
   type VoiceIntent,
 } from "@/lib/voice/speech-to-text";
-import {
-  goodbye,
-  sayAndGather,
-  transferToStaff,
-} from "@/lib/voice/twilio-voice";
+import { goodbye, sayAndGather } from "@/lib/voice/twilio-voice";
 
 /**
  * Voice conversation handler.
@@ -162,6 +157,10 @@ export async function handleVoiceConversation(
     normalized,
     callSid,
   );
+
+  if (state.turns >= MAX_CONVERSATION_TURNS) {
+    return goodbye(state.locale);
+  }
 
   // Check for opt-out
   const lower = normalized.toLowerCase();

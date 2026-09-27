@@ -129,6 +129,7 @@ const de: Dictionary = {
     },
     slotsLoading: "Zeiten werden gesucht…",
     submit: "Reservieren",
+    progress: "Schritt {current} von {total}",
     submitting: "Wird gesendet…",
     success: {
       title: "Reserviert",
@@ -136,6 +137,7 @@ const de: Dictionary = {
       again: "Weitere Reservierung",
     },
     errors: {
+      summary: "Das Formular enthält Fehler.",
       generic: "Die Reservierung ist nicht durchgegangen. Versuchen Sie es erneut oder rufen Sie uns an.",
       name: "Geben Sie den Namen für die Reservierung an.",
       phone: "Ungültige Nummer. Verwenden Sie das internationale Format, z.B. +21620123456.",

@@ -1,43 +1,57 @@
 @import "tailwindcss";
 
-/* ------------------------------------------------------------------
-   E-Coffee Node — direction artistique
-   Ancrage : les portes sculptées de Stone Town (arches, clous de laiton),
-   l'océan Indien la nuit, les épices. Fond sarcelle profond, laiton, corail.
-   ------------------------------------------------------------------ */
+/* ═══════════════════════════════════════════════════════════════════════
+   ZANZIBAR LOUNGE — Design System
+   Charcoal & gold luxe · Cream text · Single gold accent · Sharp geometry
+   ═══════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* Palette */
-  --color-night: #0e2e30; /* sarcelle profond — fond principal */
-  --color-deep: #071b1c; /* sarcelle nuit — sections creuses */
-  --color-lagoon: #3fa89b; /* turquoise océan — liens, état ouvert */
-  --color-brass: #c9922e; /* laiton des clous de porte — accent principal */
-  /* Corail hibiscus. Éclairci de L 60 % à 64 % : à #e4674c il ne donnait que
-     4,37:1 sur le fond, sous le seuil AA — or c'est la couleur des messages
-     d'erreur, la dernière qu'on peut se permettre de rendre illisible.
-     À #e7765e : 4,92:1 sur `night`, 6,05:1 sur `deep`. */
-  --color-coral: #e7765e;
-  --color-shell: #efe3d0; /* pierre de corail blanchie — texte */
-  --color-shell-dim: #b9ad9c; /* texte secondaire */
-  --color-clove: #3a1f16; /* clou de girofle — ombres chaudes */
+  /* ─── Primitive Colors ─── */
+  --color-night: #141417;
+  --color-deep: #0b0b0d;
+  --color-lagoon: #6fa396;
+  --color-brass: #c9a96e;
+  --color-coral: #cf6b55;
+  --color-shell: #efe9dc;
+  --color-shell-dim: #a39c8e;
+  --color-clove: #1e1512;
+  --color-ember: #c06047;
+  --color-sand: #e4d9c4;
+  --color-midnight: #0a0a0c;
+  --color-mist: #f5f1e8;
 
-  /* Typographie */
-  --font-display: var(--font-bodoni), "Bodoni Moda", Georgia, serif;
+  /* ─── Typography ─── */
+  --font-display: var(--font-fraunces), "Fraunces", Georgia, serif;
   --font-display-ar: var(--font-aref), "Aref Ruqaa", serif;
-  --font-body: var(--font-readex), "Readex Pro", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
 
-  /* Rythme */
+  /* ─── Spacing ─── */
   --spacing-section: 6rem;
+  --spacing-component: 1.5rem;
 
-  /* Motion */
+  /* ─── Motion ─── */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-door: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ─── Radius (sharp geometry) ─── */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-full: 9999px;
 }
 
 :root {
-  --arch: 50% 50% 0 0 / 50% 28% 0 0; /* l'arche de porte swahilie */
   color-scheme: dark;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════ */
 
 html {
   scroll-behavior: smooth;
@@ -52,9 +66,7 @@ body {
   overflow-x: hidden;
 }
 
-/* L'arabe passe à sa face d'affichage calligraphique.
-   La ruqaa descend loin sous la ligne de base : sans interligne généreux et
-   sans marge basse, les hampes se font rogner par le conteneur. */
+/* Arabic calligraphic rendering */
 [lang="ar"] .font-display,
 [lang="ar"] h1,
 [lang="ar"] h2,
@@ -62,48 +74,24 @@ body {
   font-family: var(--font-display-ar);
   line-height: 1.45;
   padding-block-end: 0.14em;
-  /* Le crénage serré des titres latins est fait pour des lettres séparées.
-     Appliqué à une écriture cursive, il écrase les liaisons : l'arabe reprend
-     son crénage naturel. */
   letter-spacing: normal;
 }
 
-/* --- Signature : l'arche et la rangée de clous de laiton --- */
-
-.arch {
-  border-radius: var(--arch);
-}
-
-/* Rangée de clous : sépare les sections comme les bossages d'une porte */
-.studs {
-  height: 0.75rem;
-  background-image: radial-gradient(
-    circle at center,
-    var(--color-brass) 0 2.5px,
-    color-mix(in oklab, var(--color-brass) 35%, transparent) 2.5px 3.5px,
-    transparent 3.6px
-  );
-  background-size: 1.75rem 0.75rem;
-  background-repeat: repeat-x;
-  background-position: center;
-}
-
-/* --- Accessibilité --- */
+/* ═══════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+   ═══════════════════════════════════════════════════════════════════════ */
 
 :focus-visible {
   outline: 2px solid var(--color-brass);
   outline-offset: 3px;
   border-radius: 2px;
+  transition: outline-offset 0.15s ease;
 }
 
-/**
- * Masquage accessible.
- *
- * ⚠️ Ne jamais masquer par `left: -9999px`. En lecture de droite à gauche, ce
- * qui déborde à gauche devient du défilement : la page arabe se retrouvait avec
- * 10 000 px de vide et son contenu poussé hors de l'écran. Le découpage par
- * `clip-path` ne dépend pas de la direction du texte.
- */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .visually-hidden,
 .skip-link {
   position: absolute;
@@ -130,10 +118,153 @@ body {
   color: var(--color-deep);
   padding: 0.75rem 1.25rem;
   font-weight: 600;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* --- Motion : une seule séquence orchestrée à l'ouverture --- */
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL TRANSITIONS
+   ═══════════════════════════════════════════════════════════════════════ */
 
+a,
+button {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 200ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SIGNATURE ELEMENTS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Gold hairline divider */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLASS MORPHISM
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.glass {
+  background: color-mix(in oklab, var(--color-night) 70%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid color-mix(in oklab, var(--color-shell) 8%, transparent);
+}
+
+.glass-subtle {
+  background: color-mix(in oklab, var(--color-night) 85%, transparent);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 1px solid color-mix(in oklab, var(--color-shell) 6%, transparent);
+}
+
+.glass-card {
+  background: color-mix(in oklab, var(--color-deep) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid color-mix(in oklab, var(--color-shell) 10%, transparent);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 color-mix(in oklab, var(--color-shell) 8%, transparent);
+}
+
+.glass-card:hover {
+  background: color-mix(in oklab, var(--color-deep) 50%, transparent);
+  border-color: color-mix(in oklab, var(--color-brass) 25%, transparent);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 color-mix(in oklab, var(--color-shell) 12%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EFFECTS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Brass glow */
+.glow-brass {
+  box-shadow: 
+    0 0 20px color-mix(in oklab, var(--color-brass) 15%, transparent),
+    0 0 40px color-mix(in oklab, var(--color-brass) 8%, transparent);
+}
+
+.glow-brass-subtle {
+  box-shadow: 
+    0 0 12px color-mix(in oklab, var(--color-brass) 10%, transparent);
+}
+
+/* Grain texture overlay */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Brass rule divider */
+.brass-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-brass) 20%,
+    var(--color-brass) 80%,
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+/* Card top border accent */
+.card-accent-top {
+  position: relative;
+}
+
+.card-accent-top::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-brass), var(--color-lagoon));
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 300ms var(--ease-door);
+}
+
+.card-accent-top:hover::before {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GRADIENTS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at center, var(--color-deep) 0%, var(--color-night) 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-brass) 0%, var(--color-lagoon) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(135deg, var(--color-brass) 0%, var(--color-coral) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Door opening — the signature entrance */
 @keyframes door-open {
   from {
     opacity: 0;
@@ -145,41 +276,119 @@ body {
   }
 }
 
-@keyframes stud-draw {
+/* Stagger reveal for child elements */
+@keyframes stagger-in {
   from {
-    background-size: 1.75rem 0;
     opacity: 0;
+    transform: translateY(1.25rem);
   }
   to {
-    background-size: 1.75rem 0.75rem;
     opacity: 1;
+    transform: none;
   }
 }
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide up */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Float */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Pulse */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Scroll indicator */
+@keyframes scroll-line {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+/* Mobile menu overlay */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Rail fill (door clock) */
+@keyframes rail-fill {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .reveal {
   animation: door-open 900ms var(--ease-door) both;
 }
 
-.studs.reveal {
-  animation:
-    door-open 900ms var(--ease-door) both,
-    stud-draw 700ms var(--ease-door) both;
+.reveal-1 { animation-delay: 120ms; }
+.reveal-2 { animation-delay: 260ms; }
+.reveal-3 { animation-delay: 400ms; }
+.reveal-4 { animation-delay: 540ms; }
+
+.stagger-child {
+  animation: stagger-in 600ms var(--ease-door) both;
 }
 
-.reveal-1 {
-  animation-delay: 120ms;
-}
-.reveal-2 {
-  animation-delay: 260ms;
-}
-.reveal-3 {
-  animation-delay: 400ms;
-}
-.reveal-4 {
-  animation-delay: 540ms;
+.stagger-child:nth-child(1) { animation-delay: 0ms; }
+.stagger-child:nth-child(2) { animation-delay: 80ms; }
+.stagger-child:nth-child(3) { animation-delay: 160ms; }
+.stagger-child:nth-child(4) { animation-delay: 240ms; }
+.stagger-child:nth-child(5) { animation-delay: 320ms; }
+.stagger-child:nth-child(6) { animation-delay: 400ms; }
+
+.scroll-indicator {
+  animation: scroll-line 2s var(--ease-door) infinite;
+  transform-origin: top;
 }
 
-/* Révélation au défilement, sans JS : progressive enhancement */
+.rail-fill {
+  transform-origin: top;
+  animation: rail-fill 1100ms var(--ease-door) both;
+  animation-delay: 420ms;
+}
+
+.mobile-menu-overlay {
+  animation: overlay-in 300ms var(--ease-door) both;
+}
+
+.mobile-menu-link {
+  animation: stagger-in 400ms var(--ease-door) both;
+}
+
+/* Scroll-driven reveal (progressive enhancement) */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .on-scroll {
@@ -190,22 +399,59 @@ body {
   }
 }
 
-/* Le cadran de la porte : la barre du service se remplit de haut en bas,
-   dans la même respiration que le reste de l'ouverture. */
-@keyframes rail-fill {
-  from {
-    transform: scaleY(0);
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPONENT UTILITIES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.card-hover {
+  transition: all 300ms var(--ease-door);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px color-mix(in oklab, var(--color-brass) 20%, transparent);
+}
+
+.scroll-mt-20 {
+  scroll-margin-top: 5rem;
+}
+
+.focus-ring {
+  transition: box-shadow 200ms var(--ease-door);
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brass) 40%, transparent);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
-  to {
-    transform: scaleY(1);
+  
+  .animate-fade-in {
+    animation: fade-in 500ms var(--ease-door) both;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 500ms var(--ease-door) both;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
   }
 }
 
-.rail-fill {
-  transform-origin: top;
-  animation: rail-fill 1100ms var(--ease-door) both;
-  animation-delay: 420ms;
-}
+/* ═══════════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -48,6 +48,19 @@ export async function proxy(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next(), null);
   }
 
+  // Widget embarquable : ni redirigé vers une locale, ni bridé par
+  // frame-ancestors — il vit dans une iframe tierce.
+  if (pathname === "/widget" || pathname.startsWith("/widget/")) {
+    const nonce = crypto.randomUUID().replaceAll("-", "");
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    return withSecurityHeaders(
+      NextResponse.next({ request: { headers } }),
+      nonce,
+      true,
+    );
+  }
+
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
@@ -87,6 +100,7 @@ export async function proxy(request: NextRequest) {
 function withSecurityHeaders(
   response: NextResponse,
   nonce: string | null,
+  allowFraming = false,
 ): NextResponse {
   const scriptSrc = nonce
     ? `'self' 'nonce-${nonce}' 'strict-dynamic'`
@@ -98,12 +112,12 @@ function withSecurityHeaders(
       "default-src 'self'",
       `script-src ${scriptSrc}`,
       // Next et Tailwind produisent des styles en ligne au rendu serveur ;
-      // un style injecté ne s'exécute pas, il défigure au pire.
+      // un script injecté ne s'exécute pas, il défigure au pire.
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "connect-src 'self'",
-      "frame-ancestors 'none'",
+      allowFraming ? "frame-ancestors *" : "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
       "object-src 'none'",

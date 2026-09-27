@@ -1,78 +1,45 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
-import { requireAdmin } from "@/lib/admin-auth";
-import { getRestaurantBySlug, type RestaurantSummary } from "@/lib/saas";
-
-const OWNER_NAV = [
-  { href: "settings", label: "Paramètres" },
-  { href: "team", label: "Équipe" },
-  { href: "billing", label: "Facturation" },
-] as const;
+import { isLocale, type Locale } from "@/i18n/config";
 
 export default async function OwnerLayout({
-  children,
   params,
+  children,
 }: {
-  children: React.ReactNode;
   params: Promise<{ locale: string }>;
+  children: React.ReactNode;
 }) {
   const { locale } = await params;
+  if (!isLocale(locale)) notFound();
 
-  if (!(await isAdminOrOwner())) notFound();
+  const typedLocale = locale as Locale;
 
-  const restaurant = await getFirstRestaurant();
-  if (!restaurant) notFound();
+  const nav = [
+    { label: "Dashboard", href: `/${typedLocale}/owner` },
+    { label: "Settings", href: `/${typedLocale}/owner/settings` },
+    { label: "Team", href: `/${typedLocale}/owner/team` },
+    { label: "Billing", href: `/${typedLocale}/owner/billing` },
+  ];
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <div className="flex items-baseline gap-4">
-          <Link
-            href={`/${locale}/owner`}
-            className="font-display text-2xl text-shell hover:text-brass transition-colors"
-          >
-            {restaurant.name}
-          </Link>
-        </div>
-      </header>
-
-      <nav
-        aria-label="Navigation propriétaire"
-        className="mt-6 flex flex-wrap items-center gap-2"
-      >
-        {OWNER_NAV.map((item) => {
-          const href = `/${locale}/owner/${item.href}`;
-          return (
-            <Link
-              key={item.href}
-              href={href}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-shell/20 px-4 text-sm text-shell-dim transition-colors hover:border-brass hover:text-brass"
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="mt-8 border-t border-brass/20 pt-8">{children}</div>
+    <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <aside className="w-full shrink-0 lg:w-48">
+          <nav className="flex flex-row flex-wrap gap-1 lg:flex-col">
+            {nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-lg px-3 py-2 text-sm text-shell-dim transition-colors hover:bg-shell/5 hover:text-shell"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <main className="flex-1">{children}</main>
+      </div>
     </div>
   );
-}
-
-async function isAdminOrOwner(): Promise<boolean> {
-  try {
-    await requireAdmin();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function getFirstRestaurant(): Promise<RestaurantSummary | null> {
-  // The owner auth is Basic Auth tied to a single restaurant context.
-  // We query by slug from the environment or find the first active restaurant.
-  const slug = process.env.OWNER_RESTAURANT_SLUG;
-  if (slug) return getRestaurantBySlug(slug);
-  return null;
 }

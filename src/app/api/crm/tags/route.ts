@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getDefaultRestaurantId } from "@/lib/restaurant";
 import { assignTag, unassignTag, getTags } from "@/lib/crm/tags";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   await requireAdmin();
   const restaurantId = await getDefaultRestaurantId();
   const tags = await getTags(restaurantId);

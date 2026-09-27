@@ -6,7 +6,7 @@ type CacheOptions = {
 
 let redisAvailable = true;
 
-async function redisCommand(command: string[], ttl?: number): Promise<unknown> {
+async function redisCommand(command: string[]): Promise<unknown> {
   if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN || !redisAvailable) {
     return null;
   }

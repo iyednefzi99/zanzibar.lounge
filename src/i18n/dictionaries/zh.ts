@@ -129,6 +129,7 @@ const zh: Dictionary = {
     },
     slotsLoading: "搜索可用时段…",
     submit: "预订",
+    progress: "第 {current} 步，共 {total} 步",
     submitting: "提交中…",
     success: {
       title: "预订成功",
@@ -136,6 +137,7 @@ const zh: Dictionary = {
       again: "再次预订",
     },
     errors: {
+      summary: "表单存在错误。",
       generic: "预订未成功。请重试或致电我们。",
       name: "请输入预订姓名。",
       phone: "号码无效。请使用国际格式，例如 +21620123456。",

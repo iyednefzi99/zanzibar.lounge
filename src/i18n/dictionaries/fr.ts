@@ -127,6 +127,7 @@ const fr = {
     },
     slotsLoading: "Recherche des créneaux…",
     submit: "Réserver",
+    progress: "Étape {current} sur {total}",
     submitting: "Envoi…",
     success: {
       title: "C'est noté",
@@ -134,6 +135,7 @@ const fr = {
       again: "Faire une autre réservation",
     },
     errors: {
+      summary: "Le formulaire contient des erreurs.",
       generic: "La réservation n'est pas passée. Réessayez ou appelez-nous.",
       name: "Indiquez le nom qui figurera sur la réservation.",
       phone: "Numéro invalide. Utilisez le format international, ex. +21620123456.",

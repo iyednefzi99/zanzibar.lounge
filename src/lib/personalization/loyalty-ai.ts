@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-export async function getLoyaltyStats(restaurantId: string) {
+export async function getLoyaltyStats(_restaurantId: string) {
   const profiles = await db.guestAiProfile.findMany();
 
   const tiers = profiles.reduce((acc, p) => {

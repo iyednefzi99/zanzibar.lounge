@@ -1,27 +1,22 @@
-import { requireAdmin } from "@/lib/admin-auth";
-import { getDefaultRestaurantId } from "@/lib/restaurant";
-import { getPaymentConfig } from "@/lib/payments/config";
-import { PaymentConfigForm } from "@/components/payments/payment-config-form";
+import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+import { PageHeader } from "@/components/admin/page-header";
+import { isLocale } from "@/i18n/config";
 
-export default async function PaymentConfigPage() {
-  await requireAdmin();
-  const restaurantId = await getDefaultRestaurantId();
-  const config = await getPaymentConfig(restaurantId);
+export default async function AdminPaymentsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10">
-      <div>
-        <h1 className="font-display text-3xl text-shell">Configuration des paiements</h1>
-        <p className="mt-2 text-sm text-shell-dim">
-          Configurez les dépôts, pré-autorisations et frais d&apos;annulation.
-        </p>
+    <div>
+      <PageHeader title="Payments" subtitle="Manage payment methods and transactions" />
+      <div className="mt-6 glass-card rounded-xl p-6">
+        <p className="text-shell-dim">Payment management coming soon</p>
       </div>
-
-      <section className="rounded-xl border border-shell/10 bg-deep/40 p-6">
-        <PaymentConfigForm config={config} />
-      </section>
     </div>
   );
 }

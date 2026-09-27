@@ -128,6 +128,7 @@ const ar: Dictionary = {
     },
     slotsLoading: "جارٍ البحث عن الأوقات…",
     submit: "احجز",
+    progress: "الخطوة {current} من {total}",
     submitting: "جارٍ الإرسال…",
     success: {
       title: "تم الحجز",
@@ -135,6 +136,7 @@ const ar: Dictionary = {
       again: "احجز مرة أخرى",
     },
     errors: {
+      summary: "يحتوي النموذج على أخطاء.",
       generic: "لم يكتمل الحجز. أعد المحاولة أو اتصل بنا.",
       name: "اكتب الاسم الذي سيظهر على الحجز.",
       phone: "رقم غير صالح. استعمل الصيغة الدولية، مثال ‎+21620123456.",

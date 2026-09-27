@@ -6,10 +6,6 @@
  * detection and language identification.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
-
-import { env } from "@/lib/env";
-
 /**
  * Transcribe audio using Whisper API or Twilio's built-in speech recognition.
  *

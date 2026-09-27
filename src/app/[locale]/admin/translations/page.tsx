@@ -1,24 +1,22 @@
-import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { isAdmin } from "@/lib/admin-auth";
+import { PageHeader } from "@/components/admin/page-header";
 import { isLocale } from "@/i18n/config";
-import { TranslationsInterface } from "./translations-interface";
 
-export const metadata: Metadata = {
-  title: "Translations",
-};
-
-export const dynamic = "force-dynamic";
-
-export default async function TranslationsPage({
+export default async function AdminTranslationsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  if (!(await isAdmin())) notFound();
 
-  return <TranslationsInterface />;
+  return (
+    <div>
+      <PageHeader title="Translations" subtitle="Manage multi-language content" />
+      <div className="mt-6 glass-card rounded-xl p-6">
+        <p className="text-shell-dim">Translation management coming soon</p>
+      </div>
+    </div>
+  );
 }

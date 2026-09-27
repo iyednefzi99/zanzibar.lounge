@@ -129,6 +129,7 @@ const it: Dictionary = {
     },
     slotsLoading: "Ricerca orari…",
     submit: "Prenota",
+    progress: "Passaggio {current} di {total}",
     submitting: "Invio in corso…",
     success: {
       title: "Prenotato",
@@ -136,6 +137,7 @@ const it: Dictionary = {
       again: "Effettua un'altra prenotazione",
     },
     errors: {
+      summary: "Il modulo contiene errori.",
       generic: "La prenotazione non è andata a buon fine. Riprova o chiamaci.",
       name: "Indica il nome che apparirà sulla prenotazione.",
       phone: "Numero non valido. Usa il formato internazionale, es. +21620123456.",

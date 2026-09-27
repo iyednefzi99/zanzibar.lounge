@@ -7,9 +7,13 @@ test.describe("Admin page", () => {
   });
 
   test("loads with valid credentials", async ({ page }) => {
+    const user = process.env.ADMIN_USER;
+    const password = process.env.ADMIN_PASSWORD;
+    test.skip(!user || !password, "ADMIN_USER / ADMIN_PASSWORD not configured");
+
     // Set Basic Auth header
     await page.setExtraHTTPHeaders({
-      Authorization: "Basic " + btoa("salle:salle"),
+      Authorization: "Basic " + btoa(`${user}:${password}`),
     });
     const response = await page.goto("/fr/admin");
     // Should not be 401

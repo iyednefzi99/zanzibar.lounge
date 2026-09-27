@@ -28,6 +28,13 @@ vi.mock("@/lib/hours", () => ({
   formatSlot: vi.fn((m: number) => `${Math.floor(m / 60)}:${(m % 60).toString().padStart(2, "0")}`),
 }));
 
+vi.mock("@/lib/reservations", () => ({
+  createReservation: vi.fn().mockResolvedValue({
+    ok: true,
+    value: { id: "res1", reference: "ZL-TEST" },
+  }),
+}));
+
 import {
   joinWaitlist,
   notifyWaitlist,
@@ -149,14 +156,6 @@ describe("waitlist", () => {
         partySize: 4,
       } as never);
       vi.mocked(mockDb.waitlist.update).mockResolvedValue({} as never);
-
-      // Mock createReservation
-      vi.mock("@/lib/reservations", () => ({
-        createReservation: vi.fn().mockResolvedValue({
-          ok: true,
-          value: { id: "res1", reference: "ZL-TEST" },
-        }),
-      }));
 
       const result = await processWaitlistResponse("w1", "accept");
 

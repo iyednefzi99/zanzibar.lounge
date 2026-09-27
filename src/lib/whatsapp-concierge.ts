@@ -9,12 +9,11 @@
  * - Transfert à un humain si nécessaire
  */
 
-import { Channel, type ConciergeIntent } from "@/generated/prisma/client";
+import { type ConciergeIntent } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { availability, createReservation, cancelReservation, findByReference } from "@/lib/reservations";
+import { availability, cancelReservation, findByReference } from "@/lib/reservations";
 import { formatSlot } from "@/lib/hours";
-import { normalizePhone } from "@/lib/phone";
-import { hmToMinutes, toISODate } from "@/lib/time";
+import { hmToMinutes } from "@/lib/time";
 
 // ─── Types ────────────────────────────────────────────────────────────
 

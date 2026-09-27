@@ -1,32 +1,31 @@
+import { getDictionary } from "@/i18n";
+import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import Link from "next/link";
 
-import { getDictionary } from "@/i18n";
-import { isLocale, type Locale } from "@/i18n/config";
-
-export default async function NotFound({
+export default async function NotFoundPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  const typedLocale = isLocale(locale) ? (locale as Locale) : "fr";
+  params?: Promise<{ locale: string }>;
+} = {}) {
+  const raw = params ? (await params).locale : undefined;
+  const typedLocale: Locale =
+    raw && isLocale(raw) ? raw : defaultLocale;
   const dictionary = await getDictionary(typedLocale);
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-5 text-center">
-      <p className="text-6xl font-bold text-brass">404</p>
-      <h1 className="mt-4 text-3xl font-bold">
-        {dictionary.notFound?.title ?? "Page introuvable"}
+    <div className="mx-auto flex min-h-[70vh] flex-col items-center justify-center px-5 text-center">
+      <p className="font-display text-7xl text-brass">404</p>
+      <h1 className="mt-4 font-display text-3xl text-shell">
+        {dictionary.notFound.title}
       </h1>
-      <p className="mt-2 text-shell-dim">
-        {dictionary.notFound?.description ??
-          "La page que vous cherchez n'existe pas ou a été déplacée."}
+      <p className="mt-2 max-w-md text-shell-dim">
+        {dictionary.notFound.description}
       </p>
       <Link
         href={`/${typedLocale}`}
-        className="mt-6 rounded bg-brass px-6 py-3 font-medium text-night transition hover:bg-brass/80"
+        className="mt-8 inline-flex min-h-12 items-center rounded-full bg-brass px-8 text-sm font-medium text-deep transition-colors hover:bg-brass/90"
       >
-        {dictionary.notFound?.backHome ?? "Retour à l'accueil"}
+        {dictionary.notFound.backHome}
       </Link>
     </div>
   );

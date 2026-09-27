@@ -1,23 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PageHeader } from "@/components/admin/page-header";
 import { isLocale } from "@/i18n/config";
-import { site } from "@/content/site";
-import { getDefaultRestaurantId } from "@/lib/restaurant";
-import { reservationsForDate } from "@/lib/reservations";
-import { getOpenOrders } from "@/lib/orders";
-import { toISODate } from "@/lib/time";
 
-export const dynamic = "force-dynamic";
-
-const STATUS_GROUPS = {
-  upcoming: ["PENDING", "CONFIRMED"],
-  active: ["SEATED"],
-  completed: ["COMPLETED"],
-  dropped: ["CANCELLED", "NO_SHOW"],
-};
-
-export default async function StaffHomePage({
+export default async function StaffPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -25,134 +11,35 @@ export default async function StaffHomePage({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const restaurantId = await getDefaultRestaurantId();
-  const today = toISODate(new Date(), site.timezone);
-
-  const [reservations, orders] = await Promise.all([
-    reservationsForDate(today, restaurantId),
-    getOpenOrders(restaurantId),
-  ]);
-
-  const live = reservations.filter(
-    (r) => !STATUS_GROUPS.dropped.includes(r.status),
-  );
-  const pendingCount = live.filter((r) => STATUS_GROUPS.upcoming.includes(r.status)).length;
-  const seatedCount = live.filter((r) => STATUS_GROUPS.active.includes(r.status)).length;
-  const pendingOrders = orders.filter((o) => o.status === "PENDING").length;
-  const preparingOrders = orders.filter((o) => o.status === "PREPARING").length;
-  const readyOrders = orders.filter((o) => o.status === "READY").length;
-
   return (
-    <div className="px-4 py-6">
-      {/* Today's Summary */}
-      <section className="mb-8">
-        <h2 className="mb-4 font-display text-xl text-shell">Aujourd&apos;hui</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Réservations" value={String(live.length)} sub={`${pendingCount} en attente`} />
-          <StatCard label="À table" value={String(seatedCount)} sub="clients installés" />
-          <StatCard label="Commandes" value={String(pendingOrders + preparingOrders)} sub={`${readyOrders} prêtes`} />
-          <StatCard label="Couverts" value={String(live.reduce((s, r) => s + r.partySize, 0))} sub="ce service" />
-        </div>
-      </section>
+    <div>
+      <PageHeader
+        title="Staff Dashboard"
+        subtitle="Manage reservations, orders, and floor plan"
+      />
 
-      {/* Quick Actions */}
-      <section className="mb-8">
-        <h2 className="mb-4 font-display text-xl text-shell">Actions rapides</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <QuickAction href={`/${locale}/staff/scan`} icon="scan" label="Scanner QR" />
-          <QuickAction href={`/${locale}/staff/reservations`} icon="calendar" label="Réservations" />
-          <QuickAction href={`/${locale}/staff/orders`} icon="orders" label="Commandes" />
-          <QuickAction href={`/${locale}/admin/floor`} icon="floor" label="Plan de salle" />
-        </div>
-      </section>
-
-      {/* Next Arrivals */}
-      {live.length > 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-xl text-shell">Prochaines arrivées</h2>
-          <div className="space-y-2">
-            {live
-              .filter((r) => STATUS_GROUPS.upcoming.includes(r.status))
-              .slice(0, 5)
-              .map((r) => (
-                <div
-                  key={r.reference}
-                  className="flex items-center justify-between rounded-xl border border-shell/10 bg-deep/40 px-4 py-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-shell">
-                      {r.name ?? "—"} · {r.partySize} pers.
-                    </p>
-                    <p className="text-xs text-shell-dim">{r.reference}</p>
-                  </div>
-                  <span className="font-mono text-sm tabular-nums text-brass" dir="ltr">
-                    {r.time}
-                  </span>
-                </div>
-              ))}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5", label: "Reservations" },
+          { icon: "M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z", label: "Orders" },
+          { icon: "M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21", label: "Floor Plan" },
+          { icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z", label: "Time Clock" },
+          { icon: "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605", label: "Schedule" },
+          { icon: "M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z", label: "Reviews" },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="glass-card group cursor-pointer rounded-xl p-6 transition-all hover:-translate-y-0.5"
+          >
+            <div className="mb-4 inline-flex items-center justify-center rounded-sm bg-brass/10 p-3 text-brass">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+              </svg>
+            </div>
+            <h3 className="font-display text-xl text-shell">{item.label}</h3>
           </div>
-        </section>
-      )}
-
-      {live.length === 0 && (
-        <p className="py-12 text-center text-sm text-shell-dim">
-          Aucune réservation pour l&apos;instant.
-        </p>
-      )}
+        ))}
+      </div>
     </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="rounded-xl border border-shell/10 bg-deep/40 p-4">
-      <p className="text-[0.65rem] uppercase tracking-wider text-shell-dim">
-        {label}
-      </p>
-      <p
-        className="mt-2 font-mono text-3xl leading-none tabular-nums text-shell"
-        dir="ltr"
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-[0.65rem] text-shell-dim">{sub}</p>
-    </div>
-  );
-}
-
-function QuickAction({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: string;
-  label: string;
-}) {
-  const icons: Record<string, string> = {
-    scan: "📸",
-    calendar: "📅",
-    orders: "🍽️",
-    floor: "🗺️",
-  };
-
-  return (
-    <Link
-      href={href}
-      className="flex h-24 flex-col items-center justify-center gap-2 rounded-xl border border-brass/20 bg-deep/40 text-shell transition-colors hover:border-brass/40 hover:bg-brass/5"
-    >
-      <span className="text-2xl" aria-hidden="true">
-        {icons[icon]}
-      </span>
-      <span className="text-sm font-medium">{label}</span>
-    </Link>
   );
 }

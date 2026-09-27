@@ -9,6 +9,8 @@
  * API Docs: https://docs.flouci.com/
  */
 
+import crypto from "node:crypto";
+
 import { env } from "@/lib/env";
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -158,7 +160,6 @@ export function verifyFlouciWebhook(
   const { appSecret } = getCredentials();
 
   // Flouci uses HMAC-SHA256 for webhook verification
-  const crypto = require("crypto");
   const expectedSignature = crypto
     .createHmac("sha256", appSecret)
     .update(payload)

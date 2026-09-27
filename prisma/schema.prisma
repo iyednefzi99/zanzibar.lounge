@@ -144,6 +144,7 @@ model Restaurant {
   socialTables     SocialTable[]
   socialTableReservations SocialTableReservation[]
   waitlistRewards  WaitlistReward[]
+  marketingJourneys MarketingJourney[]
   settings         RestaurantSettings?
 
   @@index([slug])
@@ -195,6 +196,7 @@ model Guest {
   preAuthorizations PreAuthorization[]
   conciergeInteractions ConciergeInteraction[]
   socialTableReservations SocialTableReservation[]
+  journeyExecutions JourneyExecution[]
 
   @@index([createdAt])
 }
@@ -1806,4 +1808,47 @@ model SocialTableReservation {
   @@index([socialTableId, serviceDate, status])
   @@index([guestId])
   @@index([restaurantId, serviceDate])
+}
+
+// ─── Marketing Journeys ────────────────────────────────────────────
+
+/// Parcours marketing automatisé (rappels, réactivation, anniversaire…).
+model MarketingJourney {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  /// Déclencheur : reservation_confirmed | birthday | inactive_30d | …
+  trigger      String
+  enabled      Boolean  @default(true)
+  /// Étapes du parcours (JSON array de JourneyStep).
+  steps        Json     @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  executions   JourneyExecution[]
+
+  @@index([restaurantId, trigger, enabled])
+  @@index([restaurantId, createdAt])
+}
+
+/// Exécution d'un parcours pour un client donné.
+model JourneyExecution {
+  id        String  @id @default(cuid())
+  journeyId String
+  journey   MarketingJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  guestId   String
+  guest     Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  /// Contexte de déclenchement (JSON : données de la réservation, etc.).
+  context   Json    @default("{}")
+  /// ID de l'étape en cours.
+  currentStepId String
+  /// Statut : active | completed | failed.
+  status    String  @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([journeyId, status])
+  @@index([guestId])
+  @@index([status])
 }

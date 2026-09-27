@@ -1,78 +1,76 @@
 import { notFound } from "next/navigation";
 
-import { ReviewForm } from "@/components/review-form";
-import { ReviewList } from "@/components/review-list";
-import { Studs } from "@/components/studs";
-import { isLocale } from "@/i18n/config";
+import { SectionHeader } from "@/components/ui/section-header";
 import { getDictionary } from "@/i18n";
-import { getApprovedReviews, getReviewStats } from "@/lib/reviews";
+import { isLocale, type Locale } from "@/i18n/config";
 
-export const dynamic = "force-dynamic";
-
-export default async function ReviewsPage({
+export default async function AvisPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ ref?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const dictionary = await getDictionary(locale);
-  const { ref } = await searchParams;
-
-  const [reviews, stats] = await Promise.all([
-    getApprovedReviews(50),
-    getReviewStats(),
-  ]);
+  const typedLocale = locale as Locale;
+  const dictionary = await getDictionary(typedLocale);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
-      <header>
-        <h1 className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none text-shell">
-          {dictionary.reviews.title}
-        </h1>
-        <p className="mt-4 max-w-xl text-shell-dim">
-          {dictionary.reviews.lead}
-        </p>
-      </header>
+    <div className="mx-auto max-w-2xl px-5 py-section sm:px-8">
+      <SectionHeader
+        as="h1"
+        title={dictionary.reviews.title}
+        subtitle={dictionary.reviews.lead}
+      />
 
-      <Studs className="mt-10" />
-
-      {/* Formulaire */}
-      <section className="mt-10">
-        <h2 className="font-mono text-sm uppercase tracking-[0.18em] text-shell-dim/80">
-          {dictionary.reviews.formTitle}
-        </h2>
-        <div className="mt-4">
-          <ReviewForm
-            locale={locale}
-            reservationRef={ref}
-            dictionary={{
-              title: dictionary.reviews.titleField,
-              rating: dictionary.reviews.rating,
-              comment: dictionary.reviews.comment,
-              submit: dictionary.reviews.submit,
-              success: dictionary.reviews.success,
-              error: dictionary.reviews.error,
-              namePlaceholder: dictionary.reviews.namePlaceholder,
-            }}
+      <form className="mt-10 space-y-6">
+        <div>
+          <label className="mb-2 block font-mono text-xs uppercase tracking-[0.16em] text-brass">
+            {dictionary.reviews.titleField}
+          </label>
+          <input
+            type="text"
+            placeholder={dictionary.reviews.namePlaceholder}
+            className="w-full rounded-xl border border-shell/20 bg-deep/50 px-4 py-3 text-shell outline-none transition-colors focus:border-brass"
           />
         </div>
-      </section>
 
-      <Studs className="mt-10" />
+        <div>
+          <label className="mb-2 block font-mono text-xs uppercase tracking-[0.16em] text-brass">
+            {dictionary.reviews.rating}
+          </label>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                className="h-8 w-8 text-shell/30 transition-colors hover:text-brass"
+              >
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Liste des avis */}
-      <section className="mt-10">
-        <ReviewList
-          reviews={reviews}
-          average={stats.average}
-          count={stats.count}
-          distribution={stats.distribution}
-        />
-      </section>
+        <div>
+          <label className="mb-2 block font-mono text-xs uppercase tracking-[0.16em] text-brass">
+            {dictionary.reviews.comment}
+          </label>
+          <textarea
+            rows={4}
+            className="w-full rounded-xl border border-shell/20 bg-deep/50 px-4 py-3 text-shell outline-none transition-colors focus:border-brass resize-none"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="inline-flex min-h-12 items-center rounded-full bg-brass px-8 text-sm font-medium text-deep transition-colors hover:bg-brass/90"
+        >
+          {dictionary.reviews.submit}
+        </button>
+      </form>
     </div>
   );
 }

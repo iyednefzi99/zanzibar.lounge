@@ -74,7 +74,7 @@ export function generateTwiML(
 
   if (response.say) {
     // Polly voices are valid at runtime but not in the TypeScript type union
-    const say = twiml.say({ voice: voice as never, language: toGatherLanguage(lang) as never }, response.say);
+    twiml.say({ voice: voice as never, language: toGatherLanguage(lang) as never }, response.say);
   }
 
   if (response.gather) {

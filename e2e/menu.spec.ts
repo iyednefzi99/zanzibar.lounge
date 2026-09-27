@@ -28,7 +28,10 @@ test.describe("Menu API", () => {
     const response = await request.get("/api/menu");
     expect(response.ok()).toBeTruthy();
     const data = await response.json();
-    expect(data.items).toBeDefined();
-    expect(Array.isArray(data.items)).toBeTruthy();
+    // Response is a record of category -> items
+    const items = Object.values(data).flatMap((group) =>
+      Array.isArray(group) ? group : [],
+    );
+    expect(items.length).toBeGreaterThan(0);
   });
 });

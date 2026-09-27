@@ -332,7 +332,7 @@ function generateSuggestion(
   },
 ): UpsellSuggestionData | null {
   // Pour simplifier, on génère des suggestions basées sur le type de règle
-  const suggestionText = rule.customMessage ?? getSuggestionText(rule.suggestionType, context);
+  const suggestionText = rule.customMessage ?? getSuggestionText(rule.suggestionType);
   const reason = determineReason(rule.suggestionType, context.guestPreferences);
   const score = calculateScore(reason, context);
 
@@ -345,10 +345,7 @@ function generateSuggestion(
   };
 }
 
-function getSuggestionText(
-  suggestionType: string,
-  context: { partySize?: number; hour?: number },
-): string {
+function getSuggestionText(suggestionType: string): string {
   const suggestions: Record<string, string[]> = {
     menu_item: [
       "Découvrez notre plat du jour, préparé avec des produits frais du marché.",

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
   try {
     // Initialize the voice conversation state
-    const greeting = await initVoiceCall(callSid, from);
+    await initVoiceCall(callSid, from);
 
     // Generate TwiML response with greeting and speech recognition
     const twiml = await handleVoiceCall(from, to ?? "", callSid);

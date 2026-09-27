@@ -1,77 +1,38 @@
-import { type Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { isAdmin } from "@/lib/admin-auth";
-import { db } from "@/lib/db";
+import { PageHeader } from "@/components/admin/page-header";
 import { isLocale } from "@/i18n/config";
-import { getAuditLogs } from "@/lib/security";
 
-import { SecurityDashboard } from "./security-dashboard";
-
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Sécurité",
-};
-
-export default async function SecurityPage({
+export default async function AdminSecurityPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  if (!(await isAdmin())) notFound();
-
-  const restaurantId = process.env.OWNER_RESTAURANT_SLUG
-    ? (
-        await db.restaurant.findUnique({
-          where: { slug: process.env.OWNER_RESTAURANT_SLUG },
-          select: { id: true },
-        })
-      )?.id
-    : null;
-
-  if (!restaurantId) notFound();
-
-  const [staffMembers, auditLogs, webhookCount, apiKeyCount] = await Promise.all([
-    db.staff.findMany({
-      where: { restaurantId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        twoFactorEnabled: true,
-        active: true,
-      },
-      orderBy: [{ role: "asc" }, { name: "asc" }],
-    }),
-    getAuditLogs(restaurantId, 100),
-    db.webhookEndpoint.count({ where: { restaurantId, active: true } }),
-    db.apiKey.count({ where: { restaurantId, active: true } }),
-  ]);
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h1 className="font-display text-4xl text-shell">Sécurité</h1>
-        <Link
-          href={`/${locale}/admin`}
-          className="text-sm text-shell-dim hover:text-brass"
-        >
-          ← Retour au service
-        </Link>
-      </header>
+    <div>
+      <PageHeader title="Security" subtitle="Manage authentication and access controls" />
 
-      <SecurityDashboard
-        restaurantId={restaurantId}
-        staffMembers={staffMembers}
-        auditLogs={auditLogs}
-        webhookCount={webhookCount}
-        apiKeyCount={apiKeyCount}
-      />
+      <div className="mt-6 space-y-6">
+        {[
+          { label: "Two-Factor Authentication", desc: "Add an extra layer of security to your account", enabled: true },
+          { label: "API Keys", desc: "Manage API keys for external integrations", enabled: false },
+          { label: "Audit Log", desc: "Track all admin actions and changes", enabled: true },
+          { label: "Session Management", desc: "View and revoke active sessions", enabled: false },
+        ].map((item) => (
+          <div key={item.label} className="glass-card flex items-center justify-between rounded-xl p-5">
+            <div>
+              <h3 className="text-shell">{item.label}</h3>
+              <p className="mt-1 text-sm text-shell-dim">{item.desc}</p>
+            </div>
+            <div className={`h-6 w-11 rounded-sm transition-colors ${item.enabled ? "bg-lagoon" : "bg-shell/20"}`}>
+              <div className={`h-5 w-5 rounded-full bg-white transition-transform ${item.enabled ? "translate-x-5.5 mt-0.5" : "translate-x-0.5 mt-0.5"}`} />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

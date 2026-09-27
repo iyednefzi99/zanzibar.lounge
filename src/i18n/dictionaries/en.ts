@@ -129,6 +129,7 @@ const en: Dictionary = {
     },
     slotsLoading: "Finding times…",
     submit: "Book",
+    progress: "Step {current} of {total}",
     submitting: "Sending…",
     success: {
       title: "You're booked",
@@ -136,6 +137,7 @@ const en: Dictionary = {
       again: "Make another booking",
     },
     errors: {
+      summary: "The form contains errors.",
       generic: "The booking didn't go through. Try again or give us a call.",
       name: "Tell us the name for the booking.",
       phone: "Invalid number. Use international format, e.g. +21620123456.",

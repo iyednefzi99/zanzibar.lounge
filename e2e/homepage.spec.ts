@@ -8,7 +8,7 @@ test.describe("Homepage", () => {
 
   test("displays restaurant name", async ({ page }) => {
     await page.goto("/fr");
-    await expect(page.locator("h1").first()).toContainText("e_coffee");
+    await expect(page.locator("h1").first()).toContainText("E-Coffee");
   });
 
   test("has correct meta title", async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe("Homepage", () => {
   test("has OpenGraph meta tags", async ({ page }) => {
     await page.goto("/fr");
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
-    expect(ogTitle).toContain("e_coffee");
+    expect(ogTitle).toContain("E-Coffee");
   });
 
   test("has structured data", async ({ page }) => {

@@ -191,6 +191,8 @@ export async function logTemperature(
     }
   }
 
+  details.allOk = String(allOk);
+
   return runComplianceCheck(restaurantId, "food_safety", details);
 }
 

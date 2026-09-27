@@ -1,116 +1,40 @@
-import { type Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { isAdmin } from "@/lib/admin-auth";
-import { db } from "@/lib/db";
+import { PageHeader } from "@/components/admin/page-header";
 import { isLocale } from "@/i18n/config";
-import StaffInterface from "./staff-interface";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Équipe",
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  OWNER: "Propriétaire",
-  MANAGER: "Gérant",
-  STAFF: "Personnel",
-};
-
-const ROLE_STYLES: Record<string, string> = {
-  OWNER: "border-brass/60 text-brass",
-  MANAGER: "border-lagoon/50 text-lagoon",
-  STAFF: "border-shell/30 text-shell-dim",
-};
-
-export default async function StaffPage({
+export default async function AdminStaffPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  if (!(await isAdmin())) notFound();
-
-  const restaurantId = process.env.OWNER_RESTAURANT_SLUG
-    ? (
-        await db.restaurant.findUnique({
-          where: { slug: process.env.OWNER_RESTAURANT_SLUG },
-          select: { id: true },
-        })
-      )?.id
-    : null;
-
-  if (!restaurantId) notFound();
-
-  const staffMembers = await db.staff.findMany({
-    where: { restaurantId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      active: true,
-      twoFactorEnabled: true,
-      lastLoginAt: true,
-      createdAt: true,
-    },
-    orderBy: [{ role: "asc" }, { name: "asc" }],
-  });
-
-  const staffForClient = staffMembers.map((s) => ({
-    id: s.id,
-    name: s.name,
-    email: s.email,
-    role: s.role as "OWNER" | "MANAGER" | "STAFF",
-    active: s.active,
-  }));
-
-  const activeCount = staffMembers.filter((s) => s.active).length;
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h1 className="font-display text-4xl text-shell">Équipe</h1>
-        <Link
-          href={`/${locale}/admin`}
-          className="text-sm text-shell-dim hover:text-brass"
-        >
-          ← Retour au service
-        </Link>
-      </header>
+    <div>
+      <PageHeader title="Staff Management" subtitle="Manage team members and schedules" />
 
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="border-t border-brass/35 pt-4">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-shell-dim/80">
-            Membres actifs
-          </p>
-          <p className="mt-2 font-mono text-3xl leading-none tabular-nums text-lagoon">
-            {activeCount}
-          </p>
-        </div>
-        <div className="border-t border-brass/35 pt-4">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-shell-dim/80">
-            Total
-          </p>
-          <p className="mt-2 font-mono text-3xl leading-none tabular-nums text-shell">
-            {staffMembers.length}
-          </p>
-        </div>
-        <div className="border-t border-brass/35 pt-4">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-shell-dim/80">
-            Inactifs
-          </p>
-          <p className="mt-2 font-mono text-3xl leading-none tabular-nums text-coral">
-            {staffMembers.length - activeCount}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <StaffInterface staff={staffForClient} />
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        {[
+          { name: "Ahmed B.", role: "Manager", status: "Active" },
+          { name: "Fatima M.", role: "Waitress", status: "Active" },
+          { name: "Youssef K.", role: "Chef", status: "Active" },
+          { name: "Salma H.", role: "Waitress", status: "Off duty" },
+        ].map((staff) => (
+          <div key={staff.name} className="glass-card flex items-center gap-4 rounded-xl p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-brass/10 font-display text-lg text-brass">
+              {staff.name.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <p className="text-shell">{staff.name}</p>
+              <p className="text-sm text-shell-dim">{staff.role}</p>
+            </div>
+            <span className={`rounded-sm px-2 py-0.5 text-xs ${staff.status === "Active" ? "bg-lagoon/10 text-lagoon" : "bg-shell/10 text-shell-dim"}`}>
+              {staff.status}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

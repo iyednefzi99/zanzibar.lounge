@@ -129,6 +129,7 @@ const ja: Dictionary = {
     },
     slotsLoading: "空き枠を検索中…",
     submit: "予約する",
+    progress: "ステップ {current} / {total}",
     submitting: "送信中…",
     success: {
       title: "予約完了",
@@ -136,6 +137,7 @@ const ja: Dictionary = {
       again: "新しい予約",
     },
     errors: {
+      summary: "フォームにエラーがあります。",
       generic: "予約が完了しませんでした。もう一度お試しいただくか、お電話ください。",
       name: "予約名前を入力してください。",
       phone: "無効な番号です。国際フォーマットをご利用ください。例: +21620123456",

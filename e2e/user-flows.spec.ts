@@ -20,12 +20,12 @@ test.describe("Full reservation flow", () => {
 test.describe("Language switching", () => {
   test("can switch from French to English", async ({ page }) => {
     await page.goto("/fr");
-    // Look for locale switcher
-    const switcher = page.locator("[data-testid='locale-switcher'], button:has-text('EN'), a:has-text('EN')").first();
-    if (await switcher.isVisible()) {
-      await switcher.click();
-      await expect(page).toHaveURL(/\/en/);
-    }
+    const switcher = page
+      .locator('[data-testid="locale-switcher"] a[hreflang="en"]')
+      .first();
+    await expect(switcher).toBeVisible();
+    await switcher.click();
+    await expect(page).toHaveURL(/\/en/);
   });
 
   test("Arabic pages have RTL direction", async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe("Reviews page", () => {
 
 test.describe("Loyalty page", () => {
   test("loads correctly", async ({ page }) => {
-    await page.goto("/fr/fidelite");
+    await page.goto("/fr/guest/loyalty");
     await expect(page.locator("h1")).toBeVisible();
   });
 });

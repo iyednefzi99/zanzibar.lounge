@@ -9,13 +9,6 @@ type ForecastInput = {
   factors?: unknown[];
 };
 
-type HistoricalEntry = {
-  date: Date;
-  covers: number;
-  dayOfWeek: number;
-  hour: number;
-};
-
 export async function forecastDemand(
   restaurantId: string,
   input: ForecastInput,

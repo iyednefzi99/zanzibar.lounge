@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getDefaultRestaurantId } from "@/lib/restaurant";
-import { createCampaign, getCampaigns, sendCampaign, getCampaignStats } from "@/lib/crm/campaigns";
+import { createCampaign, getCampaigns } from "@/lib/crm/campaigns";
 
 export async function GET() {
   await requireAdmin();
