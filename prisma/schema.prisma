@@ -692,7 +692,7 @@ model Staff {
   name         String
   /// Rôle : owner | manager | staff.
   role         StaffRole @default(STAFF)
-  /// Hash du mot de passe (argon2 ou bcrypt).
+  /// Hash du mot de passe (PBKDF2-SHA256, sel:hachage hex).
   passwordHash String
   /// Dernière connexion.
   lastLoginAt  DateTime?
