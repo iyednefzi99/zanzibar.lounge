@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AppShell, type NavGroup } from "@/components/admin/app-shell";
+import { LogoutButton } from "@/components/admin/logout-button";
 import { site } from "@/content/site";
 import { isLocale, type Locale } from "@/i18n/config";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -41,6 +42,7 @@ export default async function StaffLayout({
       context="Staff"
       locale={typedLocale}
       groups={groups}
+      footer={<LogoutButton locale={typedLocale} />}
     >
       {children}
     </AppShell>

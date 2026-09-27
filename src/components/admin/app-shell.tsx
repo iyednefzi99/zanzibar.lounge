@@ -61,12 +61,14 @@ export function AppShell({
   locale,
   groups,
   children,
+  footer,
 }: {
   brand: string;
   context: string;
   locale: string;
   groups: NavGroup[];
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -97,6 +99,7 @@ export function AppShell({
           >
             ← <span className="ms-2">View site</span>
           </Link>
+          {footer}
         </div>
       </aside>
 
@@ -161,6 +164,7 @@ export function AppShell({
               >
                 ← <span className="ms-2">View site</span>
               </Link>
+              {footer}
             </div>
           </nav>
         </div>
