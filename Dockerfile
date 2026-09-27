@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
+# Le postinstall (`prisma generate`) a besoin du schéma dès cette étape.
+COPY prisma ./prisma
 RUN npm ci --omit=dev
 
 # ── Stage 2: builder ─────────────────────────────────────────────────
@@ -14,10 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
 COPY prisma ./prisma
+RUN npm ci
+COPY prisma.config.ts next.config.ts tsconfig.json eslint.config.mjs postcss.config.mjs ./
 COPY src ./src
-COPY next.config.ts tsconfig.json eslint.config.mjs postcss.config.mjs ./
+COPY public ./public
 RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
