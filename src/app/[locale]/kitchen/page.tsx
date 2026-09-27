@@ -2,12 +2,15 @@ import { notFound } from "next/navigation";
 
 import { SectionHeader } from "@/components/ui/section-header";
 import { isLocale } from "@/i18n/config";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export default async function KitchenPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  await requireAdmin();
+
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 

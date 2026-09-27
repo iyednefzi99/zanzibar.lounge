@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { isLocale, type Locale } from "@/i18n/config";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export default async function OwnerLayout({
   params,
@@ -10,6 +11,8 @@ export default async function OwnerLayout({
   params: Promise<{ locale: string }>;
   children: React.ReactNode;
 }) {
+  await requireAdmin();
+
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
