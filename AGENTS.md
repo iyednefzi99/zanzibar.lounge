@@ -26,7 +26,8 @@ npm audit --omit=dev --audit-level=high  # CI runs this after build
 - Schema: `prisma/schema.prisma`. Client generated to `src/generated/prisma` (gitignored, regenerated on `postinstall`).
 - Connection uses `@prisma/adapter-pg` (PrismaPg adapter). Client in `src/lib/db.ts` is lazy — proxy defers connection until first query, so `next build` works without a database.
 - Database URL is in `prisma.config.ts` (reads `DATABASE_URL` from `.env.local`). `db.ts:22` throws if missing at runtime.
-- `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod. `npm run db:seed` populates test data.
+- `npm run db:migrate` applies migrations in dev. `npm run db:deploy` applies in prod. `npm run db:seed` populates test data (incl. demo staff account).
+- Single baseline migration (`20260927000000_baseline`); databases created via `db push` must be baselined once with `prisma migrate resolve --applied 20260927000000_baseline`.
 
 ## Env validation
 
@@ -41,8 +42,8 @@ All keys are marked `.optional()` in the schema, but `DATABASE_URL` is required 
 - **Agent loop**: Hand-rolled in `src/lib/agent/index.ts` (not the SDK's tool runner) to enforce ownership checks.
 - **Voice agent**: `src/lib/voice/voice-agent.ts` — per-call conversation state, integrates with existing tools.
 - **Proxy**: `src/proxy.ts` handles locale routing, admin/staff/owner auth, CSP nonce, security headers. Edge runtime.
-- **Admin auth**: Double-checked (proxy + `lib/admin-auth.ts` in every action/page).
-- **Staff auth**: Cookie-based HMAC-signed sessions (`lib/staff-session.ts`).
+- **Admin auth**: Double-checked — proxy first barrier, then `lib/admin-auth.ts` in the admin/staff/owner layouts, kitchen page, and every API route.
+- **Staff auth**: Cookie-based HMAC-signed sessions (`lib/staff-session.ts`); pages redirect to `/{locale}/staff/login` without one.
 - **Guest auth**: Phone-based HMAC-signed sessions (`lib/guest-session.ts`).
 - **Time model**: No date library. `Intl` in `src/lib/time.ts`. Minutes since midnight convention.
 - **Locale**: French is the base locale. 10 locales: fr, ar, en, de, es, it, pt, ru, zh, ja.
@@ -74,12 +75,12 @@ All keys are marked `.optional()` in the schema, but `DATABASE_URL` is required 
 - Staff: `/api/staff/{schedule,timeclock,performance}` — Admin: `/api/admin/{export,orders,2fa,apikeys,jobs}`
 - Health: `/api/health` — Webhooks: `/api/webhooks/{whatsapp,twilio}`
 
-**Key pages:** `/{locale}/admin` (45+ pages), `/{locale}/staff`, `/{locale}/kitchen`, `/{locale}/owner`, `/{locale}/guest`, `/{locale}/discover`, `/widget/{slug}` (iframe).
+**Key pages:** `/{locale}/admin` (25 routes, sidebar shell), `/{locale}/staff`, `/{locale}/kitchen`, `/{locale}/owner`, `/{locale}/guest`, `/{locale}/discover`, `/widget/{slug}` (iframe).
 
 ## Testing
 
 - 4 unit test files: `time.test.ts`, `hours.test.ts`, `phone.test.ts`, `waitlist.test.ts`
-- 5 E2E specs: `e2e/*.spec.ts` (admin, booking, homepage, menu, user-flows)
+- 6 E2E specs: `e2e/*.spec.ts` (admin, booking, homepage, menu, user-flows, staff)
 - Unit: `npm test` / `npm run test:watch` — E2E: `npm run test:e2e` — Both: `npm run test:all`
 
 ## Gotchas

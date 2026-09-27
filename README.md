@@ -45,7 +45,7 @@ Seule `DATABASE_URL` est obligatoire pour démarrer : sans clés Anthropic/Whats
 | **Twilio** | Voice + SMS |
 | **WhatsApp Cloud API** | Canal WhatsApp |
 | **Stripe** | Paiements + Billing |
-| **Vitest** + **Playwright** | Tests unitaires (38) + E2E (29) |
+| **Vitest** + **Playwright** | Tests unitaires (38) + E2E (32) |
 
 ---
 
@@ -195,7 +195,7 @@ Points clés :
 
 ```bash
 npm test            # 38 tests unitaires (Vitest)
-npm run test:e2e    # 29 scénarios E2E (Playwright)
+npm run test:e2e    # 32 scénarios E2E (Playwright)
 ```
 
 | Fichier | Couverture |
@@ -209,6 +209,7 @@ npm run test:e2e    # 29 scénarios E2E (Playwright)
 | `e2e/menu.spec.ts` | Carte, i18n (ar/en), API menu |
 | `e2e/admin.spec.ts` | Auth back-office (6 routes) |
 | `e2e/user-flows.spec.ts` | Navigation, i18n, RTL, avis |
+| `e2e/staff.spec.ts` | Login staff, session, redirection |
 
 Vérification avant de valider (ordre de la CI) :
 
