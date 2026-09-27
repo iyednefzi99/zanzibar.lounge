@@ -104,4 +104,37 @@ for (const item of menuItems) {
 }
 console.log(`${menuCount} articles de menu en place.`);
 
+// 4. Compte staff de démonstration (connexion /staff)
+const STAFF_EMAIL = (process.env.STAFF_SEED_EMAIL ?? "staff@e-coffee.local").toLowerCase();
+const STAFF_PASSWORD = process.env.STAFF_SEED_PASSWORD ?? "staff-demo-2026";
+
+/** Même format que `hashPassword` de src/lib/staff-auth.ts (PBKDF2-SHA-256). */
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+    keyMaterial,
+    256,
+  );
+  const hex = (buffer) =>
+    Array.from(new Uint8Array(buffer), (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex(salt.buffer)}:${hex(bits)}`;
+}
+
+await client.query(
+  `INSERT INTO "Staff" ("id", "restaurantId", "email", "name", "passwordHash", "role", "active", "createdAt", "updatedAt")
+   VALUES ('staff_demo', $1, $2, 'Staff Démo', $3, 'MANAGER', true, NOW(), NOW())
+   ON CONFLICT ("restaurantId", "email")
+   DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash", "active" = true, "updatedAt" = NOW()`,
+  [restaurantId, STAFF_EMAIL, await hashPassword(STAFF_PASSWORD)],
+);
+console.log(`Staff de démonstration : ${STAFF_EMAIL} / ${STAFF_PASSWORD}`);
+
 await client.end();

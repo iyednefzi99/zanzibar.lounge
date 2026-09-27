@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/page-header";
 import { isLocale } from "@/i18n/config";
+import { getStaffSession } from "@/lib/staff-session";
 
 export default async function StaffReservationsPage({
   params,
@@ -10,6 +11,9 @@ export default async function StaffReservationsPage({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+
+  const session = await getStaffSession();
+  if (!session) redirect(`/${locale}/staff/login`);
 
   return (
     <div>

@@ -24,12 +24,15 @@ export class AdminForbiddenError extends Error {
 
 /** Vrai si la requête courante porte des identifiants d'administration valides. */
 export async function isAdmin(): Promise<boolean> {
+  // On lit la requête AVANT toute autre décision : `headers()` force le rendu
+  // dynamique, ce qui évite d'exécuter ce contrôle pendant la génération de
+  // pages statiques au moment du build (où aucun en-tête n'existe).
+  const header = (await headers()).get("authorization");
+  if (!header?.startsWith("Basic ")) return false;
+
   const user = process.env.ADMIN_USER;
   const password = process.env.ADMIN_PASSWORD;
   if (!user || !password) return false;
-
-  const header = (await headers()).get("authorization");
-  if (!header?.startsWith("Basic ")) return false;
 
   let decoded: string;
   try {

@@ -10,7 +10,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Les secrets de production (DATABASE_URL, VERCEL_TOKEN…) ne sont pas
+  # toujours configurés : sans ce garde-fou, chaque push serait rouge.
+  precheck:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$DATABASE_URL" ] && [ -n "$VERCEL_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Production secrets (DATABASE_URL, VERCEL_TOKEN) not configured — deploy skipped."
+          fi
+
   deploy:
+    needs: precheck
+    if: needs.precheck.outputs.configured == 'true'
     runs-on: ubuntu-latest
     environment: production
     steps:
