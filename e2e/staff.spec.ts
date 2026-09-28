@@ -57,11 +57,7 @@ test.describe("Staff page", () => {
     await page.getByRole("button", { name: "Se connecter" }).click();
     await expect(page).toHaveURL(/\/fr\/staff$/);
 
-    // dispatchEvent : en dev, le badge d'overlay Next (warning CSP/eval)
-    // recouvre le pied de la barre latérale et intercepterait le clic souris.
-    await page
-      .getByRole("button", { name: "Sign out" })
-      .dispatchEvent("click");
+    await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/fr\/staff\/login/);
 
     // La session est bien détruite : le dashboard redirige de nouveau.

@@ -106,11 +106,18 @@ function withSecurityHeaders(
     ? `'self' 'nonce-${nonce}' 'strict-dynamic'`
     : `'self'`;
 
+  // En développement seulement, React (overlay, reconstruction des piles)
+  // réclame eval() : sans cela la console signale une erreur CSP et le badge
+  // « Issue » de l'overlay se place par-dessus l'interface. La production
+  // reste stricte — testé dans la vérification de build.
+  const devEval =
+    process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+
   response.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src ${scriptSrc}`,
+      `script-src ${scriptSrc}${devEval}`,
       // Next et Tailwind produisent des styles en ligne au rendu serveur ;
       // un script injecté ne s'exécute pas, il défigure au pire.
       "style-src 'self' 'unsafe-inline'",
